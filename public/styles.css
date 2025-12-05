@@ -5,8 +5,8 @@
 :root {
   --bg-primary: #061019;
   --bg-secondary: #0c1826;
-  --accent-1: #e45b67; /* festive red */
-  --accent-2: #58d1a8; /* minty green */
+  --accent-1: #ff6b6b; /* brighter red */
+  --accent-2: #58f2c5; /* bright mint */
   --accent-3: #7db3ff; /* icy blue */
   --card: #0f1a2a;
   --text: #eef3fb;
@@ -33,10 +33,10 @@ body::before {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(circle at 20% 20%, rgba(228, 91, 103, 0.25), transparent 40%),
-    radial-gradient(circle at 80% 10%, rgba(88, 209, 168, 0.22), transparent 38%),
-    radial-gradient(circle at 50% 70%, rgba(125, 179, 255, 0.18), transparent 45%),
-    linear-gradient(160deg, rgba(9, 15, 25, 0.9), rgba(6, 12, 20, 0.95));
+    radial-gradient(circle at 20% 25%, rgba(255, 107, 107, 0.35), transparent 42%),
+    radial-gradient(circle at 80% 15%, rgba(88, 242, 197, 0.32), transparent 40%),
+    radial-gradient(circle at 55% 75%, rgba(125, 179, 255, 0.32), transparent 48%),
+    linear-gradient(145deg, #091427, #050a14 60%, #0d1830);
   pointer-events: none;
   z-index: 0;
 }
@@ -46,11 +46,11 @@ body::after {
   position: fixed;
   inset: 0;
   background-image:
-    radial-gradient(1px 1px at 10% 20%, rgba(255, 255, 255, 0.35), transparent),
-    radial-gradient(1px 1px at 30% 80%, rgba(255, 255, 255, 0.3), transparent),
-    radial-gradient(1px 1px at 70% 30%, rgba(255, 255, 255, 0.4), transparent),
-    radial-gradient(1px 1px at 90% 60%, rgba(255, 255, 255, 0.32), transparent);
-  opacity: 0.6;
+    radial-gradient(1px 1px at 10% 20%, rgba(255, 255, 255, 0.45), transparent),
+    radial-gradient(1px 1px at 30% 80%, rgba(255, 255, 255, 0.38), transparent),
+    radial-gradient(1px 1px at 70% 30%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 90% 60%, rgba(255, 255, 255, 0.4), transparent);
+  opacity: 0.9;
   pointer-events: none;
   z-index: 0;
 }
@@ -100,11 +100,13 @@ body::after {
   flex-direction: column;
   padding: 32px 32px 40px;
   gap: 16px;
-  background: linear-gradient(145deg, rgba(15, 26, 44, 0.88), rgba(8, 14, 23, 0.92));
-  backdrop-filter: blur(10px);
+  background: linear-gradient(145deg, rgba(15, 26, 44, 0.92), rgba(6, 10, 18, 0.94));
+  backdrop-filter: blur(12px);
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+  box-shadow:
+    0 30px 70px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.02);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.6s ease;
@@ -129,7 +131,7 @@ header h1 {
   overflow: hidden;
   padding: 8px;
   background:
-    linear-gradient(145deg, rgba(228, 91, 103, 0.65), rgba(88, 209, 168, 0.6))
+    linear-gradient(145deg, rgba(255, 107, 107, 0.75), rgba(88, 242, 197, 0.7))
       border-box,
     #101522 padding-box;
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.45);
