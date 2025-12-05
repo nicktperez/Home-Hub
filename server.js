@@ -9,6 +9,11 @@ const dataDir = path.join(__dirname, "data");
 const projectsFile = path.join(dataDir, "projects.json");
 
 app.use(express.json());
+// Disable static caching to prevent stale assets during local use
+app.use((req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  next();
+});
 app.use(express.static(path.join(__dirname, "public")));
 
 function ensureDataFile() {
