@@ -7,8 +7,8 @@
 6 silly config load:file:/opt/homebrew/etc/npmrc
 7 verbose title npm start
 8 verbose argv "start"
-9 verbose logfile logs-max:10 dir:/Users/nickperez/Home-Hub/.npm-cache/_logs/2025-12-05T22_40_10_010Z-
-10 verbose logfile /Users/nickperez/Home-Hub/.npm-cache/_logs/2025-12-05T22_40_10_010Z-debug-0.log
+9 verbose logfile logs-max:10 dir:/Users/nickperez/Home-Hub/.npm-cache/_logs/2025-12-05T23_02_31_192Z-
+10 verbose logfile /Users/nickperez/Home-Hub/.npm-cache/_logs/2025-12-05T23_02_31_192Z-debug-0.log
 11 silly logfile done cleaning log files
 12 verbose cwd /Users/nickperez/Home-Hub
 13 verbose os Darwin 25.0.0
@@ -16,4 +16,4 @@
 15 verbose npm  v11.5.1
 16 verbose exit 1
 17 verbose code 1
-18 error A complete log of this run can be found in: /Users/nickperez/Home-Hub/.npm-cache/_logs/2025-12-05T22_40_10_010Z-debug-0.log
+18 error A complete log of this run can be found in: /Users/nickperez/Home-Hub/.npm-cache/_logs/2025-12-05T23_02_31_192Z-debug-0.log

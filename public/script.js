@@ -6,11 +6,12 @@ let slideTimer = null;
 let isManualScroll = false;
 let scrollDebounce;
 
-function scrollToSlide(index) {
+function scrollToSlide(index, behavior = "smooth") {
   if (!slides.length) return;
   currentSlideIndex = index % slides.length;
   const targetTop = currentSlideIndex * window.innerHeight;
-  window.scrollTo({ top: targetTop, behavior: "smooth" });
+  window.scrollTo({ top: targetTop, behavior });
+  document.documentElement.scrollTo({ top: targetTop, behavior });
 }
 
 function startRotation() {
@@ -228,6 +229,7 @@ function setupForm() {
 }
 
 function initSlides() {
+  scrollToSlide(0, "auto");
   startRotation();
   window.addEventListener("resize", alignCurrentSlide);
 }
