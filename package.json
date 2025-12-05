@@ -1,0 +1,13 @@
+{
+  "name": "family-wall-dashboard",
+  "version": "1.0.0",
+  "description": "Local wall display with rotating calendar slides and project list",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
+

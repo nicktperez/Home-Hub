@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Family Wall Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="slides">
+      <section class="slide" id="slide-month">
+        <header>
+          <h1>Family Calendar – Month</h1>
+        </header>
+        <div class="frame-wrapper">
+          <!-- Replace the src below with your actual Google Calendar embed URL for month view -->
+          <iframe
+            src="YOUR_GOOGLE_CALENDAR_EMBED_URL_FOR_MONTH"
+            title="Family Calendar Month"
+            frameborder="0"
+            scrolling="no"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </section>
+
+      <section class="slide" id="slide-agenda">
+        <header>
+          <h1>This Week</h1>
+        </header>
+        <div class="frame-wrapper">
+          <!-- Replace the src below with your actual Google Calendar embed URL for agenda/week view -->
+          <iframe
+            src="YOUR_GOOGLE_CALENDAR_EMBED_URL_FOR_AGENDA"
+            title="Family Calendar Agenda"
+            frameborder="0"
+            scrolling="no"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </section>
+
+      <section class="slide" id="slide-today">
+        <header>
+          <h1>Today &amp; Projects</h1>
+        </header>
+        <div class="today-projects">
+          <div class="today-box">
+            <h2>Today</h2>
+            <p id="today-text"></p>
+          </div>
+          <div class="projects-box">
+            <div class="projects-header">
+              <h2>Projects</h2>
+              <form id="project-form">
+                <input
+                  id="project-input"
+                  name="project"
+                  type="text"
+                  placeholder="Add a project"
+                  autocomplete="off"
+                  required
+                />
+                <button type="submit">Add</button>
+              </form>
+            </div>
+            <ul id="projects-list"></ul>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
+
