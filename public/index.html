@@ -4,23 +4,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Family Wall Dashboard</title>
-    <link rel="stylesheet" href="styles.css?v=8" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css?v=9" />
   </head>
   <body>
     <div class="snow-layer"></div>
     <div class="snow-layer slow"></div>
-    <div id="slide-nav" aria-label="Slide navigation">
+    <div
+      id="slide-nav"
+      aria-label="Slide navigation"
+      class="fixed top-3 right-3 flex gap-2 p-2 bg-slate-900/80 border border-slate-700 rounded-xl backdrop-blur z-20"
+    >
       <button class="nav-btn" data-slide="0">Month</button>
       <button class="nav-btn" data-slide="1">Week</button>
       <button class="nav-btn" data-slide="2">Projects</button>
     </div>
 
-    <div id="slides">
-      <section class="slide" id="slide-month">
-        <header>
-          <h1>Family Calendar – Month</h1>
+    <div id="slides" class="relative h-screen">
+      <section class="slide active">
+        <header class="mb-4">
+          <h1 class="text-4xl font-bold">Family Calendar – Month</h1>
         </header>
-        <div class="frame-wrapper">
+        <div class="frame-wrapper flex-1">
           <!-- Replace the src below with your actual Google Calendar embed URL for month view -->
           <iframe
             src="https://calendar.google.com/calendar/embed?src=19fc18fe1e0342336012fb0530d644d8c3ea9d6e14fe63b65db9b8b1ade07504%40group.calendar.google.com&ctz=America%2FLos_Angeles&mode=MONTH"
@@ -28,15 +33,16 @@
             frameborder="0"
             scrolling="no"
             allowfullscreen
+            class="w-full h-full"
           ></iframe>
         </div>
       </section>
 
-      <section class="slide" id="slide-agenda">
-        <header>
-          <h1>This Week</h1>
+      <section class="slide">
+        <header class="mb-4">
+          <h1 class="text-4xl font-bold">This Week</h1>
         </header>
-        <div class="frame-wrapper">
+        <div class="frame-wrapper flex-1">
           <!-- Replace the src below with your actual Google Calendar embed URL for agenda/week view -->
           <iframe
             src="https://calendar.google.com/calendar/embed?src=19fc18fe1e0342336012fb0530d644d8c3ea9d6e14fe63b65db9b8b1ade07504%40group.calendar.google.com&ctz=America%2FLos_Angeles&mode=WEEK"
@@ -44,23 +50,24 @@
             frameborder="0"
             scrolling="no"
             allowfullscreen
+            class="w-full h-full"
           ></iframe>
         </div>
       </section>
 
-      <section class="slide" id="slide-today">
-        <header>
-          <h1>Today &amp; Projects</h1>
+      <section class="slide">
+        <header class="mb-4">
+          <h1 class="text-4xl font-bold">Today &amp; Projects</h1>
         </header>
-        <div class="today-projects">
-          <div class="today-box">
-            <h2>Today</h2>
-            <p id="today-text"></p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 min-h-0">
+          <div class="today-box p-6">
+            <h2 class="text-2xl font-semibold mb-3">Today</h2>
+            <p id="today-text" class="text-lg text-slate-200"></p>
           </div>
-          <div class="projects-box">
-            <div class="projects-header">
-              <h2>Projects</h2>
-              <form id="project-form">
+          <div class="projects-box p-6 flex flex-col gap-4">
+            <div class="projects-header items-start">
+              <h2 class="text-2xl font-semibold">Projects</h2>
+              <form id="project-form" class="w-full flex gap-3">
                 <input
                   id="project-input"
                   name="project"
@@ -68,8 +75,11 @@
                   placeholder="Add a project"
                   autocomplete="off"
                   required
+                  class="flex-1 px-4 py-3 rounded-lg bg-slate-950/70 border border-slate-700 text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
-                <button type="submit">Add</button>
+                <button type="submit" class="px-4 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold shadow-lg">
+                  Add
+                </button>
               </form>
               <div class="status-legend">
                 <span class="pill pill-todo">Todo</span>
@@ -77,7 +87,7 @@
                 <span class="pill pill-done">Done</span>
               </div>
             </div>
-            <ul id="projects-list"></ul>
+            <ul id="projects-list" class="flex-1 overflow-y-auto space-y-3"></ul>
           </div>
         </div>
       </section>
