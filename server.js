@@ -43,7 +43,7 @@ app.get("/api/projects", (req, res) => {
 });
 
 app.post("/api/projects", (req, res) => {
-  const { title } = req.body || {};
+  const { title, note } = req.body || {};
   if (!title || typeof title !== "string" || !title.trim()) {
     return res.status(400).json({ error: "Title is required" });
   }
@@ -56,6 +56,8 @@ app.post("/api/projects", (req, res) => {
     done: false,
     status: "todo",
     updatedAt: now,
+    note: typeof note === "string" ? note.trim() : "",
+    updates: [],
   };
   projects.push(newProject);
   writeProjects(projects);
@@ -88,6 +90,20 @@ app.patch("/api/projects/:id", (req, res) => {
     if (!updates.status) {
       updated.status = updates.done ? "done" : updated.status === "done" ? "todo" : updated.status || "todo";
     }
+    updated.updatedAt = now;
+  }
+  if (typeof updates.note === "string") {
+    updated.note = updates.note.trim();
+    updated.updatedAt = now;
+  }
+  if (Array.isArray(updates.updates)) {
+    // Replace full updates log if provided.
+    updated.updates = updates.updates;
+    updated.updatedAt = now;
+  }
+  if (updates.appendUpdate && typeof updates.appendUpdate === "string") {
+    updated.updates = updated.updates || [];
+    updated.updates.push({ message: updates.appendUpdate.trim(), at: now });
     updated.updatedAt = now;
   }
 

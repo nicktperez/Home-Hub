@@ -127,6 +127,62 @@ function createProjectElement(project, refresh) {
   meta.appendChild(pill);
   meta.appendChild(updated);
 
+  // Note box
+  const noteBox = document.createElement("div");
+  noteBox.className = "note-box";
+  const noteArea = document.createElement("textarea");
+  noteArea.className = "note-textarea";
+  noteArea.placeholder = "Notes / working on...";
+  noteArea.value = project.note || "";
+  const noteSave = document.createElement("button");
+  noteSave.className = "note-save";
+  noteSave.textContent = "Save note";
+  noteSave.addEventListener("click", async () => {
+    await updateProject(project.id, { note: noteArea.value });
+    refresh();
+  });
+  noteBox.appendChild(noteArea);
+  noteBox.appendChild(noteSave);
+
+  // Updates log
+  const updatesBox = document.createElement("div");
+  updatesBox.className = "updates-box";
+  const updatesTitle = document.createElement("strong");
+  updatesTitle.textContent = "Updates";
+  const updatesList = document.createElement("ul");
+  updatesList.className = "updates-list";
+  (project.updates || []).forEach((u) => {
+    const liUpdate = document.createElement("li");
+    liUpdate.textContent = u.message || "";
+    const when = u.at ? new Date(u.at).toLocaleString() : "";
+    const small = document.createElement("small");
+    small.textContent = when;
+    liUpdate.appendChild(document.createTextNode(" "));
+    liUpdate.appendChild(small);
+    updatesList.appendChild(liUpdate);
+  });
+
+  const updateRow = document.createElement("div");
+  updateRow.className = "update-input-row";
+  const updateInput = document.createElement("input");
+  updateInput.type = "text";
+  updateInput.placeholder = "Add update...";
+  const updateBtn = document.createElement("button");
+  updateBtn.textContent = "Add";
+  updateBtn.addEventListener("click", async () => {
+    const msg = updateInput.value.trim();
+    if (!msg) return;
+    await updateProject(project.id, { appendUpdate: msg });
+    updateInput.value = "";
+    refresh();
+  });
+  updateRow.appendChild(updateInput);
+  updateRow.appendChild(updateBtn);
+
+  updatesBox.appendChild(updatesTitle);
+  updatesBox.appendChild(updatesList);
+  updatesBox.appendChild(updateRow);
+
   const delBtn = document.createElement("button");
   delBtn.className = "delete-btn";
   delBtn.textContent = "Delete";
@@ -140,6 +196,8 @@ function createProjectElement(project, refresh) {
   li.appendChild(statusSelect);
   li.appendChild(delBtn);
   li.appendChild(meta);
+  li.appendChild(noteBox);
+  li.appendChild(updatesBox);
   return li;
 }
 

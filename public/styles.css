@@ -10,7 +10,7 @@ body {
   background: #080b12;
   color: #e8ecf2;
   font-family: "Helvetica Neue", Arial, sans-serif;
-  overflow: auto;
+  overflow: hidden;
   scrollbar-width: none;
 }
 
@@ -234,6 +234,7 @@ button:active {
   border: 1px solid #1f2633;
   margin-bottom: 10px;
   position: relative;
+  transition: border 0.2s ease, transform 0.15s ease;
 }
 
 .project-item:last-child {
@@ -273,6 +274,7 @@ input[type="checkbox"] {
   align-items: center;
   font-size: 0.9rem;
   color: #aeb6c5;
+  flex-wrap: wrap;
 }
 
 .status-pill {
@@ -306,6 +308,74 @@ input[type="checkbox"] {
   border-radius: 8px;
   padding: 6px 8px;
   font-size: 0.95rem;
+}
+
+.note-box {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.note-textarea {
+  flex: 1;
+  min-height: 60px;
+  background: #0c111a;
+  color: #e8ecf2;
+  border: 1px solid #1f2633;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 0.95rem;
+}
+
+.note-save {
+  background: #22c55e;
+  border: none;
+  padding: 10px 12px;
+}
+
+.updates-box {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.updates-list {
+  margin: 0;
+  padding-left: 16px;
+  color: #cfd6e3;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.updates-list li {
+  margin-bottom: 4px;
+  font-size: 0.95rem;
+}
+
+.updates-list small {
+  color: #8d95a7;
+}
+
+.update-input-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.update-input-row input {
+  flex: 1;
+  min-width: 180px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #1f2633;
+  background: #0c111a;
+  color: #e8ecf2;
+}
+
+.update-input-row button {
+  padding: 10px 12px;
 }
 
 @media (max-width: 900px) {
