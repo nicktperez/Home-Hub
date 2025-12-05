@@ -43,13 +43,17 @@ app.get("/api/projects", (req, res) => {
 });
 
 app.post("/api/projects", (req, res) => {
-  const { title, note } = req.body || {};
+  const { title, note, progress, startDate, endDate } = req.body || {};
   if (!title || typeof title !== "string" || !title.trim()) {
     return res.status(400).json({ error: "Title is required" });
   }
 
   const projects = readProjects();
   const now = new Date().toISOString();
+  const cleanProgress =
+    typeof progress === "number" && progress >= 0 && progress <= 100
+      ? progress
+      : 0;
   const newProject = {
     id: Date.now().toString(),
     title: title.trim(),
@@ -57,6 +61,9 @@ app.post("/api/projects", (req, res) => {
     status: "todo",
     updatedAt: now,
     note: typeof note === "string" ? note.trim() : "",
+    progress: cleanProgress,
+    startDate: typeof startDate === "string" ? startDate : "",
+    endDate: typeof endDate === "string" ? endDate : "",
     updates: [],
   };
   projects.push(newProject);
@@ -94,6 +101,19 @@ app.patch("/api/projects/:id", (req, res) => {
   }
   if (typeof updates.note === "string") {
     updated.note = updates.note.trim();
+    updated.updatedAt = now;
+  }
+  if (typeof updates.progress === "number") {
+    const p = Math.min(100, Math.max(0, updates.progress));
+    updated.progress = p;
+    updated.updatedAt = now;
+  }
+  if (typeof updates.startDate === "string") {
+    updated.startDate = updates.startDate;
+    updated.updatedAt = now;
+  }
+  if (typeof updates.endDate === "string") {
+    updated.endDate = updates.endDate;
     updated.updatedAt = now;
   }
   if (Array.isArray(updates.updates)) {

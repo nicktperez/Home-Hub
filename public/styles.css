@@ -10,7 +10,7 @@ body {
   background: #080b12;
   color: #e8ecf2;
   font-family: "Helvetica Neue", Arial, sans-serif;
-  overflow-y: auto;
+  overflow: hidden;
   scrollbar-width: none;
 }
 
@@ -53,7 +53,8 @@ body::after {
 }
 
 #slides {
-  scroll-behavior: smooth;
+  height: 100vh;
+  position: relative;
   color: #e8ecf2;
   font-family: "Helvetica Neue", Arial, sans-serif;
 }
@@ -79,12 +80,24 @@ body::after {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+#slide-nav,
 #slides {
-  scroll-behavior: smooth;
-  scroll-snap-type: y mandatory;
+  position: relative;
+  z-index: 1;
+}
+
+#slides {
+  height: 100vh;
+  position: relative;
+  color: #e8ecf2;
+  font-family: "Helvetica Neue", Arial, sans-serif;
 }
 
 .slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -95,7 +108,14 @@ body::after {
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.03);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
-  scroll-snap-align: start;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+.slide.active {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 header h1 {
@@ -171,6 +191,34 @@ header h1 {
   min-width: 220px;
 }
 
+.status-legend {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  border: 1px solid #1f2633;
+}
+
+.pill-todo {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+.pill-inprogress {
+  background: rgba(58, 122, 254, 0.15);
+  color: #3a7afe;
+}
+
+.pill-done {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
 #project-input {
   flex: 1;
   padding: 12px 14px;
@@ -235,6 +283,7 @@ button:active {
   margin-bottom: 10px;
   position: relative;
   transition: border 0.2s ease, transform 0.15s ease;
+  overflow: hidden;
 }
 
 .project-item:last-child {
@@ -376,6 +425,57 @@ input[type="checkbox"] {
 
 .update-input-row button {
   padding: 10px 12px;
+}
+
+.progress-row {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 10px;
+  background: #111723;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #3a7afe, #6c5ce7);
+  width: 0%;
+  transition: width 0.2s ease;
+}
+
+.progress-value {
+  font-size: 0.9rem;
+  color: #cfd6e3;
+}
+
+.dates-row {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dates-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: #aeb6c5;
+}
+
+.dates-row input {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #1f2633;
+  background: #0c111a;
+  color: #e8ecf2;
 }
 
 @media (max-width: 900px) {

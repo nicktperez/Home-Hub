@@ -1,35 +1,26 @@
 const SLIDE_INTERVAL_MS = 15000;
 
-const slides = Array.from(document.querySelectorAll(".slide"));
+let slides = [];
 let currentSlideIndex = 0;
 let slideTimer = null;
-let isManualScroll = false;
-let scrollDebounce;
 
-function scrollToSlide(index, behavior = "smooth") {
+function setActiveSlide(index) {
   if (!slides.length) return;
-  currentSlideIndex = index % slides.length;
-  const targetTop = currentSlideIndex * window.innerHeight;
-  window.scrollTo({ top: targetTop, behavior });
-  document.documentElement.scrollTo({ top: targetTop, behavior });
+  currentSlideIndex = (index + slides.length) % slides.length;
+  slides.forEach((s, i) => {
+    if (i === currentSlideIndex) {
+      s.classList.add("active");
+    } else {
+      s.classList.remove("active");
+    }
+  });
 }
 
 function startRotation() {
   if (slideTimer) clearInterval(slideTimer);
   slideTimer = setInterval(() => {
-    scrollToSlide((currentSlideIndex + 1) % slides.length);
+    setActiveSlide((currentSlideIndex + 1) % slides.length);
   }, SLIDE_INTERVAL_MS);
-}
-
-function alignCurrentSlide() {
-  scrollToSlide(currentSlideIndex);
-}
-
-function syncCurrentSlideFromScroll() {
-  const idx = Math.round(window.scrollY / window.innerHeight);
-  if (!Number.isNaN(idx)) {
-    currentSlideIndex = Math.max(0, Math.min(slides.length - 1, idx));
-  }
 }
 
 function renderToday() {
@@ -128,6 +119,66 @@ function createProjectElement(project, refresh) {
   meta.appendChild(pill);
   meta.appendChild(updated);
 
+  // Progress row
+  const progressRow = document.createElement("div");
+  progressRow.className = "progress-row";
+  const progressBar = document.createElement("div");
+  progressBar.className = "progress-bar";
+  const progressFill = document.createElement("div");
+  progressFill.className = "progress-fill";
+  const progressValue = document.createElement("span");
+  progressValue.className = "progress-value";
+  const pct = Number.isFinite(project.progress) ? project.progress : 0;
+  progressFill.style.width = `${pct}%`;
+  progressValue.textContent = `${pct}%`;
+  progressBar.appendChild(progressFill);
+
+  const progressInput = document.createElement("input");
+  progressInput.type = "range";
+  progressInput.min = "0";
+  progressInput.max = "100";
+  progressInput.value = pct;
+  progressInput.addEventListener("input", () => {
+    progressFill.style.width = `${progressInput.value}%`;
+    progressValue.textContent = `${progressInput.value}%`;
+  });
+  progressInput.addEventListener("change", async () => {
+    await updateProject(project.id, { progress: Number(progressInput.value) });
+    refresh();
+  });
+
+  progressRow.appendChild(progressBar);
+  progressRow.appendChild(progressValue);
+  progressRow.appendChild(progressInput);
+
+  // Dates row
+  const datesRow = document.createElement("div");
+  datesRow.className = "dates-row";
+  const startLabel = document.createElement("label");
+  startLabel.textContent = "Start";
+  const startInput = document.createElement("input");
+  startInput.type = "date";
+  startInput.value = project.startDate || "";
+  startInput.addEventListener("change", async () => {
+    await updateProject(project.id, { startDate: startInput.value });
+    refresh();
+  });
+  startLabel.appendChild(startInput);
+
+  const endLabel = document.createElement("label");
+  endLabel.textContent = "End";
+  const endInput = document.createElement("input");
+  endInput.type = "date";
+  endInput.value = project.endDate || "";
+  endInput.addEventListener("change", async () => {
+    await updateProject(project.id, { endDate: endInput.value });
+    refresh();
+  });
+  endLabel.appendChild(endInput);
+
+  datesRow.appendChild(startLabel);
+  datesRow.appendChild(endLabel);
+
   // Note box
   const noteBox = document.createElement("div");
   noteBox.className = "note-box";
@@ -197,6 +248,8 @@ function createProjectElement(project, refresh) {
   li.appendChild(statusSelect);
   li.appendChild(delBtn);
   li.appendChild(meta);
+  li.appendChild(progressRow);
+  li.appendChild(datesRow);
   li.appendChild(noteBox);
   li.appendChild(updatesBox);
   return li;
@@ -229,9 +282,8 @@ function setupForm() {
 }
 
 function initSlides() {
-  scrollToSlide(0, "auto");
+  setActiveSlide(0);
   startRotation();
-  window.addEventListener("resize", alignCurrentSlide);
 }
 
 function setupNavButtons() {
@@ -240,32 +292,20 @@ function setupNavButtons() {
     btn.addEventListener("click", () => {
       const idx = Number(btn.dataset.slide);
       if (Number.isFinite(idx)) {
-        scrollToSlide(idx);
+        setActiveSlide(idx);
         startRotation();
-        isManualScroll = true;
-        setTimeout(() => {
-          isManualScroll = false;
-        }, 800);
       }
     });
   });
 }
 
 function init() {
+  slides = Array.from(document.querySelectorAll(".slide"));
   renderToday();
   renderProjects();
   setupForm();
   initSlides();
   setupNavButtons();
-  window.addEventListener("scroll", () => {
-    isManualScroll = true;
-    if (scrollDebounce) clearTimeout(scrollDebounce);
-    scrollDebounce = setTimeout(() => {
-      isManualScroll = false;
-    }, 600);
-    syncCurrentSlideFromScroll();
-    startRotation();
-  });
 }
 
 document.addEventListener("DOMContentLoaded", init);
