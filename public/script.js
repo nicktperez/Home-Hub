@@ -4,6 +4,7 @@ const slides = Array.from(document.querySelectorAll(".slide"));
 let currentSlideIndex = 0;
 let slideTimer = null;
 let isManualScroll = false;
+let scrollDebounce;
 
 function scrollToSlide(index) {
   if (!slides.length) return;
@@ -87,6 +88,45 @@ function createProjectElement(project, refresh) {
     title.classList.add("done");
   }
 
+  const statusSelect = document.createElement("select");
+  statusSelect.className = "status-select";
+  ["todo", "in_progress", "done"].forEach((val) => {
+    const opt = document.createElement("option");
+    opt.value = val;
+    opt.textContent =
+      val === "todo" ? "Todo" : val === "in_progress" ? "In Progress" : "Done";
+    if ((project.status || "todo") === val) opt.selected = true;
+    statusSelect.appendChild(opt);
+  });
+  statusSelect.addEventListener("change", async () => {
+    const status = statusSelect.value;
+    await updateProject(project.id, {
+      status,
+      done: status === "done",
+    });
+    refresh();
+  });
+
+  const meta = document.createElement("div");
+  meta.className = "project-meta";
+  const pill = document.createElement("span");
+  pill.className = `status-pill ${(project.status || "todo").replace(" ", "_")}`;
+  pill.textContent =
+    project.status === "done"
+      ? "Done"
+      : project.status === "in_progress"
+        ? "In Progress"
+        : "Todo";
+
+  const updated = document.createElement("span");
+  const updatedAt = project.updatedAt
+    ? new Date(project.updatedAt).toLocaleString()
+    : "n/a";
+  updated.textContent = `Updated: ${updatedAt}`;
+
+  meta.appendChild(pill);
+  meta.appendChild(updated);
+
   const delBtn = document.createElement("button");
   delBtn.className = "delete-btn";
   delBtn.textContent = "Delete";
@@ -97,7 +137,9 @@ function createProjectElement(project, refresh) {
 
   li.appendChild(checkbox);
   li.appendChild(title);
+  li.appendChild(statusSelect);
   li.appendChild(delBtn);
+  li.appendChild(meta);
   return li;
 }
 
@@ -156,8 +198,13 @@ function init() {
   initSlides();
   setupNavButtons();
   window.addEventListener("scroll", () => {
-    if (isManualScroll) return;
+    isManualScroll = true;
+    if (scrollDebounce) clearTimeout(scrollDebounce);
+    scrollDebounce = setTimeout(() => {
+      isManualScroll = false;
+    }, 600);
     syncCurrentSlideFromScroll();
+    startRotation();
   });
 }
 

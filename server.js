@@ -49,10 +49,13 @@ app.post("/api/projects", (req, res) => {
   }
 
   const projects = readProjects();
+  const now = new Date().toISOString();
   const newProject = {
     id: Date.now().toString(),
     title: title.trim(),
     done: false,
+    status: "todo",
+    updatedAt: now,
   };
   projects.push(newProject);
   writeProjects(projects);
@@ -69,12 +72,23 @@ app.patch("/api/projects/:id", (req, res) => {
     return res.status(404).json({ error: "Project not found" });
   }
 
+  const now = new Date().toISOString();
   const updated = { ...projects[idx] };
   if (typeof updates.title === "string") {
     updated.title = updates.title.trim();
+    updated.updatedAt = now;
+  }
+  if (typeof updates.status === "string") {
+    updated.status = updates.status;
+    updated.done = updates.status === "done";
+    updated.updatedAt = now;
   }
   if (typeof updates.done === "boolean") {
     updated.done = updates.done;
+    if (!updates.status) {
+      updated.status = updates.done ? "done" : updated.status === "done" ? "todo" : updated.status || "todo";
+    }
+    updated.updatedAt = now;
   }
 
   projects[idx] = updated;
