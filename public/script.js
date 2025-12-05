@@ -124,11 +124,25 @@ function initSlides() {
   window.addEventListener("resize", alignCurrentSlide);
 }
 
+function setupNavButtons() {
+  const buttons = document.querySelectorAll("[data-slide]");
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.dataset.slide);
+      if (Number.isFinite(idx)) {
+        scrollToSlide(idx);
+        startRotation();
+      }
+    });
+  });
+}
+
 function init() {
   renderToday();
   renderProjects();
   setupForm();
   initSlides();
+  setupNavButtons();
 }
 
 document.addEventListener("DOMContentLoaded", init);
