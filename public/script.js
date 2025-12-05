@@ -3,6 +3,7 @@ const SLIDE_INTERVAL_MS = 15000;
 const slides = Array.from(document.querySelectorAll(".slide"));
 let currentSlideIndex = 0;
 let slideTimer = null;
+let isManualScroll = false;
 
 function scrollToSlide(index) {
   if (!slides.length) return;
@@ -20,6 +21,13 @@ function startRotation() {
 
 function alignCurrentSlide() {
   scrollToSlide(currentSlideIndex);
+}
+
+function syncCurrentSlideFromScroll() {
+  const idx = Math.round(window.scrollY / window.innerHeight);
+  if (!Number.isNaN(idx)) {
+    currentSlideIndex = Math.max(0, Math.min(slides.length - 1, idx));
+  }
 }
 
 function renderToday() {
@@ -132,6 +140,10 @@ function setupNavButtons() {
       if (Number.isFinite(idx)) {
         scrollToSlide(idx);
         startRotation();
+        isManualScroll = true;
+        setTimeout(() => {
+          isManualScroll = false;
+        }, 800);
       }
     });
   });
@@ -143,6 +155,10 @@ function init() {
   setupForm();
   initSlides();
   setupNavButtons();
+  window.addEventListener("scroll", () => {
+    if (isManualScroll) return;
+    syncCurrentSlideFromScroll();
+  });
 }
 
 document.addEventListener("DOMContentLoaded", init);
