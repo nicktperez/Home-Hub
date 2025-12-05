@@ -1,0 +1,13 @@
+0 verbose cli /opt/homebrew/Cellar/node/24.5.0/bin/node /opt/homebrew/bin/npm
+1 info using npm@11.5.1
+2 info using node@v24.5.0
+3 silly config load:file:/opt/homebrew/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/nickperez/Home-Hub/.npmrc
+5 silly config load:file:/Users/nickperez/.npmrc
+6 silly config load:file:/opt/homebrew/etc/npmrc
+7 verbose title npm start
+8 verbose argv "start"
+9 verbose logfile logs-max:10 dir:/Users/nickperez/Home-Hub/.npm-cache/_logs/2025-12-05T23_41_11_380Z-
+10 verbose logfile /Users/nickperez/Home-Hub/.npm-cache/_logs/2025-12-05T23_41_11_380Z-debug-0.log
+11 silly logfile start cleaning logs, removing 1 files
+12 silly logfile done cleaning log files
