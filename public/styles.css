@@ -5,9 +5,9 @@
 :root {
   --bg-primary: #061019;
   --bg-secondary: #0c1826;
-  --accent-1: #ff6b6b; /* brighter red */
-  --accent-2: #58f2c5; /* bright mint */
-  --accent-3: #7db3ff; /* icy blue */
+  --accent-1: #ff6b6b;
+  --accent-2: #58f2c5;
+  --accent-3: #7db3ff;
   --card: #0f1a2a;
   --text: #eef3fb;
 }
