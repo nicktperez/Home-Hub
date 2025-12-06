@@ -74,7 +74,7 @@ function createProjectElement(project, refresh) {
   });
 
   const title = document.createElement("p");
-  title.className = "project-title";
+  title.className = "project-title font-semibold";
   title.textContent = project.title;
   if (project.done) {
     title.classList.add("done");
