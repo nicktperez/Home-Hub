@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Family Wall Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="styles.css?v=9" />
+    <link rel="stylesheet" href="styles.css?v=10" />
   </head>
   <body>
-    <div class="snow-layer"></div>
-    <div class="snow-layer slow"></div>
+    <canvas id="snow-canvas" class="pointer-events-none fixed inset-0 z-40"></canvas>
     <div
       id="slide-nav"
       aria-label="Slide navigation"
@@ -59,15 +58,15 @@
         <header class="mb-4">
           <h1 class="text-4xl font-bold">Today &amp; Projects</h1>
         </header>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 min-h-0">
-          <div class="today-box p-6">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">
+          <div class="today-box p-6 lg:col-span-1">
             <h2 class="text-2xl font-semibold mb-3">Today</h2>
             <p id="today-text" class="text-lg text-slate-200"></p>
           </div>
-          <div class="projects-box p-6 flex flex-col gap-4">
-            <div class="projects-header items-start">
-              <h2 class="text-2xl font-semibold">Projects</h2>
-              <form id="project-form" class="w-full flex gap-3">
+          <div class="projects-box p-6 flex flex-col gap-4 lg:col-span-3">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+              <h2 class="text-2xl font-semibold">Projects Overview</h2>
+              <form id="project-form" class="w-full lg:w-auto flex gap-3">
                 <input
                   id="project-input"
                   name="project"
@@ -75,19 +74,34 @@
                   placeholder="Add a project"
                   autocomplete="off"
                   required
-                  class="flex-1 px-4 py-3 rounded-lg bg-slate-950/70 border border-slate-700 text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  class="flex-1 lg:w-72 px-4 py-3 rounded-lg bg-slate-950/70 border border-slate-700 text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
                 <button type="submit" class="px-4 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold shadow-lg">
                   Add
                 </button>
               </form>
-              <div class="status-legend">
-                <span class="pill pill-todo">Todo</span>
-                <span class="pill pill-inprogress">In Progress</span>
-                <span class="pill pill-done">Done</span>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-slate-200">
+              <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-3">
+                <p class="text-slate-400 text-xs">Total</p>
+                <p id="summary-total" class="text-xl font-semibold">0</p>
+              </div>
+              <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-3">
+                <p class="text-slate-400 text-xs">Todo</p>
+                <p id="summary-todo" class="text-xl font-semibold">0</p>
+              </div>
+              <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-3">
+                <p class="text-slate-400 text-xs">In Progress</p>
+                <p id="summary-inprogress" class="text-xl font-semibold">0</p>
+              </div>
+              <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-3">
+                <p class="text-slate-400 text-xs">Done</p>
+                <p id="summary-done" class="text-xl font-semibold">0</p>
               </div>
             </div>
-            <ul id="projects-list" class="flex-1 overflow-y-auto space-y-3"></ul>
+
+            <div class="project-card-grid" id="projects-list"></div>
           </div>
         </div>
       </section>

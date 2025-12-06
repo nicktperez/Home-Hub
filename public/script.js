@@ -3,6 +3,47 @@ const SLIDE_INTERVAL_MS = 15000;
 let slides = [];
 let currentSlideIndex = 0;
 let slideTimer = null;
+let snowCtx = null;
+let snowParticles = [];
+
+function initSnow() {
+  const canvas = document.getElementById("snow-canvas");
+  if (!canvas) return;
+  const resize = () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  };
+  window.addEventListener("resize", resize);
+  resize();
+  const ctx = canvas.getContext("2d");
+  snowCtx = ctx;
+  snowParticles = Array.from({ length: 120 }).map(() => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 2 + 1,
+    v: Math.random() * 0.6 + 0.4,
+    drift: Math.random() * 0.5 - 0.25,
+  }));
+  requestAnimationFrame(updateSnow);
+}
+
+function updateSnow() {
+  if (!snowCtx) return;
+  const canvas = snowCtx.canvas;
+  snowCtx.clearRect(0, 0, canvas.width, canvas.height);
+  snowCtx.fillStyle = "rgba(255,255,255,0.9)";
+  snowParticles.forEach((p) => {
+    snowCtx.beginPath();
+    snowCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    snowCtx.fill();
+    p.y += p.v;
+    p.x += p.drift;
+    if (p.y > canvas.height) p.y = -p.r;
+    if (p.x > canvas.width) p.x = -p.r;
+    if (p.x < -p.r) p.x = canvas.width + p.r;
+  });
+  requestAnimationFrame(updateSnow);
+}
 
 function setActiveSlide(index) {
   if (!slides.length) return;
@@ -62,7 +103,7 @@ async function addProject(title) {
 }
 
 function createProjectElement(project, refresh) {
-  const li = document.createElement("li");
+  const li = document.createElement("div");
   li.className = "project-item";
 
   const checkbox = document.createElement("input");
@@ -260,10 +301,27 @@ async function renderProjects() {
   if (!listEl) return;
   listEl.innerHTML = "";
   const projects = await fetchProjects();
+  // Summary
+  const total = projects.length;
+  const todo = projects.filter((p) => (p.status || "todo") === "todo").length;
+  const inprogress = projects.filter((p) => (p.status || "todo") === "in_progress").length;
+  const done = projects.filter((p) => (p.status || "todo") === "done").length;
+  const sTotal = document.getElementById("summary-total");
+  const sTodo = document.getElementById("summary-todo");
+  const sInprogress = document.getElementById("summary-inprogress");
+  const sDone = document.getElementById("summary-done");
+  if (sTotal) sTotal.textContent = total;
+  if (sTodo) sTodo.textContent = todo;
+  if (sInprogress) sInprogress.textContent = inprogress;
+  if (sDone) sDone.textContent = done;
+
+  const column = document.createElement("div");
+  column.className = "grid md:grid-cols-2 xl:grid-cols-3 gap-4";
   projects.forEach((project) => {
     const item = createProjectElement(project, renderProjects);
-    listEl.appendChild(item);
+    column.appendChild(item);
   });
+  listEl.appendChild(column);
 }
 
 function setupForm() {
@@ -306,6 +364,7 @@ function init() {
   setupForm();
   initSlides();
   setupNavButtons();
+  initSnow();
 }
 
 document.addEventListener("DOMContentLoaded", init);
