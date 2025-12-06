@@ -16,7 +16,8 @@
     >
       <button class="nav-btn" data-slide="0">Month</button>
       <button class="nav-btn" data-slide="1">Week</button>
-      <button class="nav-btn" data-slide="2">Projects</button>
+      <button class="nav-btn" data-slide="2">Today</button>
+      <button class="nav-btn" data-slide="3">Projects</button>
     </div>
 
     <div id="slides" class="relative h-screen">
@@ -56,52 +57,80 @@
 
       <section class="slide">
         <header class="mb-4">
-          <h1 class="text-4xl font-bold">Today &amp; Projects</h1>
+          <h1 class="text-4xl font-bold">Today</h1>
         </header>
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">
-          <div class="today-box p-6 lg:col-span-1">
-            <h2 class="text-2xl font-semibold mb-3">Today</h2>
-            <p id="today-text" class="text-lg text-slate-200"></p>
+        <div class="flex-1 flex items-center justify-center">
+          <div class="today-box p-8 max-w-xl w-full text-center">
+            <h2 class="text-3xl font-semibold mb-4">Today</h2>
+            <p id="today-text" class="text-2xl text-slate-100"></p>
           </div>
-          <div class="projects-box p-6 flex flex-col gap-4 lg:col-span-3">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-              <h2 class="text-2xl font-semibold">Projects Overview</h2>
-              <form id="project-form" class="w-full lg:w-auto flex gap-3">
-                <input
-                  id="project-input"
-                  name="project"
-                  type="text"
-                  placeholder="Add a project"
-                  autocomplete="off"
-                  required
-                  class="flex-1 lg:w-72 px-4 py-3 rounded-lg bg-slate-950/70 border border-slate-700 text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-                <button type="submit" class="px-4 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold shadow-lg">
-                  Add
-                </button>
-              </form>
-            </div>
+        </div>
+      </section>
 
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-slate-200">
-              <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-3">
-                <p class="text-slate-400 text-xs">Total</p>
-                <p id="summary-total" class="text-xl font-semibold">0</p>
-              </div>
-              <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-3">
-                <p class="text-slate-400 text-xs">Todo</p>
-                <p id="summary-todo" class="text-xl font-semibold">0</p>
-              </div>
-              <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-3">
-                <p class="text-slate-400 text-xs">In Progress</p>
-                <p id="summary-inprogress" class="text-xl font-semibold">0</p>
-              </div>
-              <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-3">
-                <p class="text-slate-400 text-xs">Done</p>
-                <p id="summary-done" class="text-xl font-semibold">0</p>
-              </div>
+      <section class="slide">
+        <header class="mb-4">
+          <h1 class="text-4xl font-bold">Projects</h1>
+        </header>
+        <div class="projects-box p-6 flex flex-col gap-6 flex-1 overflow-hidden">
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div>
+              <h2 class="text-2xl font-semibold">Project Management</h2>
+              <p class="text-slate-300 text-sm">Track status, dates, notes, and updates.</p>
             </div>
+            <form id="project-form" class="w-full lg:w-auto flex gap-3">
+              <input
+                id="project-input"
+                name="project"
+                type="text"
+                placeholder="Add a project"
+                autocomplete="off"
+                required
+                class="flex-1 lg:w-72 px-4 py-3 rounded-lg bg-slate-950/70 border border-slate-700 text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+              <button type="submit" class="px-4 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold shadow-lg">
+                Add
+              </button>
+            </form>
+          </div>
 
-            <div class="project-card-grid" id="projects-list"></div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-slate-200">
+            <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-3">
+              <p class="text-slate-400 text-xs">Total</p>
+              <p id="summary-total" class="text-xl font-semibold">0</p>
+            </div>
+            <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-3">
+              <p class="text-slate-400 text-xs">Todo</p>
+              <p id="summary-todo" class="text-xl font-semibold">0</p>
+            </div>
+            <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-3">
+              <p class="text-slate-400 text-xs">In Progress</p>
+              <p id="summary-inprogress" class="text-xl font-semibold">0</p>
+            </div>
+            <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-3">
+              <p class="text-slate-400 text-xs">Done</p>
+              <p id="summary-done" class="text-xl font-semibold">0</p>
+            </div>
+          </div>
+
+          <div class="board-grid flex-1 overflow-auto">
+            <div class="board-col">
+              <div class="board-col-header">
+                <span>Todo</span>
+              </div>
+              <div id="board-todo" class="space-y-3"></div>
+            </div>
+            <div class="board-col">
+              <div class="board-col-header">
+                <span>In Progress</span>
+              </div>
+              <div id="board-inprogress" class="space-y-3"></div>
+            </div>
+            <div class="board-col">
+              <div class="board-col-header">
+                <span>Done</span>
+              </div>
+              <div id="board-done" class="space-y-3"></div>
+            </div>
           </div>
         </div>
       </section>
