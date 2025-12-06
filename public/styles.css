@@ -16,11 +16,12 @@ html,
 body {
   margin: 0;
   padding: 0;
-  height: 100%;
+  min-height: 100%;
   background: var(--bg-primary);
   color: var(--text);
   font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   scrollbar-width: none;
 }
 
@@ -95,7 +96,7 @@ body::after {
 }
 
 #slides {
-  height: 100vh;
+  min-height: 100vh;
   position: relative;
 }
 
@@ -105,7 +106,7 @@ body::after {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 28px;
+  padding: 20px;
   background: linear-gradient(135deg, rgba(13, 19, 44, 0.95), rgba(10, 18, 32, 0.92), rgba(18, 37, 68, 0.9));
   backdrop-filter: blur(12px);
   border-radius: 18px;
@@ -348,7 +349,7 @@ header h1 {
   }
 
   .slide {
-    padding: 18px 16px 26px;
+    padding: 16px 14px 22px;
   }
 
   header h1 {
