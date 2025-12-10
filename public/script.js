@@ -323,28 +323,30 @@ function createProjectElement(project, refresh) {
   });
 
   li.addEventListener("dragstart", (e) => {
-    // Create a simple, small drag image to avoid duplication
-    const dragImage = document.createElement("div");
-    dragImage.style.width = "1px";
-    dragImage.style.height = "1px";
+    // Create a clone of the element as the drag image
+    const dragImage = li.cloneNode(true);
     dragImage.style.position = "absolute";
     dragImage.style.top = "-1000px";
-    dragImage.style.opacity = "0";
+    dragImage.style.opacity = "0.8";
+    dragImage.style.pointerEvents = "none";
+    dragImage.style.transform = "rotate(5deg)";
     document.body.appendChild(dragImage);
-    e.dataTransfer.setDragImage(dragImage, 0, 0);
     
-    // Clean up the drag image immediately
+    // Set the drag image offset to center
+    const rect = li.getBoundingClientRect();
+    e.dataTransfer.setDragImage(dragImage, rect.width / 2, rect.height / 2);
+    
+    // Clean up the drag image after drag ends
     setTimeout(() => {
       if (dragImage.parentNode) {
         dragImage.parentNode.removeChild(dragImage);
       }
-    }, 0);
+    }, 100);
     
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", project.id);
     e.dataTransfer.setData("application/json", JSON.stringify({ id: project.id }));
     
-    // Hide the original element during drag to prevent duplication
     li.classList.add("dragging");
     draggedElement = li;
     pauseRotation();
