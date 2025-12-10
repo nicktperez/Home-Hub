@@ -247,22 +247,17 @@ function createProjectElement(project, refresh) {
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", project.id);
     li.classList.add("dragging");
-    dragState.dragging = li;
+    draggedElement = li;
+    draggedOverElement = null;
     pauseRotation(); // Pause rotation while dragging
   });
 
   li.addEventListener("dragend", (e) => {
     li.classList.remove("dragging");
     
-    // Cancel any pending animation frame
-    if (dragState.rafId) {
-      cancelAnimationFrame(dragState.rafId);
-      dragState.rafId = null;
-    }
-    
     // Reset drag state
-    dragState.dragging = null;
-    dragState.lastY = null;
+    draggedElement = null;
+    draggedOverElement = null;
     
     resumeRotation(); // Resume rotation after dragging
   });
@@ -403,11 +398,8 @@ async function renderProjects() {
 // Setup drag and drop handlers for a project column
 // Use a WeakMap to track if handlers are already set up
 const dragDropSetup = new WeakMap();
-let dragState = {
-  dragging: null,
-  rafId: null,
-  lastY: null
-};
+let draggedElement = null;
+let draggedOverElement = null;
 
 function setupDragAndDrop(column) {
   // Skip if already set up
@@ -418,51 +410,41 @@ function setupDragAndDrop(column) {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     
-    const dragging = dragState.dragging;
-    if (!dragging) return;
+    if (!draggedElement) return;
 
-    // Throttle updates using requestAnimationFrame
-    if (dragState.rafId) {
-      cancelAnimationFrame(dragState.rafId);
+    // Get all project items in this column (excluding the one being dragged)
+    const siblings = Array.from(column.children).filter(
+      child => child.classList.contains("project-item") && child !== draggedElement
+    );
+
+    // Find which element we're over
+    let nextSibling = null;
+    for (const sibling of siblings) {
+      const box = sibling.getBoundingClientRect();
+      const middle = box.top + box.height / 2;
+      
+      if (e.clientY < middle) {
+        nextSibling = sibling;
+        break;
+      }
     }
 
-    dragState.rafId = requestAnimationFrame(() => {
-      const afterElement = getDragAfterElement(column, e.clientY);
+    // Only move if position changed
+    if (nextSibling !== draggedOverElement) {
+      draggedOverElement = nextSibling;
       
-      // Only update if position actually changed
-      if (dragState.lastY !== e.clientY) {
-        dragState.lastY = e.clientY;
-        
-        // Actually move the dragging element to the new position
-        if (afterElement == null) {
-          // Move to end of column
-          if (dragging.parentNode !== column) {
-            column.appendChild(dragging);
-          } else if (dragging.nextSibling !== null) {
-            column.appendChild(dragging);
-          }
-        } else {
-          // Move before the afterElement
-          if (dragging !== afterElement && dragging.nextSibling !== afterElement) {
-            column.insertBefore(dragging, afterElement);
-          }
-        }
+      if (nextSibling) {
+        column.insertBefore(draggedElement, nextSibling);
+      } else {
+        column.appendChild(draggedElement);
       }
-    });
+    }
   });
-
 
   column.addEventListener("drop", async (e) => {
     e.preventDefault();
     
-    // Cancel any pending animation frame
-    if (dragState.rafId) {
-      cancelAnimationFrame(dragState.rafId);
-      dragState.rafId = null;
-    }
-
-    const draggedId = e.dataTransfer.getData("text/plain");
-    if (!draggedId || !dragState.dragging) return;
+    if (!draggedElement) return;
 
     // Get final order from DOM
     const allItems = Array.from(column.children).filter(item => 
@@ -507,25 +489,9 @@ function setupDragAndDrop(column) {
     }
     
     // Reset drag state
-    dragState.dragging = null;
-    dragState.lastY = null;
+    draggedElement = null;
+    draggedOverElement = null;
   });
-}
-
-// Helper function to determine where to insert dragged element
-function getDragAfterElement(container, y) {
-  const draggableElements = [...container.querySelectorAll(".project-item:not(.dragging)")];
-  
-  return draggableElements.reduce((closest, child) => {
-    const box = child.getBoundingClientRect();
-    const offset = y - box.top - box.height / 2;
-    
-    if (offset < 0 && offset > closest.offset) {
-      return { offset: offset, element: child };
-    } else {
-      return closest;
-    }
-  }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
 function setupForm() {
