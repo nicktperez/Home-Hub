@@ -212,159 +212,34 @@ function createProjectElement(project, refresh) {
     refresh();
   });
 
-  const meta = document.createElement("div");
-  meta.className = "project-meta";
-  const pill = document.createElement("span");
-  pill.className = `status-pill ${(project.status || "todo").replace(" ", "_")}`;
-  pill.textContent =
-    project.status === "done"
-      ? "Done"
-      : project.status === "in_progress"
-        ? "In Progress"
-        : "Todo";
-
-  const updated = document.createElement("span");
-  const updatedAt = project.updatedAt
-    ? new Date(project.updatedAt).toLocaleString()
-    : "n/a";
-  updated.textContent = `Updated: ${updatedAt}`;
-
-  meta.appendChild(pill);
-  meta.appendChild(updated);
-
-  // Progress row
-  const progressRow = document.createElement("div");
-  progressRow.className = "progress-row";
-  const progressBar = document.createElement("div");
-  progressBar.className = "progress-bar";
-  const progressFill = document.createElement("div");
-  progressFill.className = "progress-fill";
-  const progressValue = document.createElement("span");
-  progressValue.className = "progress-value";
-  const pct = Number.isFinite(project.progress) ? project.progress : 0;
-  progressFill.style.width = `${pct}%`;
-  progressValue.textContent = `${pct}%`;
-  progressBar.appendChild(progressFill);
-
-  const progressInput = document.createElement("input");
-  progressInput.type = "range";
-  progressInput.min = "0";
-  progressInput.max = "100";
-  progressInput.value = pct;
-  progressInput.addEventListener("input", () => {
-    progressFill.style.width = `${progressInput.value}%`;
-    progressValue.textContent = `${progressInput.value}%`;
-  });
-  progressInput.addEventListener("change", async () => {
-    await updateProject(project.id, { progress: Number(progressInput.value) });
-    refresh();
-  });
-
-  progressRow.appendChild(progressBar);
-  progressRow.appendChild(progressValue);
-  progressRow.appendChild(progressInput);
-
-  // Dates row
-  const datesRow = document.createElement("div");
-  datesRow.className = "dates-row";
-  const startLabel = document.createElement("label");
-  startLabel.textContent = "Start";
-  const startInput = document.createElement("input");
-  startInput.type = "date";
-  startInput.value = project.startDate || "";
-  startInput.addEventListener("change", async () => {
-    await updateProject(project.id, { startDate: startInput.value });
-    refresh();
-  });
-  startLabel.appendChild(startInput);
-
-  const endLabel = document.createElement("label");
-  endLabel.textContent = "End";
-  const endInput = document.createElement("input");
-  endInput.type = "date";
-  endInput.value = project.endDate || "";
-  endInput.addEventListener("change", async () => {
-    await updateProject(project.id, { endDate: endInput.value });
-    refresh();
-  });
-  endLabel.appendChild(endInput);
-
-  datesRow.appendChild(startLabel);
-  datesRow.appendChild(endLabel);
-
-  // Note box
-  const noteBox = document.createElement("div");
-  noteBox.className = "note-box";
-  const noteArea = document.createElement("textarea");
-  noteArea.className = "note-textarea";
-  noteArea.placeholder = "Notes / working on...";
-  noteArea.value = project.note || "";
-  const noteSave = document.createElement("button");
-  noteSave.className = "note-save";
-  noteSave.textContent = "Save note";
-  noteSave.addEventListener("click", async () => {
-    await updateProject(project.id, { note: noteArea.value });
-    refresh();
-  });
-  noteBox.appendChild(noteArea);
-  noteBox.appendChild(noteSave);
-
-  // Updates log
-  const updatesBox = document.createElement("div");
-  updatesBox.className = "updates-box";
-  const updatesTitle = document.createElement("strong");
-  updatesTitle.textContent = "Updates";
-  const updatesList = document.createElement("ul");
-  updatesList.className = "updates-list";
-  (project.updates || []).forEach((u) => {
-    const liUpdate = document.createElement("li");
-    liUpdate.textContent = u.message || "";
-    const when = u.at ? new Date(u.at).toLocaleString() : "";
-    const small = document.createElement("small");
-    small.textContent = when;
-    liUpdate.appendChild(document.createTextNode(" "));
-    liUpdate.appendChild(small);
-    updatesList.appendChild(liUpdate);
-  });
-
-  const updateRow = document.createElement("div");
-  updateRow.className = "update-input-row";
-  const updateInput = document.createElement("input");
-  updateInput.type = "text";
-  updateInput.placeholder = "Add update...";
-  const updateBtn = document.createElement("button");
-  updateBtn.textContent = "Add";
-  updateBtn.addEventListener("click", async () => {
-    const msg = updateInput.value.trim();
-    if (!msg) return;
-    await updateProject(project.id, { appendUpdate: msg });
-    updateInput.value = "";
-    refresh();
-  });
-  updateRow.appendChild(updateInput);
-  updateRow.appendChild(updateBtn);
-
-  updatesBox.appendChild(updatesTitle);
-  updatesBox.appendChild(updatesList);
-  updatesBox.appendChild(updateRow);
-
   const delBtn = document.createElement("button");
-  delBtn.className = "delete-btn";
+  delBtn.className = "delete-btn-simple";
   delBtn.textContent = "Delete";
   delBtn.addEventListener("click", async () => {
-    await deleteProject(project.id);
-    refresh();
+    if (confirm(`Delete "${project.title}"?`)) {
+      try {
+        await deleteProject(project.id);
+        await refreshProjects();
+      } catch (error) {
+        console.error("Error deleting project:", error);
+        alert("Failed to delete project");
+      }
+    }
   });
 
-  li.appendChild(checkbox);
-  li.appendChild(title);
-  li.appendChild(statusSelect);
-  li.appendChild(delBtn);
-  li.appendChild(meta);
-  li.appendChild(progressRow);
-  li.appendChild(datesRow);
-  li.appendChild(noteBox);
-  li.appendChild(updatesBox);
+  // Simple layout: checkbox + title on one row, status + delete on another
+  const headerRow = document.createElement("div");
+  headerRow.className = "project-header-simple";
+  headerRow.appendChild(checkbox);
+  headerRow.appendChild(title);
+
+  const actionsRow = document.createElement("div");
+  actionsRow.className = "project-actions-simple";
+  actionsRow.appendChild(statusSelect);
+  actionsRow.appendChild(delBtn);
+
+  li.appendChild(headerRow);
+  li.appendChild(actionsRow);
   return li;
 }
 
@@ -645,22 +520,76 @@ function renderTodayNotes() {
   const todayNotesEl = document.getElementById("today-notes");
   if (!todayNotesEl) return;
 
-  if (notesData.length === 0) {
-    todayNotesEl.innerHTML = '<p class="text-slate-400 text-center py-2 text-sm">No notes yet.</p>';
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
+  
+  // Filter notes by today's date
+  const todayNotes = notesData.filter(note => {
+    const noteDate = note.notedate || note.createdat?.split('T')[0];
+    return noteDate === today;
+  });
+
+  if (todayNotes.length === 0) {
+    todayNotesEl.innerHTML = '<p class="text-slate-400 text-center py-2 text-sm">No notes for today.</p>';
     return;
   }
 
-  // Show only the most recent 4 notes
-  const recentNotes = notesData.slice(0, 4);
-  todayNotesEl.innerHTML = recentNotes
-    .map(
-      (note) => `
-    <div class="note-card-compact note-${note.color || "yellow"}">
-      <div class="note-content-compact">${escapeHtml(note.content)}</div>
-    </div>
-  `
-    )
-    .join("");
+  // Separate completed and active notes
+  const activeNotes = todayNotes.filter(n => !n.done);
+  const completedNotes = todayNotes.filter(n => n.done);
+
+  let html = '';
+  
+  // Active notes
+  if (activeNotes.length > 0) {
+    html += activeNotes
+      .map(
+        (note) => `
+      <div class="note-card-compact note-${note.color || "yellow"}">
+        <div class="flex items-start gap-2">
+          <input type="checkbox" class="note-checkbox-today mt-1" data-id="${note.id}" ${note.done ? 'checked' : ''}>
+          <div class="note-content-compact flex-1">${escapeHtml(note.content)}</div>
+        </div>
+      </div>
+    `
+      )
+      .join("");
+  }
+
+  // Completed notes (with strikethrough)
+  if (completedNotes.length > 0) {
+    html += '<div class="mt-3 pt-3 border-t border-slate-700"><p class="text-xs text-slate-400 mb-2">Completed:</p>';
+    html += completedNotes
+      .map(
+        (note) => `
+      <div class="note-card-compact note-${note.color || "yellow"} opacity-60">
+        <div class="flex items-start gap-2">
+          <input type="checkbox" class="note-checkbox-today mt-1" data-id="${note.id}" checked>
+          <div class="note-content-compact flex-1 line-through">${escapeHtml(note.content)}</div>
+        </div>
+      </div>
+    `
+      )
+      .join("");
+    html += '</div>';
+  }
+
+  todayNotesEl.innerHTML = html;
+
+  // Add event listeners for checkboxes
+  todayNotesEl.querySelectorAll('.note-checkbox-today').forEach(checkbox => {
+    checkbox.addEventListener('change', async (e) => {
+      const noteId = e.target.dataset.id;
+      const isDone = e.target.checked;
+      try {
+        await updateNote(noteId, { done: isDone });
+        await refreshNotes();
+      } catch (error) {
+        console.error('Error updating note:', error);
+        e.target.checked = !isDone; // Revert on error
+      }
+    });
+  });
 }
 
 // ===== WEATHER =====

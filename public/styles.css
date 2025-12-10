@@ -815,6 +815,75 @@ header h1 {
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
 }
 
+/* Simplified project item */
+.project-item-simple {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.project-header-simple {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.project-checkbox-simple {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.project-title-simple {
+  font-size: 0.95rem;
+  color: #e8ecf2;
+  margin: 0;
+  flex: 1;
+}
+
+.project-title-simple.done {
+  text-decoration: line-through;
+  color: #7d8596;
+}
+
+.project-actions-simple {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.status-select-simple {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e8ecf2;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.delete-btn-simple {
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #ff4d4d, #c81932);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.delete-btn-simple:hover {
+  opacity: 0.9;
+}
+
 .project-title {
   font-size: 1.05rem;
   color: #e8ecf2;

@@ -38,6 +38,7 @@ module.exports = async (req, res) => {
       }
 
       const now = new Date().toISOString();
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
       // Use lowercase column names to match PostgreSQL
       const { data, error } = await supabase
         .from("notes")
@@ -45,6 +46,8 @@ module.exports = async (req, res) => {
           id: Date.now().toString(),
           content: content.trim(),
           color: color || "yellow",
+          done: false,
+          notedate: today, // Set to today's date by default
           createdat: now, // Use lowercase to match database column
           updatedat: now, // Use lowercase to match database column
         })
@@ -74,6 +77,12 @@ module.exports = async (req, res) => {
       }
       if (typeof updates.color === "string") {
         updated.color = updates.color;
+      }
+      if (typeof updates.done === "boolean") {
+        updated.done = updates.done;
+      }
+      if (typeof updates.notedate === "string") {
+        updated.notedate = updates.notedate;
       }
 
       const { data, error } = await supabase.from("notes").update(updated).eq("id", id).select().single();

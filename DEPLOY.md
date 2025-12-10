@@ -43,6 +43,8 @@ CREATE TABLE notes (
   id TEXT PRIMARY KEY,
   content TEXT NOT NULL,
   color TEXT DEFAULT 'yellow',
+  done BOOLEAN DEFAULT false,
+  notedate TEXT DEFAULT NULL,
   updatedAt TEXT NOT NULL,
   createdAt TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -72,6 +74,15 @@ CREATE POLICY "Allow all operations on notes" ON notes
 
 CREATE POLICY "Allow all operations on shopping" ON shopping
   FOR ALL USING (true) WITH CHECK (true);
+```
+
+**To add completion tracking and date fields to notes** (for Today view with historical tracking), run this migration:
+
+```sql
+-- Add done and notedate columns to notes table
+ALTER TABLE notes 
+  ADD COLUMN IF NOT EXISTS done BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS notedate TEXT DEFAULT NULL;
 ```
 
 **If you're getting errors about columns**, first check what columns exist, then fix them:

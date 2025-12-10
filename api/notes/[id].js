@@ -45,6 +45,12 @@ module.exports = async (req, res) => {
       if (typeof updates.color === "string") {
         updated.color = updates.color;
       }
+      if (typeof updates.done === "boolean") {
+        updated.done = updates.done;
+      }
+      if (typeof updates.notedate === "string") {
+        updated.notedate = updates.notedate;
+      }
 
       const { data, error } = await supabase.from("notes").update(updated).eq("id", id).select().single();
       if (error) throw error;
