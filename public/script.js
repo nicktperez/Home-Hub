@@ -323,8 +323,6 @@ function createProjectElement(project, refresh) {
   });
 
   li.addEventListener("dragstart", (e) => {
-    console.log("✅ DRAGSTART FIRED for project:", project.id);
-    
     // Create a clone of the element as the drag image
     const dragImage = li.cloneNode(true);
     dragImage.style.position = "absolute";
@@ -349,18 +347,14 @@ function createProjectElement(project, refresh) {
     e.dataTransfer.setData("text/plain", project.id);
     e.dataTransfer.setData("application/json", JSON.stringify({ id: project.id }));
     
-    // Make sure the original element stays in place but appears dragged
     li.classList.add("dragging");
     draggedElement = li;
-    console.log("Set draggedElement:", draggedElement, "Parent:", li.parentNode);
     pauseRotation();
   });
 
   li.addEventListener("dragend", (e) => {
-    console.log("✅ DRAGEND FIRED");
     li.classList.remove("dragging");
     
-    // Only reset if this was the dragged element
     if (draggedElement === li) {
       draggedElement = null;
     }
@@ -438,12 +432,10 @@ async function renderProjects() {
   });
 
   // Setup drag and drop for each column - do this AFTER all items are added
-  // Use setTimeout to ensure DOM is fully updated
   setTimeout(() => {
     setupDragAndDrop(todoCol);
     setupDragAndDrop(inprogressCol);
     setupDragAndDrop(doneCol);
-    console.log("✅ Drag and drop setup complete for all columns");
   }, 0);
 }
 
@@ -453,21 +445,14 @@ let draggedElement = null;
 
 function setupDragAndDrop(column) {
   // Skip if already set up
-  if (dragDropSetup.has(column)) {
-    console.log("Column already set up:", column.id);
-    return;
-  }
+  if (dragDropSetup.has(column)) return;
   dragDropSetup.set(column, true);
 
-  console.log("🔧 Setting up drag and drop for column:", column.id, "Element:", column);
-
-  // Make sure column can receive drop events
   column.setAttribute("data-drop-zone", "true");
 
   column.addEventListener("dragenter", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("✅ DRAGENTER on column:", column.id);
   });
 
   column.addEventListener("dragover", (e) => {
@@ -475,12 +460,7 @@ function setupDragAndDrop(column) {
     e.stopPropagation();
     e.dataTransfer.dropEffect = "move";
     
-    if (!draggedElement) {
-      console.log("⚠️ dragover: No draggedElement");
-      return;
-    }
-
-    console.log("✅ DRAGOVER on column:", column.id, "mouseY:", e.clientY);
+    if (!draggedElement) return;
 
     const siblings = Array.from(column.children).filter(
       child => child.classList.contains("project-item") && child !== draggedElement
@@ -499,21 +479,12 @@ function setupDragAndDrop(column) {
     // Move the element
     if (nextSibling) {
       if (draggedElement.nextSibling !== nextSibling) {
-        console.log("🔄 Moving element before:", nextSibling);
         column.insertBefore(draggedElement, nextSibling);
       }
     } else {
       if (draggedElement.parentNode !== column || draggedElement.nextSibling !== null) {
-        console.log("🔄 Moving element to end");
         column.appendChild(draggedElement);
       }
-    }
-  });
-
-  column.addEventListener("dragleave", (e) => {
-    // Only log if we're actually leaving the column
-    if (!column.contains(e.relatedTarget)) {
-      console.log("DRAGLEAVE from column:", column.id);
     }
   });
 
