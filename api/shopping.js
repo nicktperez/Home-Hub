@@ -36,13 +36,16 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: "Item is required" });
       }
 
-      // Insert without timestamp columns - let the database handle created_at with default
+      const now = new Date().toISOString();
+      // Insert with updatedAt if column exists (handle case sensitivity)
+      // Try with updatedAt first, if it fails the migration will need to be run
       const { data, error } = await supabase
         .from("shopping")
         .insert({
           id: Date.now().toString(),
           item: item.trim(),
           checked: false,
+          updatedAt: now,
         })
         .select()
         .single();
@@ -59,8 +62,11 @@ module.exports = async (req, res) => {
         return res.status(404).json({ error: "Item not found" });
       }
 
-      // Only update the fields that are being changed, don't include updatedAt
-      const updated = {};
+      const now = new Date().toISOString();
+      // Update with updatedAt if column exists
+      const updated = {
+        updatedAt: now,
+      };
 
       if (typeof updates.item === "string") {
         updated.item = updates.item.trim();

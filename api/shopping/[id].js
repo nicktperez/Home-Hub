@@ -33,8 +33,11 @@ module.exports = async (req, res) => {
         return res.status(404).json({ error: "Item not found" });
       }
 
-      // Only update the fields that are being changed, don't include updatedAt
-      const updated = {};
+      const now = new Date().toISOString();
+      // Update with updatedAt if column exists
+      const updated = {
+        updatedAt: now,
+      };
 
       if (typeof updates.item === "string") {
         updated.item = updates.item.trim();

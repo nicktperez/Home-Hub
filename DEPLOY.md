@@ -53,6 +53,7 @@ CREATE TABLE shopping (
   id TEXT PRIMARY KEY,
   item TEXT NOT NULL,
   checked BOOLEAN DEFAULT false,
+  "updatedAt" TEXT NOT NULL DEFAULT NOW()::TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -73,12 +74,24 @@ CREATE POLICY "Allow all operations on shopping" ON shopping
   FOR ALL USING (true) WITH CHECK (true);
 ```
 
-**If you're getting errors about missing columns**, run this migration in the SQL Editor:
+**If you're getting errors about columns**, run this migration in the SQL Editor:
 
 ```sql
--- Fix shopping table: remove camelCase columns if they exist, keep only created_at
-ALTER TABLE shopping DROP COLUMN IF EXISTS "createdAt";
-ALTER TABLE shopping DROP COLUMN IF EXISTS "updatedAt";
+-- Option 1: If you want to keep updatedAt (recommended)
+-- Make sure updatedAt exists and has a default value
+ALTER TABLE shopping 
+  DROP COLUMN IF EXISTS "createdAt",
+  DROP COLUMN IF EXISTS updatedat; -- lowercase version
+
+-- Add updatedAt with proper quoting and default
+ALTER TABLE shopping 
+  ADD COLUMN IF NOT EXISTS "updatedAt" TEXT NOT NULL DEFAULT NOW()::TEXT;
+
+-- Option 2: If you want to remove updatedAt completely (requires code changes)
+-- ALTER TABLE shopping 
+--   DROP COLUMN IF EXISTS "createdAt",
+--   DROP COLUMN IF EXISTS "updatedAt",
+--   DROP COLUMN IF EXISTS updatedat;
 ```
 
 4. Get your Supabase credentials:
