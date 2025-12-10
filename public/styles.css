@@ -210,6 +210,149 @@ header h1 {
   max-width: calc(100vw - 24px);
 }
 
+/* ===== MOBILE HAMBURGER MENU ===== */
+#mobile-nav {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 30;
+}
+
+.hamburger-btn {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, 
+    rgba(220, 38, 38, 0.9), 
+    rgba(22, 163, 74, 0.85));
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  cursor: pointer;
+  padding: 10px;
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.4),
+    0 0 15px rgba(220, 38, 38, 0.3);
+  transition: all 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hamburger-btn:active {
+  transform: scale(0.95);
+}
+
+.hamburger-line {
+  width: 24px;
+  height: 3px;
+  background: #ffffff;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+  transform-origin: center;
+}
+
+.hamburger-btn.active .hamburger-line:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+
+.hamburger-btn.active .hamburger-line:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.hamburger-btn.active .hamburger-line:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
+.mobile-menu {
+  position: fixed;
+  top: 72px;
+  right: 12px;
+  width: calc(100vw - 24px);
+  max-width: 320px;
+  background: linear-gradient(135deg, 
+    rgba(30, 41, 59, 0.98), 
+    rgba(15, 23, 42, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  backdrop-filter: blur(20px);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(220, 38, 38, 0.2);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(-20px) scale(0.95);
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 29;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+
+.mobile-menu.menu-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.mobile-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-nav-item span {
+  font-size: 1.25rem;
+  min-width: 24px;
+  text-align: center;
+}
+
+.mobile-nav-item:active {
+  transform: scale(0.98);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.mobile-nav-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateX(4px);
+}
+
+/* Mobile menu backdrop - separate element */
+#mobile-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 28;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+#mobile-menu-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .nav-btn {
   padding: 11px 14px;
   font-size: 1rem;
@@ -714,33 +857,18 @@ button[type="submit"]:active {
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
+  /* Desktop nav hidden on mobile */
   #slide-nav {
-    position: fixed;
-    left: 50%;
-    right: auto;
-    top: auto;
-    bottom: 12px;
-    transform: translateX(-50%);
-    flex-wrap: wrap;
-    justify-content: center;
-    max-width: calc(100vw - 24px);
-    width: auto;
-    padding: 6px;
-    gap: 6px;
-    border-radius: 16px;
+    display: none;
   }
 
-  .nav-btn {
-    font-size: 0.75rem;
-    padding: 8px 12px;
-    min-width: 60px;
-    font-weight: 600;
-    border-radius: 10px;
-    flex: 0 0 auto;
+  /* Mobile menu visible */
+  #mobile-nav {
+    display: block;
   }
 
   .slide {
-    padding: 12px 10px 80px;
+    padding: 70px 10px 20px;
     border-radius: 0;
   }
 
@@ -830,7 +958,7 @@ button[type="submit"]:active {
   }
 
   .slide {
-    padding: 10px 8px 70px;
+    padding: 65px 8px 15px;
   }
 
   header h1 {

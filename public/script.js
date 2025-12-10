@@ -371,9 +371,84 @@ function setupNavButtons() {
       if (Number.isFinite(idx)) {
         setActiveSlide(idx);
         startRotation();
+        // Close mobile menu if open
+        closeMobileMenu();
       }
     });
   });
+}
+
+// ===== MOBILE MENU =====
+function setupMobileMenu() {
+  const hamburgerBtn = document.getElementById("hamburger-btn");
+  const mobileMenu = document.getElementById("mobile-menu");
+
+  if (!hamburgerBtn || !mobileMenu) return;
+
+  hamburgerBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleMobileMenu();
+  });
+
+  // Close menu when clicking backdrop or outside
+  const backdrop = document.getElementById("mobile-menu-backdrop");
+  if (backdrop) {
+    backdrop.addEventListener("click", closeMobileMenu);
+  }
+  
+  document.addEventListener("click", (e) => {
+    if (!mobileMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
+      closeMobileMenu();
+    }
+  });
+
+  // Close menu on escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeMobileMenu();
+    }
+  });
+}
+
+function toggleMobileMenu() {
+  const hamburgerBtn = document.getElementById("hamburger-btn");
+  const mobileMenu = document.getElementById("mobile-menu");
+  
+  if (!hamburgerBtn || !mobileMenu) return;
+
+  const isOpen = mobileMenu.classList.contains("menu-open");
+  
+  if (isOpen) {
+    closeMobileMenu();
+  } else {
+    openMobileMenu();
+  }
+}
+
+function openMobileMenu() {
+  const hamburgerBtn = document.getElementById("hamburger-btn");
+  const mobileMenu = document.getElementById("mobile-menu");
+  const backdrop = document.getElementById("mobile-menu-backdrop");
+  
+  if (!hamburgerBtn || !mobileMenu) return;
+
+  hamburgerBtn.classList.add("active");
+  mobileMenu.classList.add("menu-open");
+  if (backdrop) backdrop.classList.add("active");
+  document.body.style.overflow = "hidden"; // Prevent background scrolling
+}
+
+function closeMobileMenu() {
+  const hamburgerBtn = document.getElementById("hamburger-btn");
+  const mobileMenu = document.getElementById("mobile-menu");
+  const backdrop = document.getElementById("mobile-menu-backdrop");
+  
+  if (!hamburgerBtn || !mobileMenu) return;
+
+  hamburgerBtn.classList.remove("active");
+  mobileMenu.classList.remove("menu-open");
+  if (backdrop) backdrop.classList.remove("active");
+  document.body.style.overflow = ""; // Restore scrolling
 }
 
 // ===== CALENDAR EVENTS =====
@@ -954,6 +1029,7 @@ function init() {
   setupShoppingForm();
   initSlides();
   setupNavButtons();
+  setupMobileMenu();
   initSnow();
   lazyLoadCalendars();
   startRealTimeSync();

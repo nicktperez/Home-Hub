@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Family Wall Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-            <link rel="stylesheet" href="styles.css?v=12" />
+            <link rel="stylesheet" href="styles.css?v=13" />
   </head>
   <body>
     <canvas id="snow-canvas" class="pointer-events-none fixed inset-0 z-40"></canvas>
+    <!-- Desktop Navigation -->
     <div
       id="slide-nav"
       aria-label="Slide navigation"
-      class="fixed top-3 right-3 flex gap-2 p-2 bg-slate-900/80 border border-slate-700 rounded-xl backdrop-blur z-20 md:top-3 md:right-3 md:bottom-auto md:left-auto md:transform-none"
+      class="hidden md:flex fixed top-3 right-3 gap-2 p-2 bg-slate-900/80 border border-slate-700 rounded-xl backdrop-blur z-20"
     >
       <button class="nav-btn" data-slide="0">Month</button>
       <button class="nav-btn" data-slide="1">Week</button>
@@ -20,6 +21,42 @@
       <button class="nav-btn" data-slide="3">Projects</button>
       <button class="nav-btn" data-slide="4">Notes</button>
       <button class="nav-btn" data-slide="5">Shopping</button>
+    </div>
+
+    <!-- Mobile Menu Backdrop -->
+    <div id="mobile-menu-backdrop" class="md:hidden"></div>
+
+    <!-- Mobile Hamburger Menu -->
+    <div id="mobile-nav" class="md:hidden fixed top-3 right-3 z-30">
+      <button
+        id="hamburger-btn"
+        aria-label="Toggle menu"
+        class="hamburger-btn"
+      >
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+      <div id="mobile-menu" class="mobile-menu">
+        <button class="mobile-nav-item" data-slide="0">
+          <span>📅</span> Month
+        </button>
+        <button class="mobile-nav-item" data-slide="1">
+          <span>📆</span> Week
+        </button>
+        <button class="mobile-nav-item" data-slide="2">
+          <span>☀️</span> Today
+        </button>
+        <button class="mobile-nav-item" data-slide="3">
+          <span>📋</span> Projects
+        </button>
+        <button class="mobile-nav-item" data-slide="4">
+          <span>📝</span> Notes
+        </button>
+        <button class="mobile-nav-item" data-slide="5">
+          <span>🛒</span> Shopping
+        </button>
+      </div>
     </div>
 
     <div id="slides" class="relative h-screen">
