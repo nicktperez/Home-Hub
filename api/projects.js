@@ -22,8 +22,8 @@ module.exports = async (req, res) => {
 
   try {
     if (method === "GET") {
-      // GET /api/projects
-      const { data, error } = await supabase.from("projects").select("*").order("updatedAt", { ascending: false });
+      // GET /api/projects - use lowercase for column name
+      const { data, error } = await supabase.from("projects").select("*").order("updatedat", { ascending: false });
       if (error) throw error;
       return res.status(200).json(data || []);
     }
@@ -39,6 +39,7 @@ module.exports = async (req, res) => {
       const now = new Date().toISOString();
       const cleanProgress = typeof progress === "number" && progress >= 0 && progress <= 100 ? progress : 0;
 
+      // Use lowercase column names to match PostgreSQL (unquoted columns are lowercased)
       const { data, error } = await supabase
         .from("projects")
         .insert({
@@ -46,11 +47,11 @@ module.exports = async (req, res) => {
           title: title.trim(),
           done: false,
           status: "todo",
-          updatedAt: now,
+          updatedat: now, // Use lowercase to match database column
           note: typeof note === "string" ? note.trim() : "",
           progress: cleanProgress,
-          startDate: typeof startDate === "string" ? startDate : "",
-          endDate: typeof endDate === "string" ? endDate : "",
+          startdate: typeof startDate === "string" ? startDate : "",
+          enddate: typeof endDate === "string" ? endDate : "",
           updates: [],
         })
         .select()

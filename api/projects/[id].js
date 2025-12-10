@@ -38,49 +38,43 @@ module.exports = async (req, res) => {
       }
 
       const now = new Date().toISOString();
-      const updated = { ...current };
+      // Only update the fields that are being changed, use lowercase column names
+      const updated = {
+        updatedat: now, // Use lowercase to match database column
+      };
 
       if (typeof updates.title === "string") {
         updated.title = updates.title.trim();
-        updated.updatedAt = now;
       }
       if (typeof updates.status === "string") {
         updated.status = updates.status;
         updated.done = updates.status === "done";
-        updated.updatedAt = now;
       }
       if (typeof updates.done === "boolean") {
         updated.done = updates.done;
         if (!updates.status) {
-          updated.status = updated.done ? "done" : updated.status === "done" ? "todo" : updated.status || "todo";
+          updated.status = updated.done ? "done" : current.status === "done" ? "todo" : current.status || "todo";
         }
-        updated.updatedAt = now;
       }
       if (typeof updates.note === "string") {
         updated.note = updates.note.trim();
-        updated.updatedAt = now;
       }
       if (typeof updates.progress === "number") {
         const p = Math.min(100, Math.max(0, updates.progress));
         updated.progress = p;
-        updated.updatedAt = now;
       }
       if (typeof updates.startDate === "string") {
-        updated.startDate = updates.startDate;
-        updated.updatedAt = now;
+        updated.startdate = updates.startDate;
       }
       if (typeof updates.endDate === "string") {
-        updated.endDate = updates.endDate;
-        updated.updatedAt = now;
+        updated.enddate = updates.endDate;
       }
       if (Array.isArray(updates.updates)) {
         updated.updates = updates.updates;
-        updated.updatedAt = now;
       }
       if (updates.appendUpdate && typeof updates.appendUpdate === "string") {
-        updated.updates = updated.updates || [];
+        updated.updates = current.updates || [];
         updated.updates.push({ message: updates.appendUpdate.trim(), at: now });
-        updated.updatedAt = now;
       }
 
       const { data, error } = await supabase.from("projects").update(updated).eq("id", id).select().single();

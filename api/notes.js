@@ -23,8 +23,8 @@ module.exports = async (req, res) => {
 
   try {
     if (method === "GET" && !id) {
-      // GET /api/notes
-      const { data, error } = await supabase.from("notes").select("*").order("updatedAt", { ascending: false });
+      // GET /api/notes - use lowercase for column name
+      const { data, error } = await supabase.from("notes").select("*").order("updatedat", { ascending: false });
       if (error) throw error;
       return res.status(200).json(data || []);
     }
@@ -38,14 +38,15 @@ module.exports = async (req, res) => {
       }
 
       const now = new Date().toISOString();
+      // Use lowercase column names to match PostgreSQL
       const { data, error } = await supabase
         .from("notes")
         .insert({
           id: Date.now().toString(),
           content: content.trim(),
           color: color || "yellow",
-          updatedAt: now,
-          createdAt: now,
+          createdat: now, // Use lowercase to match database column
+          updatedat: now, // Use lowercase to match database column
         })
         .select()
         .single();
@@ -63,7 +64,10 @@ module.exports = async (req, res) => {
       }
 
       const now = new Date().toISOString();
-      const updated = { ...current, updatedAt: now };
+      // Only update the fields that are being changed, use lowercase column names
+      const updated = {
+        updatedat: now, // Use lowercase to match database column
+      };
 
       if (typeof updates.content === "string") {
         updated.content = updates.content.trim();

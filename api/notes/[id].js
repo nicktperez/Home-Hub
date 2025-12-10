@@ -34,7 +34,10 @@ module.exports = async (req, res) => {
       }
 
       const now = new Date().toISOString();
-      const updated = { ...current, updatedAt: now };
+      // Only update the fields that are being changed, use lowercase column names
+      const updated = {
+        updatedat: now, // Use lowercase to match database column
+      };
 
       if (typeof updates.content === "string") {
         updated.content = updates.content.trim();
