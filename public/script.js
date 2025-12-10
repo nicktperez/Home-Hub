@@ -455,10 +455,82 @@ function renderCalendarEvents() {
 // ===== WEATHER =====
 let weatherData = null;
 let weatherTimer = null;
+let userLocation = null;
+
+// Get user's location using browser geolocation API
+function getUserLocation() {
+  return new Promise((resolve, reject) => {
+    // Check if we have a stored location (less than 1 hour old)
+    const stored = localStorage.getItem("userLocation");
+    if (stored) {
+      try {
+        const location = JSON.parse(stored);
+        const age = Date.now() - location.timestamp;
+        // Use stored location if less than 1 hour old
+        if (age < 3600000) {
+          resolve({ lat: location.lat, lon: location.lon });
+          return;
+        }
+      } catch (e) {
+        // Invalid stored data, continue to geolocation
+      }
+    }
+
+    // Check if geolocation is supported
+    if (!navigator.geolocation) {
+      console.warn("Geolocation is not supported by this browser");
+      reject(new Error("Geolocation not supported"));
+      return;
+    }
+
+    // Request location with timeout
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const location = {
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+          timestamp: Date.now(),
+        };
+        // Store location for future use
+        localStorage.setItem("userLocation", JSON.stringify(location));
+        resolve({ lat: location.lat, lon: location.lon });
+      },
+      (error) => {
+        console.warn("Geolocation error:", error.message);
+        // If user denies or error occurs, try to use stored location anyway
+        if (stored) {
+          try {
+            const location = JSON.parse(stored);
+            resolve({ lat: location.lat, lon: location.lon });
+            return;
+          } catch (e) {
+            // Fall through to reject
+          }
+        }
+        reject(error);
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 3600000, // Accept cached location up to 1 hour old
+      }
+    );
+  });
+}
 
 async function fetchWeather() {
   try {
-    const res = await fetch("/api/weather");
+    // Get user location first
+    let locationParams = "";
+    try {
+      const location = await getUserLocation();
+      locationParams = `?lat=${location.lat}&lon=${location.lon}`;
+    } catch (error) {
+      console.warn("Could not get user location, using default:", error.message);
+      // Will use default (Los Angeles) if no location provided
+    }
+
+    const res = await fetch(`/api/weather${locationParams}`);
     if (!res.ok) throw new Error("Weather fetch failed");
     const data = await res.json();
     weatherData = data;
