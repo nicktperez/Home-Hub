@@ -369,10 +369,19 @@ function createProjectElement(project, refresh) {
 }
 
 async function renderProjects() {
-  const listEl = document.getElementById("projects-list");
-  if (!listEl) return;
+  // Get column elements
+  const todoCol = document.getElementById("board-todo");
+  const inprogressCol = document.getElementById("board-inprogress");
+  const doneCol = document.getElementById("board-done");
+  
+  // If columns don't exist, return early
+  if (!todoCol || !inprogressCol || !doneCol) {
+    console.warn("Project columns not found in DOM");
+    return;
+  }
   
   const projects = await fetchProjects();
+  console.log("Fetched projects:", projects.length, projects);
   
   // Summary
   const total = projects.length;
@@ -388,25 +397,22 @@ async function renderProjects() {
   if (sInprogress) sInprogress.textContent = inprogress;
   if (sDone) sDone.textContent = done;
 
-  // Clear and populate columns
-  const todoCol = document.getElementById("board-todo");
-  const inprogressCol = document.getElementById("board-inprogress");
-  const doneCol = document.getElementById("board-done");
-  
-  if (todoCol) todoCol.innerHTML = "";
-  if (inprogressCol) inprogressCol.innerHTML = "";
-  if (doneCol) doneCol.innerHTML = "";
+  // Clear columns
+  todoCol.innerHTML = "";
+  inprogressCol.innerHTML = "";
+  doneCol.innerHTML = "";
 
+  // Populate columns
   projects.forEach((project) => {
     const item = createProjectElement(project, renderProjects);
     const status = project.status || "todo";
     
     if (status === "done") {
-      if (doneCol) doneCol.appendChild(item);
+      doneCol.appendChild(item);
     } else if (status === "in_progress") {
-      if (inprogressCol) inprogressCol.appendChild(item);
+      inprogressCol.appendChild(item);
     } else {
-      if (todoCol) todoCol.appendChild(item);
+      todoCol.appendChild(item);
     }
   });
 }
@@ -420,9 +426,13 @@ function setupForm() {
     e.preventDefault();
     const value = input.value.trim();
     if (!value) return;
-    await addProject(value);
-    input.value = "";
-    renderProjects();
+    try {
+      await addProject(value);
+      input.value = "";
+      await refreshProjects();
+    } catch (error) {
+      console.error("Error adding project from form:", error);
+    }
   });
 }
 
@@ -1115,9 +1125,13 @@ function startRealTimeSync() {
 }
 
 async function refreshProjects() {
-  projectsData = await fetchProjects();
-  renderProjects();
-  updateQuickStats();
+  try {
+    projectsData = await fetchProjects();
+    await renderProjects();
+    updateQuickStats();
+  } catch (error) {
+    console.error("Error refreshing projects:", error);
+  }
 }
 
 // ===== UTILITY =====
@@ -1322,8 +1336,8 @@ function processVoiceCommand(transcript) {
     const title = projectMatch[1].trim();
     if (title) {
       addProject(title)
-        .then(() => {
-          refreshProjects();
+        .then(async () => {
+          await refreshProjects();
           showVoiceFeedback(`Added project: "${title}"`);
         })
         .catch((error) => {
