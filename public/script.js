@@ -244,22 +244,44 @@ function createProjectElement(project, refresh) {
 
   // Drag and drop handlers
   li.addEventListener("dragstart", (e) => {
+    console.log("Drag started for project:", project.id);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", project.id);
     li.classList.add("dragging");
     draggedElement = li;
-    draggedOverElement = null;
     pauseRotation(); // Pause rotation while dragging
   });
 
   li.addEventListener("dragend", (e) => {
+    console.log("Drag ended");
     li.classList.remove("dragging");
     
     // Reset drag state
     draggedElement = null;
-    draggedOverElement = null;
     
     resumeRotation(); // Resume rotation after dragging
+  });
+
+  // Make the entire item draggable, but allow child elements to work normally
+  // The drag handle and title area will initiate drag
+  dragHandle.addEventListener("mousedown", (e) => {
+    // This will allow the drag to start from the handle
+  });
+  
+  title.style.cursor = "move";
+  title.addEventListener("mousedown", (e) => {
+    // Allow drag to start from title area too
+  });
+  
+  // Prevent interactive elements from starting drag, but allow them to work
+  checkbox.addEventListener("mousedown", (e) => {
+    e.stopPropagation();
+  });
+  statusSelect.addEventListener("mousedown", (e) => {
+    e.stopPropagation();
+  });
+  delBtn.addEventListener("mousedown", (e) => {
+    e.stopPropagation();
   });
 
 
@@ -318,9 +340,43 @@ function createProjectElement(project, refresh) {
     }
   });
 
-  // Simple layout: checkbox + title on one row, status + delete on another
+  // Add a drag handle icon
+  const dragHandle = document.createElement("div");
+  dragHandle.className = "drag-handle";
+  dragHandle.innerHTML = "⋮⋮";
+  dragHandle.style.cursor = "move";
+  dragHandle.style.userSelect = "none";
+  dragHandle.style.padding = "4px 8px";
+  dragHandle.style.opacity = "0.5";
+  dragHandle.style.fontSize = "16px";
+  dragHandle.style.lineHeight = "1";
+
+  // Make the entire item draggable, but allow child elements to work normally
+  // The drag handle and title area will initiate drag
+  dragHandle.addEventListener("mousedown", (e) => {
+    // This will allow the drag to start from the handle
+  });
+  
+  title.style.cursor = "move";
+  title.addEventListener("mousedown", (e) => {
+    // Allow drag to start from title area too
+  });
+  
+  // Prevent interactive elements from starting drag, but allow them to work
+  checkbox.addEventListener("mousedown", (e) => {
+    e.stopPropagation();
+  });
+  statusSelect.addEventListener("mousedown", (e) => {
+    e.stopPropagation();
+  });
+  delBtn.addEventListener("mousedown", (e) => {
+    e.stopPropagation();
+  });
+
+  // Simple layout: drag handle + checkbox + title on one row, status + delete on another
   const headerRow = document.createElement("div");
   headerRow.className = "project-header-simple";
+  headerRow.appendChild(dragHandle);
   headerRow.appendChild(checkbox);
   headerRow.appendChild(title);
 
@@ -396,10 +452,8 @@ async function renderProjects() {
 }
 
 // Setup drag and drop handlers for a project column
-// Use a WeakMap to track if handlers are already set up
 const dragDropSetup = new WeakMap();
 let draggedElement = null;
-let draggedOverElement = null;
 
 function setupDragAndDrop(column) {
   // Skip if already set up
@@ -408,16 +462,20 @@ function setupDragAndDrop(column) {
 
   column.addEventListener("dragover", (e) => {
     e.preventDefault();
+    e.stopPropagation();
     e.dataTransfer.dropEffect = "move";
     
-    if (!draggedElement) return;
+    if (!draggedElement) {
+      console.log("No dragged element in dragover");
+      return;
+    }
 
-    // Get all project items in this column (excluding the one being dragged)
+    // Get all siblings (excluding the dragged element)
     const siblings = Array.from(column.children).filter(
-      child => child.classList.contains("project-item") && child !== draggedElement
+      child => child !== draggedElement && child.classList.contains("project-item")
     );
 
-    // Find which element we're over
+    // Find insertion point
     let nextSibling = null;
     for (const sibling of siblings) {
       const box = sibling.getBoundingClientRect();
@@ -429,15 +487,11 @@ function setupDragAndDrop(column) {
       }
     }
 
-    // Only move if position changed
-    if (nextSibling !== draggedOverElement) {
-      draggedOverElement = nextSibling;
-      
-      if (nextSibling) {
-        column.insertBefore(draggedElement, nextSibling);
-      } else {
-        column.appendChild(draggedElement);
-      }
+    // Move the element
+    if (nextSibling) {
+      column.insertBefore(draggedElement, nextSibling);
+    } else {
+      column.appendChild(draggedElement);
     }
   });
 
@@ -490,7 +544,6 @@ function setupDragAndDrop(column) {
     
     // Reset drag state
     draggedElement = null;
-    draggedOverElement = null;
   });
 }
 
