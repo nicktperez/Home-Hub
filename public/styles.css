@@ -867,8 +867,7 @@ header h1 {
 #board-todo,
 #board-inprogress,
 #board-done {
-  contain: layout style paint;
-  will-change: contents;
+  min-height: 100px;
 }
 
 /* Simplified project item */

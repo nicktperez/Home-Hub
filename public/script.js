@@ -425,29 +425,32 @@ function setupDragAndDrop(column) {
   if (dragDropSetup.has(column)) return;
   dragDropSetup.set(column, true);
 
-  console.log("Setting up drag and drop for column:", column.id);
+  console.log("Setting up drag and drop for column:", column.id, column);
+
+  // Make sure column can receive drop events
+  column.setAttribute("data-drop-zone", "true");
 
   column.addEventListener("dragenter", (e) => {
     e.preventDefault();
-    console.log("DRAGENTER on column:", column.id);
+    e.stopPropagation();
+    console.log("✅ DRAGENTER on column:", column.id);
   });
 
   column.addEventListener("dragover", (e) => {
     e.preventDefault();
+    e.stopPropagation();
     e.dataTransfer.dropEffect = "move";
     
     if (!draggedElement) {
-      console.log("dragover: No draggedElement");
+      console.log("⚠️ dragover: No draggedElement");
       return;
     }
 
-    console.log("DRAGOVER on column:", column.id, "draggedElement:", draggedElement);
+    console.log("✅ DRAGOVER on column:", column.id, "mouseY:", e.clientY);
 
     const siblings = Array.from(column.children).filter(
       child => child.classList.contains("project-item") && child !== draggedElement
     );
-
-    console.log("Siblings in column:", siblings.length, siblings);
 
     let nextSibling = null;
     for (const sibling of siblings) {
@@ -459,14 +462,24 @@ function setupDragAndDrop(column) {
       }
     }
 
-    console.log("Next sibling:", nextSibling, "clientY:", e.clientY);
-
+    // Move the element
     if (nextSibling) {
-      console.log("Moving element before:", nextSibling);
-      column.insertBefore(draggedElement, nextSibling);
+      if (draggedElement.nextSibling !== nextSibling) {
+        console.log("🔄 Moving element before:", nextSibling);
+        column.insertBefore(draggedElement, nextSibling);
+      }
     } else {
-      console.log("Moving element to end of column");
-      column.appendChild(draggedElement);
+      if (draggedElement.parentNode !== column || draggedElement.nextSibling !== null) {
+        console.log("🔄 Moving element to end");
+        column.appendChild(draggedElement);
+      }
+    }
+  });
+
+  column.addEventListener("dragleave", (e) => {
+    // Only log if we're actually leaving the column
+    if (!column.contains(e.relatedTarget)) {
+      console.log("DRAGLEAVE from column:", column.id);
     }
   });
 
