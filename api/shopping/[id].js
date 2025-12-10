@@ -34,9 +34,9 @@ module.exports = async (req, res) => {
       }
 
       const now = new Date().toISOString();
-      // Update with updatedAt if column exists
+      // Update with updatedat (lowercase) to match database column name
       const updated = {
-        updatedAt: now,
+        updatedat: now, // Use lowercase to match database column
       };
 
       if (typeof updates.item === "string") {

@@ -37,15 +37,15 @@ module.exports = async (req, res) => {
       }
 
       const now = new Date().toISOString();
-      // Insert with updatedAt if column exists (handle case sensitivity)
-      // Try with updatedAt first, if it fails the migration will need to be run
+      // Insert with updatedat (lowercase) to match database column name
+      // PostgreSQL stores unquoted identifiers as lowercase
       const { data, error } = await supabase
         .from("shopping")
         .insert({
           id: Date.now().toString(),
           item: item.trim(),
           checked: false,
-          updatedAt: now,
+          updatedat: now, // Use lowercase to match database column
         })
         .select()
         .single();
@@ -63,9 +63,9 @@ module.exports = async (req, res) => {
       }
 
       const now = new Date().toISOString();
-      // Update with updatedAt if column exists
+      // Update with updatedat (lowercase) to match database column name
       const updated = {
-        updatedAt: now,
+        updatedat: now, // Use lowercase to match database column
       };
 
       if (typeof updates.item === "string") {

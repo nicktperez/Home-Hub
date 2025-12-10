@@ -77,15 +77,27 @@ CREATE POLICY "Allow all operations on shopping" ON shopping
 **If you're getting errors about columns**, run this migration in the SQL Editor:
 
 ```sql
--- Option 1: If you want to keep updatedAt (recommended)
--- Make sure updatedAt exists and has a default value
+-- Step 1: First, check what columns currently exist
+SELECT column_name, data_type, is_nullable, column_default
+FROM information_schema.columns
+WHERE table_name = 'shopping'
+ORDER BY ordinal_position;
+
+-- Step 2: Remove any incorrectly named columns first
 ALTER TABLE shopping 
   DROP COLUMN IF EXISTS "createdAt",
-  DROP COLUMN IF EXISTS updatedat; -- lowercase version
+  DROP COLUMN IF EXISTS "updatedAt",
+  DROP COLUMN IF EXISTS updated_at;
 
--- Add updatedAt with proper quoting and default
+-- Step 3: Create the updatedat column (PostgreSQL stores unquoted columns as lowercase)
 ALTER TABLE shopping 
-  ADD COLUMN IF NOT EXISTS "updatedAt" TEXT NOT NULL DEFAULT NOW()::TEXT;
+  ADD COLUMN updatedat TEXT NOT NULL DEFAULT NOW()::TEXT;
+
+-- Step 4: Verify it was created
+SELECT column_name, data_type, is_nullable, column_default
+FROM information_schema.columns
+WHERE table_name = 'shopping';
+```
 
 -- Option 2: If you want to remove updatedAt completely (requires code changes)
 -- ALTER TABLE shopping 
