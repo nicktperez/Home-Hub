@@ -1444,24 +1444,48 @@ function renderEnergyData(data) {
   // Render simple bar chart
   const chartEl = document.getElementById("energy-chart");
   if (chartEl) {
-    const chartData = recentData.slice(0, 30).reverse(); // Oldest to newest for chart
+    // Show all available data (up to 30 billing periods), oldest to newest
+    const chartData = sortedData.slice(0, 30).reverse();
     const maxUsage = Math.max(...chartData.map(d => parseFloat(d.usage_kwh) || 0));
+    const maxCost = Math.max(...chartData.map(d => parseFloat(d.cost) || 0));
     
     chartEl.innerHTML = `
-      <div class="w-full h-full flex flex-col justify-end">
-        <div class="flex items-end justify-between gap-1 h-full">
-          ${chartData.map(d => {
-            const usage = parseFloat(d.usage_kwh) || 0;
-            const height = maxUsage > 0 ? (usage / maxUsage) * 100 : 0;
-            const date = new Date(d.date);
-            return `
-              <div class="flex-1 flex flex-col items-center gap-1" title="${date.toLocaleDateString()}: ${usage.toFixed(1)} kWh">
-                <div class="w-full bg-gradient-to-t from-blue-500 to-indigo-500 rounded-t" style="height: ${height}%"></div>
-                <div class="text-xs text-slate-400 transform -rotate-45 origin-top-left whitespace-nowrap">${date.getMonth() + 1}/${date.getDate()}</div>
-              </div>
-            `;
-          }).join("")}
+      <div class="w-full h-full flex flex-col gap-2">
+        <!-- Usage Chart -->
+        <div class="flex-1 flex flex-col">
+          <div class="text-xs text-slate-400 mb-1">Usage (kWh)</div>
+          <div class="flex-1 flex items-end justify-between gap-1">
+            ${chartData.map(d => {
+              const usage = parseFloat(d.usage_kwh) || 0;
+              const height = maxUsage > 0 ? (usage / maxUsage) * 100 : 0;
+              const date = new Date(d.date);
+              return `
+                <div class="flex-1 flex flex-col items-center gap-1" title="${date.toLocaleDateString()}: ${usage.toFixed(1)} kWh">
+                  <div class="w-full bg-gradient-to-t from-blue-500 to-indigo-500 rounded-t transition-all hover:opacity-80" style="height: ${height}%"></div>
+                  <div class="text-xs text-slate-400 transform -rotate-45 origin-top-left whitespace-nowrap">${date.getMonth() + 1}/${date.getDate()}</div>
+                </div>
+              `;
+            }).join("")}
+          </div>
         </div>
+        <!-- Cost Chart (if available) -->
+        ${maxCost > 0 ? `
+        <div class="flex-1 flex flex-col">
+          <div class="text-xs text-slate-400 mb-1">Cost ($)</div>
+          <div class="flex-1 flex items-end justify-between gap-1">
+            ${chartData.map(d => {
+              const cost = parseFloat(d.cost) || 0;
+              const height = maxCost > 0 ? (cost / maxCost) * 100 : 0;
+              const date = new Date(d.date);
+              return `
+                <div class="flex-1 flex flex-col items-center gap-1" title="${date.toLocaleDateString()}: $${cost.toFixed(2)}">
+                  <div class="w-full bg-gradient-to-t from-green-500 to-emerald-500 rounded-t transition-all hover:opacity-80" style="height: ${height}%"></div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
+        ` : ''}
       </div>
     `;
   }

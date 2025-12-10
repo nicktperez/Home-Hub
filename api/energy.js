@@ -66,44 +66,69 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: "Invalid CSV format" });
       }
 
-      const headers = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g, "").trim().toLowerCase());
-      const records = [];
+      // Find the header row (skip metadata lines)
+      let headerLineIndex = -1;
+      let headers = [];
+      for (let i = 0; i < lines.length; i++) {
+        const parsed = parseCSVLine(lines[i]);
+        const headerCheck = parsed.map(h => h.replace(/^"|"$/g, "").trim().toLowerCase());
+        // Look for SMUD header pattern: TYPE, START DATE, END DATE, IMPORT, etc.
+        if (headerCheck.includes("type") && (headerCheck.includes("start date") || headerCheck.includes("end date"))) {
+          headerLineIndex = i;
+          headers = headerCheck;
+          break;
+        }
+      }
 
-      // Find date and usage columns (SMUD CSV format may vary)
-      const dateIndex = headers.findIndex(h => 
-        h.includes("date") || h.includes("period") || h.includes("billing") || h.includes("day")
-      );
-      const usageIndex = headers.findIndex(h => 
-        h.includes("usage") || h.includes("kwh") || h.includes("consumption") || h.includes("energy")
-      );
-      const costIndex = headers.findIndex(h => 
-        h.includes("cost") || h.includes("amount") || h.includes("charge") || h.includes("total")
-      );
-
-      if (dateIndex === -1 || usageIndex === -1) {
+      if (headerLineIndex === -1) {
         return res.status(400).json({ 
-          error: `Could not find date or usage columns in CSV. Found columns: ${headers.join(", ")}` 
+          error: "Could not find header row in CSV. Expected columns: TYPE, START DATE, END DATE, IMPORT (kWh), COST" 
         });
       }
 
-      // Parse each data row
-      for (let i = 1; i < lines.length; i++) {
-        const values = parseCSVLine(lines[i]).map(v => v.replace(/^"|"$/g, "").trim());
-        if (values.length < Math.max(dateIndex, usageIndex) + 1) continue;
+      const records = [];
 
-        const dateStr = values[dateIndex];
-        const usageStr = values[usageIndex];
+      // Find columns - SMUD specific format
+      const typeIndex = headers.findIndex(h => h === "type");
+      const startDateIndex = headers.findIndex(h => h.includes("start date"));
+      const endDateIndex = headers.findIndex(h => h.includes("end date"));
+      const importIndex = headers.findIndex(h => h.includes("import") && h.includes("kwh"));
+      const exportIndex = headers.findIndex(h => h.includes("export") && h.includes("kwh"));
+      const costIndex = headers.findIndex(h => h === "cost");
+
+      if (endDateIndex === -1 || importIndex === -1) {
+        return res.status(400).json({ 
+          error: `Could not find required columns. Found: ${headers.join(", ")}` 
+        });
+      }
+
+      // Parse each data row (start after header)
+      for (let i = headerLineIndex + 1; i < lines.length; i++) {
+        const values = parseCSVLine(lines[i]).map(v => v.replace(/^"|"$/g, "").trim());
+        if (values.length < Math.max(endDateIndex, importIndex) + 1) continue;
+
+        // Skip non-billing rows (only process "Electric billing" type)
+        if (typeIndex !== -1 && values[typeIndex] && !values[typeIndex].toLowerCase().includes("billing")) {
+          continue;
+        }
+
+        // Use END DATE as the date for the record (billing period end date)
+        const dateStr = values[endDateIndex];
+        const importStr = values[importIndex];
+        const exportStr = exportIndex !== -1 ? values[exportIndex] : null;
         const costStr = costIndex !== -1 ? values[costIndex] : null;
 
-        // Parse date (handle various formats)
+        // Parse date (SMUD uses YYYY-MM-DD format)
         let date;
         try {
+          // SMUD format is YYYY-MM-DD, which Date.parse handles well
           date = new Date(dateStr);
           if (isNaN(date.getTime())) {
-            // Try parsing as MM/DD/YYYY or other formats
+            // Try parsing as YYYY-MM-DD explicitly
             const parts = dateStr.split(/[\/\-]/);
             if (parts.length === 3) {
-              date = new Date(parts[2], parts[0] - 1, parts[1]);
+              // Assume YYYY-MM-DD format
+              date = new Date(parts[0], parts[1] - 1, parts[2]);
             }
           }
         } catch {
@@ -112,13 +137,21 @@ module.exports = async (req, res) => {
 
         if (isNaN(date.getTime())) continue;
 
-        // Parse usage (remove any non-numeric characters except decimal point)
-        const usage = parseFloat(usageStr.replace(/[^\d.-]/g, "")) || 0;
-        const cost = costStr ? parseFloat(costStr.replace(/[^\d.-]/g, "")) || 0 : null;
+        // Parse import usage (kWh) - remove any non-numeric characters except decimal point
+        const importUsage = parseFloat(importStr.replace(/[^\d.-]/g, "")) || 0;
+        
+        // Parse export usage (kWh) if available (solar export)
+        const exportUsage = exportStr ? parseFloat(exportStr.replace(/[^\d.-]/g, "")) || 0 : 0;
+        
+        // Net usage = import - export (if export exists)
+        const netUsage = importUsage - exportUsage;
+        
+        // Parse cost - SMUD format has dollar signs like "$83.83"
+        const cost = costStr ? parseFloat(costStr.replace(/[^\d.-]/g, "")) || null : null;
 
         records.push({
           date: date.toISOString().split("T")[0], // YYYY-MM-DD format
-          usage_kwh: usage,
+          usage_kwh: netUsage > 0 ? netUsage : importUsage, // Use net usage if positive, otherwise just import
           cost: cost,
         });
       }

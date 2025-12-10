@@ -349,27 +349,28 @@
 
       <section class="slide">
         <div class="energy-box p-5 pt-12 flex flex-col gap-4 flex-1 overflow-hidden h-full">
-          <div class="flex flex-col gap-3 flex-shrink-0">
-            <h1 class="text-3xl font-bold">Energy Usage</h1>
-            <p class="text-slate-300 text-sm">Track your SMUD energy consumption and costs</p>
-            
-            <!-- CSV Upload Section -->
-            <div class="bg-slate-900/70 border border-slate-700 rounded-lg p-4">
-              <h2 class="text-lg font-semibold mb-2">Upload SMUD Data</h2>
-              <p class="text-slate-400 text-xs mb-3">Export your data from SMUD's Green Button (CSV format) and upload it here</p>
-              <form id="energy-upload-form" class="flex gap-2">
-                <input
-                  id="energy-csv-input"
-                  name="csv-file"
-                  type="file"
-                  accept=".csv"
-                  required
-                  class="flex-1 px-4 py-2.5 rounded-lg bg-slate-950/70 border border-slate-700 text-slate-100 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"
-                />
-                <button type="submit" class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold shadow-lg text-sm whitespace-nowrap hover:shadow-xl transition-shadow">
-                  Upload
-                </button>
-              </form>
+          <div class="flex flex-col gap-2 flex-shrink-0">
+            <div class="flex items-center justify-between">
+              <div>
+                <h1 class="text-3xl font-bold">Energy Usage</h1>
+                <p class="text-slate-300 text-sm">Track your SMUD energy consumption and costs</p>
+              </div>
+              <!-- Compact CSV Upload Section -->
+              <div class="bg-slate-900/70 border border-slate-700 rounded-lg p-2.5">
+                <form id="energy-upload-form" class="flex gap-2 items-center">
+                  <input
+                    id="energy-csv-input"
+                    name="csv-file"
+                    type="file"
+                    accept=".csv"
+                    required
+                    class="text-xs px-2 py-1.5 rounded bg-slate-950/70 border border-slate-700 text-slate-100 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"
+                  />
+                  <button type="submit" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold shadow-lg text-xs whitespace-nowrap hover:shadow-xl transition-shadow">
+                    Upload
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
 
@@ -385,7 +386,7 @@
 
             <!-- Daily Usage Chart -->
             <div class="lg:col-span-2 today-box p-4 flex flex-col">
-              <h2 class="text-lg font-semibold mb-3">Daily Usage (Last 30 Days)</h2>
+              <h2 class="text-lg font-semibold mb-3">Usage Over Time (Last 30 Billing Periods)</h2>
               <div id="energy-chart" class="flex-1 flex items-center justify-center">
                 <p class="text-slate-400 text-center py-4 text-sm">Upload CSV data to see usage chart</p>
               </div>
