@@ -465,40 +465,104 @@ async function fetchWeather() {
     renderWeather();
   } catch (error) {
     console.error("Weather error:", error);
-    document.getElementById("weather-temp").textContent = "--°";
-    document.getElementById("weather-desc").textContent = "Unable to load";
+    // Set error states for all weather elements
+    const elements = {
+      "weather-temp-now": "--°",
+      "weather-desc-now": "Unable to load",
+      "weather-feels-like": "--°",
+      "weather-humidity": "--%",
+      "weather-wind": "-- mph",
+      "weather-location": "--",
+      "weather-desc-today": "--",
+      "weather-temp-range": "--° / --°",
+    };
+    Object.entries(elements).forEach(([id, text]) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    });
+    const forecastEl = document.getElementById("weather-forecast");
+    if (forecastEl) {
+      forecastEl.innerHTML = '<p class="text-slate-400 text-center py-2 text-sm">Unable to load forecast.</p>';
+    }
   }
 }
 
 function renderWeather() {
-  if (!weatherData) return;
-  const iconEl = document.getElementById("weather-icon");
-  const tempEl = document.getElementById("weather-temp");
-  const descEl = document.getElementById("weather-desc");
-  const detailsEl = document.getElementById("weather-details");
+  if (!weatherData || !weatherData.current) return;
 
-  if (iconEl) {
-    const iconMap = {
-      "01d": "☀️", "01n": "🌙",
-      "02d": "⛅", "02n": "☁️",
-      "03d": "☁️", "03n": "☁️",
-      "04d": "☁️", "04n": "☁️",
-      "09d": "🌧️", "09n": "🌧️",
-      "10d": "🌦️", "10n": "🌧️",
-      "11d": "⛈️", "11n": "⛈️",
-      "13d": "❄️", "13n": "❄️",
-      "50d": "🌫️", "50n": "🌫️",
-    };
-    iconEl.textContent = iconMap[weatherData.icon] || "⛅";
+  const { current, today, forecast } = weatherData;
+
+  // Render current weather
+  const iconNowEl = document.getElementById("weather-icon-now");
+  const tempNowEl = document.getElementById("weather-temp-now");
+  const descNowEl = document.getElementById("weather-desc-now");
+  const feelsLikeEl = document.getElementById("weather-feels-like");
+  const humidityEl = document.getElementById("weather-humidity");
+  const windEl = document.getElementById("weather-wind");
+  const locationEl = document.getElementById("weather-location");
+
+  if (iconNowEl) {
+    iconNowEl.src = `http://openweathermap.org/img/wn/${current.icon}@2x.png`;
+    iconNowEl.alt = current.description;
   }
-  if (tempEl) tempEl.textContent = `${weatherData.temp}°`;
-  if (descEl) descEl.textContent = weatherData.description.charAt(0).toUpperCase() + weatherData.description.slice(1);
-  if (detailsEl) {
-    detailsEl.innerHTML = `
-      Feels like ${weatherData.feelsLike}°<br>
-      ${weatherData.humidity}% humidity • ${weatherData.windSpeed} mph wind<br>
-      ${weatherData.city}, ${weatherData.country}
-    `;
+  if (tempNowEl) tempNowEl.textContent = `${current.temp}°`;
+  if (descNowEl) {
+    descNowEl.textContent = current.description.charAt(0).toUpperCase() + current.description.slice(1);
+  }
+  if (feelsLikeEl) feelsLikeEl.textContent = `${current.feelsLike}°`;
+  if (humidityEl) humidityEl.textContent = `${current.humidity}%`;
+  if (windEl) windEl.textContent = `${current.windSpeed} mph`;
+  if (locationEl) locationEl.textContent = `${current.city}${current.country ? `, ${current.country}` : ""}`;
+
+  // Render today's summary
+  const iconTodayEl = document.getElementById("weather-icon-today");
+  const descTodayEl = document.getElementById("weather-desc-today");
+  const tempRangeEl = document.getElementById("weather-temp-range");
+
+  if (iconTodayEl && today) {
+    iconTodayEl.src = `http://openweathermap.org/img/wn/${today.icon}@2x.png`;
+    iconTodayEl.alt = today.description;
+  }
+  if (descTodayEl && today) {
+    descTodayEl.textContent = today.description.charAt(0).toUpperCase() + today.description.slice(1);
+  }
+  if (tempRangeEl && today) {
+    tempRangeEl.textContent = `${today.min}° / ${today.max}°`;
+  }
+
+  // Render 5-day forecast
+  const forecastEl = document.getElementById("weather-forecast");
+  if (forecastEl && forecast && forecast.length > 0) {
+    forecastEl.innerHTML = forecast
+      .map((day, index) => {
+        // Skip today (index 0) as we already show it
+        if (index === 0) return "";
+        
+        const date = new Date(day.date);
+        const dayName = index === 1 ? "Tomorrow" : day.dayName;
+        
+        return `
+          <div class="forecast-day-item">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3 flex-1">
+                <img src="http://openweathermap.org/img/wn/${day.icon}@2x.png" alt="${day.description}" class="w-10 h-10" />
+                <div class="flex-1">
+                  <div class="text-sm font-semibold text-slate-200">${dayName}</div>
+                  <div class="text-xs text-slate-400 capitalize">${day.description}</div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm font-semibold text-slate-200">${day.max}°</div>
+                <div class="text-xs text-slate-400">${day.min}°</div>
+              </div>
+            </div>
+          </div>
+        `;
+      })
+      .filter(html => html !== "")
+      .join("");
+  } else if (forecastEl) {
+    forecastEl.innerHTML = '<p class="text-slate-400 text-center py-2 text-sm">No forecast available.</p>';
   }
 }
 
