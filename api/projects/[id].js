@@ -84,8 +84,15 @@ module.exports = async (req, res) => {
 
     if (method === "DELETE") {
       // DELETE /api/projects/:id
-      const { error } = await supabase.from("projects").delete().eq("id", id);
-      if (error) throw error;
+      const { data, error } = await supabase.from("projects").delete().eq("id", id).select();
+      if (error) {
+        console.error("Supabase delete error:", error);
+        throw error;
+      }
+      // Check if any rows were deleted
+      if (!data || data.length === 0) {
+        return res.status(404).json({ error: "Project not found" });
+      }
       return res.status(204).end();
     }
 

@@ -66,13 +66,36 @@ function setActiveSlide(index) {
   });
 }
 
+let rotationPaused = false;
+
+function pauseRotation() {
+  rotationPaused = true;
+  if (slideTimer) {
+    clearTimeout(slideTimer);
+    slideTimer = null;
+  }
+}
+
+function resumeRotation() {
+  rotationPaused = false;
+  if (slideTimer) {
+    clearTimeout(slideTimer);
+    slideTimer = null;
+  }
+  startRotation();
+}
+
 function startRotation() {
+  if (rotationPaused) return; // Don't start if paused
+  
   if (slideTimer) {
     clearTimeout(slideTimer);
     slideTimer = null;
   }
   
   function advanceSlide() {
+    if (rotationPaused) return; // Don't advance if paused
+    
     const nextIndex = (currentSlideIndex + 1) % slides.length;
     setActiveSlide(nextIndex);
     
@@ -152,7 +175,17 @@ async function updateProject(id, data) {
 async function deleteProject(id) {
   try {
     const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
-    if (!res.ok && res.status !== 204) throw new Error(`Delete failed: ${res.status}`);
+    
+    // 204 No Content is a successful delete response
+    if (res.status === 204) {
+      return; // Success
+    }
+    
+    // If not 204, check if it's an error
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: `Delete failed: ${res.status}` }));
+      throw new Error(errorData.error || `Delete failed: ${res.status}`);
+    }
   } catch (error) {
     console.error("Delete project error:", error);
     throw error;
@@ -222,7 +255,8 @@ function createProjectElement(project, refresh) {
         await refreshProjects();
       } catch (error) {
         console.error("Error deleting project:", error);
-        alert("Failed to delete project");
+        const errorMessage = error.message || "Failed to delete project";
+        alert(`Failed to delete project: ${errorMessage}`);
       }
     }
   });
@@ -297,6 +331,20 @@ function setupForm() {
   const input = document.getElementById("project-input");
   if (!form || !input) return;
 
+  // Pause rotation when user focuses on input
+  input.addEventListener("focus", () => {
+    pauseRotation();
+  });
+
+  // Resume rotation when user leaves input (with a small delay)
+  input.addEventListener("blur", () => {
+    setTimeout(() => {
+      if (document.activeElement !== input) {
+        resumeRotation();
+      }
+    }, 500);
+  });
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const value = input.value.trim();
@@ -305,6 +353,7 @@ function setupForm() {
       await addProject(value);
       input.value = "";
       await refreshProjects();
+      resumeRotation(); // Resume after submitting
     } catch (error) {
       console.error("Error adding project from form:", error);
     }
@@ -888,6 +937,20 @@ function setupNotesForm() {
   const colorSelect = document.getElementById("note-color");
   if (!form || !input) return;
 
+  // Pause rotation when user focuses on input
+  input.addEventListener("focus", () => {
+    pauseRotation();
+  });
+
+  // Resume rotation when user leaves input
+  input.addEventListener("blur", () => {
+    setTimeout(() => {
+      if (document.activeElement !== input) {
+        resumeRotation();
+      }
+    }, 500);
+  });
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const content = input.value.trim();
@@ -895,6 +958,7 @@ function setupNotesForm() {
     if (!content) return;
     await addNote(content, color);
     input.value = "";
+    resumeRotation(); // Resume after submitting
   });
 }
 
@@ -1004,12 +1068,27 @@ function setupShoppingForm() {
   const input = document.getElementById("shopping-input");
   if (!form || !input) return;
 
+  // Pause rotation when user focuses on input
+  input.addEventListener("focus", () => {
+    pauseRotation();
+  });
+
+  // Resume rotation when user leaves input
+  input.addEventListener("blur", () => {
+    setTimeout(() => {
+      if (document.activeElement !== input) {
+        resumeRotation();
+      }
+    }, 500);
+  });
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const item = input.value.trim();
     if (!item) return;
     await addShoppingItem(item);
     input.value = "";
+    resumeRotation(); // Resume after submitting
   });
 }
 
