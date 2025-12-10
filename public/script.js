@@ -247,11 +247,29 @@ function createProjectElement(project, refresh) {
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", project.id);
     li.classList.add("dragging");
+    dragState.dragging = li;
     pauseRotation(); // Pause rotation while dragging
   });
 
   li.addEventListener("dragend", (e) => {
     li.classList.remove("dragging");
+    
+    // Clean up placeholder if it still exists
+    if (dragState.placeholder && dragState.placeholder.parentNode) {
+      dragState.placeholder.remove();
+    }
+    
+    // Cancel any pending animation frame
+    if (dragState.rafId) {
+      cancelAnimationFrame(dragState.rafId);
+      dragState.rafId = null;
+    }
+    
+    // Reset drag state
+    dragState.dragging = null;
+    dragState.placeholder = null;
+    dragState.lastY = null;
+    
     resumeRotation(); // Resume rotation after dragging
   });
 
@@ -391,57 +409,136 @@ async function renderProjects() {
 // Setup drag and drop handlers for a project column
 // Use a WeakMap to track if handlers are already set up
 const dragDropSetup = new WeakMap();
+let dragState = {
+  dragging: null,
+  placeholder: null,
+  rafId: null,
+  lastY: null
+};
 
 function setupDragAndDrop(column) {
   // Skip if already set up
   if (dragDropSetup.has(column)) return;
   dragDropSetup.set(column, true);
 
+  // Create placeholder element for smooth dragging
+  const placeholder = document.createElement("div");
+  placeholder.className = "project-item-placeholder";
+  placeholder.style.display = "none";
+
   column.addEventListener("dragover", (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
-    const afterElement = getDragAfterElement(column, e.clientY);
-    const dragging = document.querySelector(".dragging");
-    if (!dragging) return;
     
-    if (afterElement == null) {
-      column.appendChild(dragging);
-    } else {
-      column.insertBefore(dragging, afterElement);
+    const dragging = dragState.dragging;
+    if (!dragging) return;
+
+    // Throttle updates using requestAnimationFrame
+    if (dragState.rafId) {
+      cancelAnimationFrame(dragState.rafId);
+    }
+
+    dragState.rafId = requestAnimationFrame(() => {
+      const afterElement = getDragAfterElement(column, e.clientY);
+      
+      // Only update if position actually changed
+      if (dragState.lastY !== e.clientY) {
+        dragState.lastY = e.clientY;
+        
+        // Show placeholder
+        if (!dragState.placeholder) {
+          dragState.placeholder = placeholder.cloneNode(true);
+          dragState.placeholder.style.display = "block";
+          dragState.placeholder.style.height = `${dragging.offsetHeight}px`;
+          dragState.placeholder.style.marginBottom = "8px";
+        }
+        
+        // Insert placeholder at new position
+        if (afterElement == null) {
+          if (dragState.placeholder.parentNode !== column) {
+            column.appendChild(dragState.placeholder);
+          }
+        } else {
+          if (dragState.placeholder.parentNode !== column || dragState.placeholder.nextSibling !== afterElement) {
+            column.insertBefore(dragState.placeholder, afterElement);
+          }
+        }
+      }
+    });
+  });
+
+  column.addEventListener("dragleave", (e) => {
+    // Only remove placeholder if we're actually leaving the column
+    if (!column.contains(e.relatedTarget)) {
+      if (dragState.placeholder && dragState.placeholder.parentNode) {
+        dragState.placeholder.remove();
+      }
     }
   });
 
   column.addEventListener("drop", async (e) => {
     e.preventDefault();
-    const draggedId = e.dataTransfer.getData("text/plain");
-    if (!draggedId) return;
+    
+    // Cancel any pending animation frame
+    if (dragState.rafId) {
+      cancelAnimationFrame(dragState.rafId);
+      dragState.rafId = null;
+    }
 
-    const allItems = Array.from(column.children);
+    const draggedId = e.dataTransfer.getData("text/plain");
+    if (!draggedId || !dragState.dragging) return;
+
+    // Remove placeholder
+    if (dragState.placeholder && dragState.placeholder.parentNode) {
+      dragState.placeholder.remove();
+    }
+
+    // Get final order from DOM (excluding placeholder)
+    const allItems = Array.from(column.children).filter(item => 
+      item !== dragState.placeholder && item.classList.contains("project-item")
+    );
     
-    // Get all projects to determine status
+    // Determine status from column ID
+    let status = "todo";
+    if (column.id === "board-inprogress") {
+      status = "in_progress";
+    } else if (column.id === "board-done") {
+      status = "done";
+    }
+    
+    // Get all projects to find which ones are in this status column
     const projects = await fetchProjects();
-    const draggedProject = projects.find(p => p.id === draggedId);
-    if (!draggedProject) return;
-    
-    const status = draggedProject.status || "todo";
     const sameStatusProjects = projects.filter(p => (p.status || "todo") === status);
     
-    // Reorder the projects array based on new DOM order
-    const reorderedProjects = [];
+    // Reorder projects based on DOM position
+    const orderUpdates = [];
     allItems.forEach((item, index) => {
       const projectId = item.dataset.projectId;
       const proj = sameStatusProjects.find(p => p.id === projectId);
-      if (proj) {
-        reorderedProjects.push({ ...proj, order: index });
+      if (proj && proj.order !== index) {
+        orderUpdates.push({ id: projectId, order: index });
       }
     });
 
-    // Update all projects with new order
-    for (const proj of reorderedProjects) {
-      await updateProject(proj.id, { order: proj.order });
+    // Only update if there are changes
+    if (orderUpdates.length > 0) {
+      // Batch update all projects in parallel
+      const updatePromises = orderUpdates.map(({ id, order }) => 
+        updateProject(id, { order }).catch(err => {
+          console.error(`Failed to update order for project ${id}:`, err);
+        })
+      );
+      
+      await Promise.all(updatePromises);
+      
+      // Refresh to ensure UI is in sync
+      await renderProjects();
     }
     
-    await renderProjects();
+    // Reset drag state
+    dragState.dragging = null;
+    dragState.placeholder = null;
+    dragState.lastY = null;
   });
 }
 

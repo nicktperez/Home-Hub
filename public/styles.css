@@ -834,12 +834,32 @@ header h1 {
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
   cursor: move;
   user-select: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  will-change: transform, opacity;
 }
 
 .project-item.dragging {
-  opacity: 0.5;
-  transform: scale(0.95);
+  opacity: 0.4;
+  transform: scale(0.98);
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.project-item-placeholder {
+  border: 2px dashed rgba(59, 130, 246, 0.5);
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.1);
+  margin-bottom: 8px;
+  transition: none;
+  pointer-events: none;
+}
+
+/* Optimize drag performance */
+#board-todo,
+#board-inprogress,
+#board-done {
+  contain: layout style paint;
+  will-change: contents;
 }
 
 /* Simplified project item */
