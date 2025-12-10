@@ -805,7 +805,7 @@ header h1 {
 .board-col {
   background: rgba(30, 41, 59, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -832,7 +832,7 @@ header h1 {
   gap: 10px;
   align-items: center;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 6px;
   background: linear-gradient(135deg, rgba(13, 19, 31, 0.9), rgba(9, 14, 23, 0.9));
   border: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
@@ -854,10 +854,11 @@ header h1 {
 }
 
 .project-item.dragging {
-  opacity: 0.5;
-  transform: scale(0.95);
+  opacity: 0.3;
+  transform: scale(0.9);
   z-index: 1000;
   position: relative;
+  pointer-events: none;
 }
 
 .project-item-placeholder {
