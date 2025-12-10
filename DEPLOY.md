@@ -133,7 +133,28 @@ CREATE POLICY "Allow all operations on shopping" ON shopping
    - Paste your OpenWeatherMap API key when prompted
    - Select "Production", "Preview", and "Development" (all three)
 
-6. **Redeploy** to apply the environment variables:
+6. **Add Google Calendar API Key** (Required for calendar events widget):
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select an existing one
+   - Enable the "Calendar API" for your project
+   - Go to "Credentials" → "Create Credentials" → "API Key"
+   - Copy your API key
+   - (Optional) Restrict the API key to only the Calendar API for security
+   
+   ```bash
+   vercel env add GOOGLE_CALENDAR_API_KEY
+   ```
+   - Paste your Google Calendar API key when prompted
+   - Select "Production", "Preview", and "Development" (all three)
+   
+   ```bash
+   vercel env add GOOGLE_CALENDAR_ID
+   ```
+   - Paste your Google Calendar ID (found in your calendar embed URL, the part after `src=`)
+   - If not set, it will use the default calendar ID from your embed URLs
+   - Select "Production", "Preview", and "Development" (all three)
+
+7. **Redeploy** to apply the environment variables:
    ```bash
    vercel --prod
    ```
@@ -162,6 +183,8 @@ CREATE POLICY "Allow all operations on shopping" ON shopping
    - Add `SUPABASE_URL` with your Supabase project URL
    - Add `SUPABASE_ANON_KEY` with your Supabase anon key
    - (Optional) Add `OPENWEATHER_API_KEY` with your OpenWeatherMap API key for weather widget
+   - (Recommended) Add `GOOGLE_CALENDAR_API_KEY` with your Google Calendar API key for events widget
+   - (Optional) Add `GOOGLE_CALENDAR_ID` with your specific calendar ID (defaults to the one in your embed URLs)
    - Make sure to select "Production", "Preview", and "Development" for each
 
 4. **Deploy**:

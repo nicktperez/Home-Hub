@@ -61,39 +61,55 @@
         <header class="mb-4">
           <h1 class="text-4xl font-bold">Today</h1>
         </header>
-        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="today-box p-8 flex flex-col justify-center text-center">
-            <h2 class="text-3xl font-semibold mb-4">Today</h2>
-            <p id="today-text" class="text-2xl text-slate-100 mb-6"></p>
-            <div id="weather-widget" class="weather-widget">
-              <div class="flex items-center justify-center gap-4">
-                <div id="weather-icon" class="text-6xl">⛅</div>
-                <div class="text-left">
-                  <div id="weather-temp" class="text-4xl font-bold">--°</div>
-                  <div id="weather-desc" class="text-slate-300">Loading...</div>
-                  <div id="weather-details" class="text-sm text-slate-400 mt-2"></div>
+        <div class="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-1 flex flex-col gap-6">
+            <div class="today-box p-6 flex flex-col justify-center text-center">
+              <h2 class="text-2xl font-semibold mb-3">Today</h2>
+              <p id="today-text" class="text-xl text-slate-100 mb-4"></p>
+              <div id="weather-widget" class="weather-widget">
+                <div class="flex items-center justify-center gap-3">
+                  <div id="weather-icon" class="text-5xl">⛅</div>
+                  <div class="text-left">
+                    <div id="weather-temp" class="text-3xl font-bold">--°</div>
+                    <div id="weather-desc" class="text-slate-300 text-sm">Loading...</div>
+                    <div id="weather-details" class="text-xs text-slate-400 mt-1"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="today-box p-6 flex flex-col">
+              <h2 class="text-xl font-semibold mb-3">Quick Stats</h2>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-3">
+                  <p class="text-slate-400 text-xs mb-1">Active Projects</p>
+                  <p id="quick-projects" class="text-2xl font-semibold">0</p>
+                </div>
+                <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-3">
+                  <p class="text-slate-400 text-xs mb-1">Shopping Items</p>
+                  <p id="quick-shopping" class="text-2xl font-semibold">0</p>
+                </div>
+                <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-3">
+                  <p class="text-slate-400 text-xs mb-1">Notes</p>
+                  <p id="quick-notes" class="text-2xl font-semibold">0</p>
+                </div>
+                <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-3">
+                  <p class="text-slate-400 text-xs mb-1">Done Today</p>
+                  <p id="quick-done" class="text-2xl font-semibold">0</p>
                 </div>
               </div>
             </div>
           </div>
-          <div class="today-box p-8 flex flex-col">
-            <h2 class="text-2xl font-semibold mb-4">Quick Stats</h2>
-            <div class="grid grid-cols-2 gap-4 flex-1">
-              <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-4">
-                <p class="text-slate-400 text-xs mb-1">Active Projects</p>
-                <p id="quick-projects" class="text-3xl font-semibold">0</p>
+          <div class="lg:col-span-2 flex flex-col gap-6">
+            <div class="today-box p-6 flex flex-col flex-1">
+              <h2 class="text-2xl font-semibold mb-4">Today's Events</h2>
+              <div id="today-events" class="flex-1 overflow-y-auto space-y-3">
+                <p class="text-slate-400 text-center py-4">Loading events...</p>
               </div>
-              <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-4">
-                <p class="text-slate-400 text-xs mb-1">Shopping Items</p>
-                <p id="quick-shopping" class="text-3xl font-semibold">0</p>
-              </div>
-              <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-4">
-                <p class="text-slate-400 text-xs mb-1">Notes</p>
-                <p id="quick-notes" class="text-3xl font-semibold">0</p>
-              </div>
-              <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-4">
-                <p class="text-slate-400 text-xs mb-1">Done Today</p>
-                <p id="quick-done" class="text-3xl font-semibold">0</p>
+            </div>
+            <div class="today-box p-6 flex flex-col">
+              <h2 class="text-xl font-semibold mb-3">Tomorrow Preview</h2>
+              <div id="tomorrow-events" class="space-y-2 max-h-48 overflow-y-auto">
+                <p class="text-slate-400 text-center py-2 text-sm">Loading...</p>
               </div>
             </div>
           </div>

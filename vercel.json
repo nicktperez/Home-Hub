@@ -2,8 +2,36 @@
   "version": 2,
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "src": "/api/calendar",
+      "dest": "/api/calendar.js"
+    },
+    {
+      "src": "/api/weather",
+      "dest": "/api/weather.js"
+    },
+    {
+      "src": "/api/projects",
+      "dest": "/api/projects.js"
+    },
+    {
+      "src": "/api/projects/(?<id>[^/]+)",
+      "dest": "/api/projects/[id].js"
+    },
+    {
+      "src": "/api/notes",
+      "dest": "/api/notes.js"
+    },
+    {
+      "src": "/api/notes/(?<id>[^/]+)",
+      "dest": "/api/notes/[id].js"
+    },
+    {
+      "src": "/api/shopping",
+      "dest": "/api/shopping.js"
+    },
+    {
+      "src": "/api/shopping/(?<id>[^/]+)",
+      "dest": "/api/shopping/[id].js"
     },
     {
       "src": "/(.*)",

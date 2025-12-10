@@ -376,6 +376,82 @@ function setupNavButtons() {
   });
 }
 
+// ===== CALENDAR EVENTS =====
+let calendarData = null;
+let calendarTimer = null;
+
+async function fetchCalendarEvents() {
+  try {
+    const res = await fetch("/api/calendar");
+    if (!res.ok) throw new Error("Calendar fetch failed");
+    const data = await res.json();
+    calendarData = data;
+    renderCalendarEvents();
+  } catch (error) {
+    console.error("Calendar error:", error);
+    const todayEl = document.getElementById("today-events");
+    const tomorrowEl = document.getElementById("tomorrow-events");
+    if (todayEl) {
+      todayEl.innerHTML = '<p class="text-slate-400 text-center py-4">Unable to load events. Check API configuration.</p>';
+    }
+    if (tomorrowEl) {
+      tomorrowEl.innerHTML = '<p class="text-slate-400 text-center py-2 text-sm">Unable to load events.</p>';
+    }
+  }
+}
+
+function renderCalendarEvents() {
+  if (!calendarData) return;
+
+  const todayEl = document.getElementById("today-events");
+  const tomorrowEl = document.getElementById("tomorrow-events");
+
+  // Render today's events
+  if (todayEl) {
+    if (calendarData.today && calendarData.today.length > 0) {
+      todayEl.innerHTML = calendarData.today
+        .map(
+          (event) => `
+        <div class="calendar-event-item">
+          <div class="event-time">${event.time}</div>
+          <div class="event-details">
+            <div class="event-title">${escapeHtml(event.title)}</div>
+            ${event.location ? `<div class="event-location">📍 ${escapeHtml(event.location)}</div>` : ""}
+            ${event.description ? `<div class="event-description">${escapeHtml(event.description.substring(0, 100))}${event.description.length > 100 ? "..." : ""}</div>` : ""}
+          </div>
+        </div>
+      `
+        )
+        .join("");
+    } else {
+      todayEl.innerHTML = '<p class="text-slate-400 text-center py-4">No events scheduled for today.</p>';
+    }
+  }
+
+  // Render tomorrow's events
+  if (tomorrowEl) {
+    if (calendarData.tomorrow && calendarData.tomorrow.length > 0) {
+      const previewCount = Math.min(calendarData.tomorrow.length, 3);
+      tomorrowEl.innerHTML = calendarData.tomorrow
+        .slice(0, previewCount)
+        .map(
+          (event) => `
+        <div class="calendar-event-item-small">
+          <div class="event-time-small">${event.time}</div>
+          <div class="event-title-small">${escapeHtml(event.title)}</div>
+        </div>
+      `
+        )
+        .join("");
+      if (calendarData.tomorrow.length > previewCount) {
+        tomorrowEl.innerHTML += `<p class="text-slate-400 text-xs text-center mt-2">+${calendarData.tomorrow.length - previewCount} more</p>`;
+      }
+    } else {
+      tomorrowEl.innerHTML = '<p class="text-slate-400 text-center py-2 text-sm">No events scheduled for tomorrow.</p>';
+    }
+  }
+}
+
 // ===== WEATHER =====
 let weatherData = null;
 let weatherTimer = null;
@@ -733,6 +809,7 @@ function init() {
   slides = Array.from(document.querySelectorAll(".slide"));
   renderToday();
   fetchWeather();
+  fetchCalendarEvents();
   refreshProjects();
   refreshNotes();
   refreshShopping();
@@ -747,6 +824,8 @@ function init() {
 
   // Refresh weather every 10 minutes
   weatherTimer = setInterval(fetchWeather, 600000);
+  // Refresh calendar events every 5 minutes
+  calendarTimer = setInterval(fetchCalendarEvents, 300000);
 }
 
 document.addEventListener("DOMContentLoaded", init);

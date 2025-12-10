@@ -224,6 +224,81 @@ header h1 {
   color: rgba(255, 255, 255, 0.7);
 }
 
+/* ===== CALENDAR EVENTS ===== */
+.calendar-event-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(13, 19, 31, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  border-left: 3px solid var(--accent-1);
+}
+
+.calendar-event-item:hover {
+  background: rgba(13, 19, 31, 0.8);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateX(2px);
+}
+
+.event-time {
+  min-width: 100px;
+  font-weight: 600;
+  color: var(--accent-2);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 0.25rem;
+}
+
+.event-details {
+  flex: 1;
+}
+
+.event-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e8ecf2;
+  margin-bottom: 0.5rem;
+}
+
+.event-location {
+  font-size: 0.9rem;
+  color: #aeb6c5;
+  margin-bottom: 0.25rem;
+}
+
+.event-description {
+  font-size: 0.85rem;
+  color: #8d95a7;
+  line-height: 1.4;
+  margin-top: 0.5rem;
+}
+
+.calendar-event-item-small {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(13, 19, 31, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  border-left: 2px solid var(--accent-3);
+}
+
+.event-time-small {
+  min-width: 70px;
+  font-weight: 600;
+  color: var(--accent-3);
+  font-size: 0.8rem;
+}
+
+.event-title-small {
+  font-size: 0.9rem;
+  color: #e8ecf2;
+  flex: 1;
+}
+
 /* ===== PROJECTS ===== */
 .board-grid {
   display: grid;
