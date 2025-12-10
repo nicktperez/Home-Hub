@@ -371,8 +371,9 @@ function createProjectElement(project, refresh) {
 async function renderProjects() {
   const listEl = document.getElementById("projects-list");
   if (!listEl) return;
-  listEl.innerHTML = "";
+  
   const projects = await fetchProjects();
+  
   // Summary
   const total = projects.length;
   const todo = projects.filter((p) => (p.status || "todo") === "todo").length;
@@ -387,13 +388,27 @@ async function renderProjects() {
   if (sInprogress) sInprogress.textContent = inprogress;
   if (sDone) sDone.textContent = done;
 
-  const column = document.createElement("div");
-  column.className = "grid md:grid-cols-2 xl:grid-cols-3 gap-4";
+  // Clear and populate columns
+  const todoCol = document.getElementById("board-todo");
+  const inprogressCol = document.getElementById("board-inprogress");
+  const doneCol = document.getElementById("board-done");
+  
+  if (todoCol) todoCol.innerHTML = "";
+  if (inprogressCol) inprogressCol.innerHTML = "";
+  if (doneCol) doneCol.innerHTML = "";
+
   projects.forEach((project) => {
     const item = createProjectElement(project, renderProjects);
-    column.appendChild(item);
+    const status = project.status || "todo";
+    
+    if (status === "done") {
+      if (doneCol) doneCol.appendChild(item);
+    } else if (status === "in_progress") {
+      if (inprogressCol) inprogressCol.appendChild(item);
+    } else {
+      if (todoCol) todoCol.appendChild(item);
+    }
   });
-  listEl.appendChild(column);
 }
 
 function setupForm() {
@@ -760,7 +775,7 @@ function renderWeather() {
   const locationEl = document.getElementById("weather-location");
 
   if (iconNowEl) {
-    iconNowEl.src = `http://openweathermap.org/img/wn/${current.icon}@2x.png`;
+    iconNowEl.src = `https://openweathermap.org/img/wn/${current.icon}@2x.png`;
     iconNowEl.alt = current.description;
   }
   if (tempNowEl) tempNowEl.textContent = `${current.temp}°`;
@@ -778,7 +793,7 @@ function renderWeather() {
   const tempRangeEl = document.getElementById("weather-temp-range");
 
   if (iconTodayEl && today) {
-    iconTodayEl.src = `http://openweathermap.org/img/wn/${today.icon}@2x.png`;
+    iconTodayEl.src = `https://openweathermap.org/img/wn/${today.icon}@2x.png`;
     iconTodayEl.alt = today.description;
   }
   if (descTodayEl && today) {
@@ -803,7 +818,7 @@ function renderWeather() {
           <div class="forecast-day-item">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3 flex-1">
-                <img src="http://openweathermap.org/img/wn/${day.icon}@2x.png" alt="${day.description}" class="w-10 h-10" />
+                <img src="https://openweathermap.org/img/wn/${day.icon}@2x.png" alt="${day.description}" class="w-10 h-10" />
                 <div class="flex-1">
                   <div class="text-sm font-semibold text-slate-200">${dayName}</div>
                   <div class="text-xs text-slate-400 capitalize">${day.description}</div>
