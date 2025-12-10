@@ -54,7 +54,6 @@ CREATE TABLE shopping (
   item TEXT NOT NULL,
   checked BOOLEAN DEFAULT false,
   updatedAt TEXT NOT NULL,
-  createdAt TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -73,6 +72,13 @@ CREATE POLICY "Allow all operations on notes" ON notes
 
 CREATE POLICY "Allow all operations on shopping" ON shopping
   FOR ALL USING (true) WITH CHECK (true);
+```
+
+**If you're getting errors about missing `createdAt` column**, run this migration in the SQL Editor:
+
+```sql
+-- Fix shopping table: remove createdAt if it exists, keep only created_at
+ALTER TABLE shopping DROP COLUMN IF EXISTS "createdAt";
 ```
 
 4. Get your Supabase credentials:

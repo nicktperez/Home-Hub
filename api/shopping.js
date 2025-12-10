@@ -22,8 +22,8 @@ module.exports = async (req, res) => {
 
   try {
     if (method === "GET" && !id) {
-      // GET /api/shopping
-      const { data, error } = await supabase.from("shopping").select("*").order("createdAt", { ascending: true });
+      // GET /api/shopping - order by created_at (timestamp column)
+      const { data, error } = await supabase.from("shopping").select("*").order("created_at", { ascending: true });
       if (error) throw error;
       return res.status(200).json(data || []);
     }
@@ -37,13 +37,13 @@ module.exports = async (req, res) => {
       }
 
       const now = new Date().toISOString();
+      // Insert without createdAt - use created_at (auto-set by DB) instead
       const { data, error } = await supabase
         .from("shopping")
         .insert({
           id: Date.now().toString(),
           item: item.trim(),
           checked: false,
-          createdAt: now,
           updatedAt: now,
         })
         .select()
