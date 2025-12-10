@@ -20,9 +20,33 @@ module.exports = async (req, res) => {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
   const { method } = req;
-  const { id } = req.query;
+  
+  // Extract ID from query (Vercel dynamic routes use req.query)
+  // Also check URL path as fallback
+  let id = req.query?.id;
+  
+  // If not in query, try to extract from URL path
+  if (!id && req.url) {
+    const urlMatch = req.url.match(/\/api\/projects\/([^/?]+)/);
+    if (urlMatch) {
+      id = decodeURIComponent(urlMatch[1]);
+    }
+  }
+  
+  // Log for debugging
+  console.log("Delete request:", { 
+    method, 
+    query: req.query, 
+    url: req.url, 
+    extractedId: id 
+  });
 
   if (!id) {
+    console.error("No ID found in request:", { 
+      query: req.query, 
+      url: req.url,
+      headers: req.headers 
+    });
     return res.status(400).json({ error: "Project ID is required" });
   }
 

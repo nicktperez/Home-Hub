@@ -173,7 +173,12 @@ async function updateProject(id, data) {
 }
 
 async function deleteProject(id) {
+  if (!id) {
+    throw new Error("Project ID is required");
+  }
+  
   try {
+    console.log("Deleting project with ID:", id);
     const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
     
     // 204 No Content is a successful delete response
@@ -251,10 +256,15 @@ function createProjectElement(project, refresh) {
   delBtn.addEventListener("click", async () => {
     if (confirm(`Delete "${project.title}"?`)) {
       try {
-        await deleteProject(project.id);
+        const projectId = project.id;
+        if (!projectId) {
+          throw new Error("Project ID is missing");
+        }
+        console.log("Attempting to delete project:", projectId, project);
+        await deleteProject(projectId);
         await refreshProjects();
       } catch (error) {
-        console.error("Error deleting project:", error);
+        console.error("Error deleting project:", error, project);
         const errorMessage = error.message || "Failed to delete project";
         alert(`Failed to delete project: ${errorMessage}`);
       }
