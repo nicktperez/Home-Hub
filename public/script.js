@@ -254,11 +254,6 @@ function createProjectElement(project, refresh) {
   li.addEventListener("dragend", (e) => {
     li.classList.remove("dragging");
     
-    // Clean up placeholder if it still exists
-    if (dragState.placeholder && dragState.placeholder.parentNode) {
-      dragState.placeholder.remove();
-    }
-    
     // Cancel any pending animation frame
     if (dragState.rafId) {
       cancelAnimationFrame(dragState.rafId);
@@ -267,7 +262,6 @@ function createProjectElement(project, refresh) {
     
     // Reset drag state
     dragState.dragging = null;
-    dragState.placeholder = null;
     dragState.lastY = null;
     
     resumeRotation(); // Resume rotation after dragging
@@ -411,7 +405,6 @@ async function renderProjects() {
 const dragDropSetup = new WeakMap();
 let dragState = {
   dragging: null,
-  placeholder: null,
   rafId: null,
   lastY: null
 };
@@ -420,11 +413,6 @@ function setupDragAndDrop(column) {
   // Skip if already set up
   if (dragDropSetup.has(column)) return;
   dragDropSetup.set(column, true);
-
-  // Create placeholder element for smooth dragging
-  const placeholder = document.createElement("div");
-  placeholder.className = "project-item-placeholder";
-  placeholder.style.display = "none";
 
   column.addEventListener("dragover", (e) => {
     e.preventDefault();
@@ -445,36 +433,24 @@ function setupDragAndDrop(column) {
       if (dragState.lastY !== e.clientY) {
         dragState.lastY = e.clientY;
         
-        // Show placeholder
-        if (!dragState.placeholder) {
-          dragState.placeholder = placeholder.cloneNode(true);
-          dragState.placeholder.style.display = "block";
-          dragState.placeholder.style.height = `${dragging.offsetHeight}px`;
-          dragState.placeholder.style.marginBottom = "8px";
-        }
-        
-        // Insert placeholder at new position
+        // Actually move the dragging element to the new position
         if (afterElement == null) {
-          if (dragState.placeholder.parentNode !== column) {
-            column.appendChild(dragState.placeholder);
+          // Move to end of column
+          if (dragging.parentNode !== column) {
+            column.appendChild(dragging);
+          } else if (dragging.nextSibling !== null) {
+            column.appendChild(dragging);
           }
         } else {
-          if (dragState.placeholder.parentNode !== column || dragState.placeholder.nextSibling !== afterElement) {
-            column.insertBefore(dragState.placeholder, afterElement);
+          // Move before the afterElement
+          if (dragging !== afterElement && dragging.nextSibling !== afterElement) {
+            column.insertBefore(dragging, afterElement);
           }
         }
       }
     });
   });
 
-  column.addEventListener("dragleave", (e) => {
-    // Only remove placeholder if we're actually leaving the column
-    if (!column.contains(e.relatedTarget)) {
-      if (dragState.placeholder && dragState.placeholder.parentNode) {
-        dragState.placeholder.remove();
-      }
-    }
-  });
 
   column.addEventListener("drop", async (e) => {
     e.preventDefault();
@@ -488,14 +464,9 @@ function setupDragAndDrop(column) {
     const draggedId = e.dataTransfer.getData("text/plain");
     if (!draggedId || !dragState.dragging) return;
 
-    // Remove placeholder
-    if (dragState.placeholder && dragState.placeholder.parentNode) {
-      dragState.placeholder.remove();
-    }
-
-    // Get final order from DOM (excluding placeholder)
+    // Get final order from DOM
     const allItems = Array.from(column.children).filter(item => 
-      item !== dragState.placeholder && item.classList.contains("project-item")
+      item.classList.contains("project-item")
     );
     
     // Determine status from column ID
@@ -537,7 +508,6 @@ function setupDragAndDrop(column) {
     
     // Reset drag state
     dragState.dragging = null;
-    dragState.placeholder = null;
     dragState.lastY = null;
   });
 }
