@@ -565,7 +565,7 @@ function renderCalendarEvents() {
   const todayEl = document.getElementById("today-events");
   const tomorrowEl = document.getElementById("tomorrow-events");
 
-  // Render today's events
+  // Render today's events (compact version)
   if (todayEl) {
     if (calendarData.today && calendarData.today.length > 0) {
       todayEl.innerHTML = calendarData.today
@@ -573,12 +573,11 @@ function renderCalendarEvents() {
           (event) => {
             const timeStr = formatEventTime(event);
             return `
-        <div class="calendar-event-item">
-          <div class="event-time">${timeStr}</div>
-          <div class="event-details">
-            <div class="event-title">${escapeHtml(event.title)}</div>
-            ${event.location ? `<div class="event-location">📍 ${escapeHtml(event.location)}</div>` : ""}
-            ${event.description ? `<div class="event-description">${escapeHtml(event.description.substring(0, 100))}${event.description.length > 100 ? "..." : ""}</div>` : ""}
+        <div class="calendar-event-item-compact">
+          <div class="event-time-compact">${timeStr}</div>
+          <div class="event-details-compact">
+            <div class="event-title-compact">${escapeHtml(event.title)}</div>
+            ${event.location ? `<div class="event-location-compact">📍 ${escapeHtml(event.location)}</div>` : ""}
           </div>
         </div>
       `;
@@ -586,35 +585,57 @@ function renderCalendarEvents() {
         )
         .join("");
     } else {
-      todayEl.innerHTML = '<p class="text-slate-400 text-center py-4">No events scheduled for today.</p>';
+      todayEl.innerHTML = '<p class="text-slate-400 text-center py-2 text-sm">No events scheduled for today.</p>';
     }
   }
 
-  // Render tomorrow's events
+  // Render tomorrow's events (very compact)
   if (tomorrowEl) {
     if (calendarData.tomorrow && calendarData.tomorrow.length > 0) {
-      const previewCount = Math.min(calendarData.tomorrow.length, 3);
+      const previewCount = Math.min(calendarData.tomorrow.length, 2);
       tomorrowEl.innerHTML = calendarData.tomorrow
         .slice(0, previewCount)
         .map(
           (event) => {
             const timeStr = formatEventTime(event);
             return `
-        <div class="calendar-event-item-small">
-          <div class="event-time-small">${timeStr}</div>
-          <div class="event-title-small">${escapeHtml(event.title)}</div>
+        <div class="calendar-event-item-tiny">
+          <div class="event-time-tiny">${timeStr}</div>
+          <div class="event-title-tiny">${escapeHtml(event.title)}</div>
         </div>
       `;
           }
         )
         .join("");
       if (calendarData.tomorrow.length > previewCount) {
-        tomorrowEl.innerHTML += `<p class="text-slate-400 text-xs text-center mt-2">+${calendarData.tomorrow.length - previewCount} more</p>`;
+        tomorrowEl.innerHTML += `<p class="text-slate-400 text-xs text-center mt-1">+${calendarData.tomorrow.length - previewCount} more</p>`;
       }
     } else {
-      tomorrowEl.innerHTML = '<p class="text-slate-400 text-center py-2 text-sm">No events scheduled for tomorrow.</p>';
+      tomorrowEl.innerHTML = '<p class="text-slate-400 text-center py-1 text-xs">No events tomorrow.</p>';
     }
   }
+}
+
+function renderTodayNotes() {
+  const todayNotesEl = document.getElementById("today-notes");
+  if (!todayNotesEl) return;
+
+  if (notesData.length === 0) {
+    todayNotesEl.innerHTML = '<p class="text-slate-400 text-center py-2 text-sm">No notes yet.</p>';
+    return;
+  }
+
+  // Show only the most recent 4 notes
+  const recentNotes = notesData.slice(0, 4);
+  todayNotesEl.innerHTML = recentNotes
+    .map(
+      (note) => `
+    <div class="note-card-compact note-${note.color || "yellow"}">
+      <div class="note-content-compact">${escapeHtml(note.content)}</div>
+    </div>
+  `
+    )
+    .join("");
 }
 
 // ===== WEATHER =====
@@ -862,6 +883,7 @@ async function deleteNote(id) {
 async function refreshNotes() {
   notesData = await fetchNotes();
   renderNotes();
+  renderTodayNotes(); // Also render notes on Today page
   updateQuickStats();
 }
 
