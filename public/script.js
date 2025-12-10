@@ -357,14 +357,377 @@ function setupNavButtons() {
   });
 }
 
+// ===== WEATHER =====
+let weatherData = null;
+let weatherTimer = null;
+
+async function fetchWeather() {
+  try {
+    const res = await fetch("/api/weather");
+    if (!res.ok) throw new Error("Weather fetch failed");
+    const data = await res.json();
+    weatherData = data;
+    renderWeather();
+  } catch (error) {
+    console.error("Weather error:", error);
+    document.getElementById("weather-temp").textContent = "--°";
+    document.getElementById("weather-desc").textContent = "Unable to load";
+  }
+}
+
+function renderWeather() {
+  if (!weatherData) return;
+  const iconEl = document.getElementById("weather-icon");
+  const tempEl = document.getElementById("weather-temp");
+  const descEl = document.getElementById("weather-desc");
+  const detailsEl = document.getElementById("weather-details");
+
+  if (iconEl) {
+    const iconMap = {
+      "01d": "☀️", "01n": "🌙",
+      "02d": "⛅", "02n": "☁️",
+      "03d": "☁️", "03n": "☁️",
+      "04d": "☁️", "04n": "☁️",
+      "09d": "🌧️", "09n": "🌧️",
+      "10d": "🌦️", "10n": "🌧️",
+      "11d": "⛈️", "11n": "⛈️",
+      "13d": "❄️", "13n": "❄️",
+      "50d": "🌫️", "50n": "🌫️",
+    };
+    iconEl.textContent = iconMap[weatherData.icon] || "⛅";
+  }
+  if (tempEl) tempEl.textContent = `${weatherData.temp}°`;
+  if (descEl) descEl.textContent = weatherData.description.charAt(0).toUpperCase() + weatherData.description.slice(1);
+  if (detailsEl) {
+    detailsEl.innerHTML = `
+      Feels like ${weatherData.feelsLike}°<br>
+      ${weatherData.humidity}% humidity • ${weatherData.windSpeed} mph wind<br>
+      ${weatherData.city}, ${weatherData.country}
+    `;
+  }
+}
+
+// ===== NOTES =====
+let notesData = [];
+let notesTimer = null;
+
+async function fetchNotes() {
+  try {
+    const res = await fetch("/api/notes");
+    if (!res.ok) return [];
+    return res.json();
+  } catch (error) {
+    console.error("Notes fetch error:", error);
+    return [];
+  }
+}
+
+async function addNote(content, color) {
+  try {
+    await fetch("/api/notes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content, color }),
+    });
+    await refreshNotes();
+  } catch (error) {
+    console.error("Add note error:", error);
+  }
+}
+
+async function updateNote(id, data) {
+  try {
+    await fetch(`/api/notes/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    await refreshNotes();
+  } catch (error) {
+    console.error("Update note error:", error);
+  }
+}
+
+async function deleteNote(id) {
+  try {
+    await fetch(`/api/notes/${id}`, { method: "DELETE" });
+    await refreshNotes();
+  } catch (error) {
+    console.error("Delete note error:", error);
+  }
+}
+
+async function refreshNotes() {
+  notesData = await fetchNotes();
+  renderNotes();
+  updateQuickStats();
+}
+
+function renderNotes() {
+  const grid = document.getElementById("notes-grid");
+  if (!grid) return;
+  grid.innerHTML = "";
+
+  if (notesData.length === 0) {
+    grid.innerHTML = '<p class="text-slate-400 text-center py-8">No notes yet. Add one above!</p>';
+    return;
+  }
+
+  notesData.forEach((note) => {
+    const card = document.createElement("div");
+    card.className = `note-card note-${note.color || "yellow"}`;
+    card.innerHTML = `
+      <div class="note-content">${escapeHtml(note.content)}</div>
+      <div class="note-actions">
+        <button class="note-edit-btn" data-id="${note.id}">Edit</button>
+        <button class="note-delete-btn" data-id="${note.id}">Delete</button>
+      </div>
+    `;
+
+    const editBtn = card.querySelector(".note-edit-btn");
+    const deleteBtn = card.querySelector(".note-delete-btn");
+
+    editBtn.addEventListener("click", () => {
+      const newContent = prompt("Edit note:", note.content);
+      if (newContent && newContent.trim()) {
+        updateNote(note.id, { content: newContent.trim() });
+      }
+    });
+
+    deleteBtn.addEventListener("click", () => {
+      if (confirm("Delete this note?")) {
+        deleteNote(note.id);
+      }
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+function setupNotesForm() {
+  const form = document.getElementById("note-form");
+  const input = document.getElementById("note-input");
+  const colorSelect = document.getElementById("note-color");
+  if (!form || !input) return;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const content = input.value.trim();
+    const color = colorSelect?.value || "yellow";
+    if (!content) return;
+    await addNote(content, color);
+    input.value = "";
+  });
+}
+
+// ===== SHOPPING LIST =====
+let shoppingData = [];
+let shoppingTimer = null;
+
+async function fetchShopping() {
+  try {
+    const res = await fetch("/api/shopping");
+    if (!res.ok) return [];
+    return res.json();
+  } catch (error) {
+    console.error("Shopping fetch error:", error);
+    return [];
+  }
+}
+
+async function addShoppingItem(item) {
+  try {
+    await fetch("/api/shopping", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ item }),
+    });
+    await refreshShopping();
+  } catch (error) {
+    console.error("Add shopping error:", error);
+  }
+}
+
+async function updateShoppingItem(id, data) {
+  try {
+    await fetch(`/api/shopping/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    await refreshShopping();
+  } catch (error) {
+    console.error("Update shopping error:", error);
+  }
+}
+
+async function deleteShoppingItem(id) {
+  try {
+    await fetch(`/api/shopping/${id}`, { method: "DELETE" });
+    await refreshShopping();
+  } catch (error) {
+    console.error("Delete shopping error:", error);
+  }
+}
+
+async function refreshShopping() {
+  shoppingData = await fetchShopping();
+  renderShopping();
+  updateQuickStats();
+}
+
+function renderShopping() {
+  const list = document.getElementById("shopping-list");
+  if (!list) return;
+  list.innerHTML = "";
+
+  if (shoppingData.length === 0) {
+    list.innerHTML = '<p class="text-slate-400 text-center py-8">Shopping list is empty. Add items above!</p>';
+    return;
+  }
+
+  const checked = shoppingData.filter((item) => item.checked);
+  const unchecked = shoppingData.filter((item) => !item.checked);
+
+  [...unchecked, ...checked].forEach((item) => {
+    const li = document.createElement("div");
+    li.className = `shopping-item ${item.checked ? "checked" : ""}`;
+    li.innerHTML = `
+      <label class="shopping-checkbox-label">
+        <input type="checkbox" ${item.checked ? "checked" : ""} data-id="${item.id}" class="shopping-checkbox" />
+        <span class="shopping-item-text">${escapeHtml(item.item)}</span>
+      </label>
+      <button class="shopping-delete-btn" data-id="${item.id}">×</button>
+    `;
+
+    const checkbox = li.querySelector(".shopping-checkbox");
+    const deleteBtn = li.querySelector(".shopping-delete-btn");
+
+    checkbox.addEventListener("change", () => {
+      updateShoppingItem(item.id, { checked: checkbox.checked });
+    });
+
+    deleteBtn.addEventListener("click", () => {
+      deleteShoppingItem(item.id);
+    });
+
+    list.appendChild(li);
+  });
+}
+
+function setupShoppingForm() {
+  const form = document.getElementById("shopping-form");
+  const input = document.getElementById("shopping-input");
+  if (!form || !input) return;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const item = input.value.trim();
+    if (!item) return;
+    await addShoppingItem(item);
+    input.value = "";
+  });
+}
+
+// ===== QUICK STATS =====
+function updateQuickStats() {
+  const projects = projectsData || [];
+  const activeProjects = projects.filter((p) => p.status !== "done").length;
+  const shoppingCount = shoppingData.filter((item) => !item.checked).length;
+  const notesCount = notesData.length;
+  const doneToday = projects.filter((p) => {
+    if (p.status !== "done") return false;
+    const updated = new Date(p.updatedAt);
+    const today = new Date();
+    return updated.toDateString() === today.toDateString();
+  }).length;
+
+  const quickProjects = document.getElementById("quick-projects");
+  const quickShopping = document.getElementById("quick-shopping");
+  const quickNotes = document.getElementById("quick-notes");
+  const quickDone = document.getElementById("quick-done");
+
+  if (quickProjects) quickProjects.textContent = activeProjects;
+  if (quickShopping) quickShopping.textContent = shoppingCount;
+  if (quickNotes) quickNotes.textContent = notesCount;
+  if (quickDone) quickDone.textContent = doneToday;
+}
+
+// ===== REAL-TIME SYNC =====
+const SYNC_INTERVAL_MS = 5000; // Poll every 5 seconds
+let syncTimer = null;
+let projectsData = [];
+
+function startRealTimeSync() {
+  if (syncTimer) clearInterval(syncTimer);
+  syncTimer = setInterval(async () => {
+    // Only sync if not actively editing (simple debounce)
+    if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") {
+      return;
+    }
+    await Promise.all([refreshProjects(), refreshNotes(), refreshShopping()]);
+  }, SYNC_INTERVAL_MS);
+}
+
+async function refreshProjects() {
+  projectsData = await fetchProjects();
+  renderProjects();
+  updateQuickStats();
+}
+
+// ===== UTILITY =====
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ===== PERFORMANCE OPTIMIZATIONS =====
+// Lazy load calendar iframes
+function lazyLoadCalendars() {
+  const iframes = document.querySelectorAll(".frame-wrapper iframe");
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting && !entry.target.dataset.loaded) {
+        entry.target.dataset.loaded = "true";
+        // Iframe src is already set, just mark as loaded
+      }
+    });
+  });
+  iframes.forEach((iframe) => observer.observe(iframe));
+}
+
+// Debounce resize events
+let resizeTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (snowCtx) {
+      const canvas = snowCtx.canvas;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+  }, 250);
+});
+
 function init() {
   slides = Array.from(document.querySelectorAll(".slide"));
   renderToday();
-  renderProjects();
+  fetchWeather();
+  refreshProjects();
+  refreshNotes();
+  refreshShopping();
   setupForm();
+  setupNotesForm();
+  setupShoppingForm();
   initSlides();
   setupNavButtons();
   initSnow();
+  lazyLoadCalendars();
+  startRealTimeSync();
+
+  // Refresh weather every 10 minutes
+  weatherTimer = setInterval(fetchWeather, 600000);
 }
 
 document.addEventListener("DOMContentLoaded", init);
