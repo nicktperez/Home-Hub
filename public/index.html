@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Family Wall Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-            <link rel="stylesheet" href="styles.css?v=13" />
+            <link rel="stylesheet" href="styles.css?v=14" />
   </head>
   <body>
     <canvas id="snow-canvas" class="pointer-events-none fixed inset-0 z-40"></canvas>
@@ -102,7 +102,13 @@
           <div class="lg:col-span-1 flex flex-col gap-6">
             <div class="today-box p-6 flex flex-col gap-4">
               <h2 class="text-2xl font-semibold mb-2">Today</h2>
-              <p id="today-text" class="text-lg text-slate-100 mb-4"></p>
+              <p id="today-text" class="text-lg text-slate-100 mb-2"></p>
+              
+              <!-- Clock -->
+              <div id="clock-widget" class="clock-widget mb-4">
+                <div id="clock-time" class="text-5xl font-bold text-center mb-2">--:--:--</div>
+                <div id="clock-date" class="text-lg text-slate-300 text-center"></div>
+              </div>
               
               <!-- Current Weather -->
               <div id="weather-current" class="weather-current">
@@ -178,6 +184,45 @@
             </div>
           </div>
           <div class="lg:col-span-2 flex flex-col gap-6">
+            <!-- Camera Feeds -->
+            <div class="today-box p-6 flex flex-col">
+              <h2 class="text-xl font-semibold mb-3">Camera Feeds</h2>
+              <div id="camera-feeds" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="camera-feed">
+                  <div class="camera-label">Front Door</div>
+                  <div class="camera-container">
+                    <iframe
+                      id="camera-1"
+                      src=""
+                      frameborder="0"
+                      allowfullscreen
+                      class="camera-iframe"
+                      title="Camera Feed 1"
+                    ></iframe>
+                    <div class="camera-placeholder">
+                      <p class="text-sm text-slate-400">Configure camera URL in settings</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="camera-feed">
+                  <div class="camera-label">Backyard</div>
+                  <div class="camera-container">
+                    <iframe
+                      id="camera-2"
+                      src=""
+                      frameborder="0"
+                      allowfullscreen
+                      class="camera-iframe"
+                      title="Camera Feed 2"
+                    ></iframe>
+                    <div class="camera-placeholder">
+                      <p class="text-sm text-slate-400">Configure camera URL in settings</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <div class="today-box p-6 flex flex-col flex-1">
               <h2 class="text-2xl font-semibold mb-4">Today's Events</h2>
               <div id="today-events" class="flex-1 overflow-y-auto space-y-3">

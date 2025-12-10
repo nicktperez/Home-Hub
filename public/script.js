@@ -1,4 +1,13 @@
-const SLIDE_INTERVAL_MS = 15000;
+const SLIDE_INTERVAL_MS = 15000; // Default interval
+// Different intervals for different slides (in milliseconds)
+const SLIDE_DURATIONS = {
+  0: 15000, // Month - 15 seconds
+  1: 15000, // Week - 15 seconds
+  2: 30000, // Today - 30 seconds (longer!)
+  3: 20000, // Projects - 20 seconds
+  4: 15000, // Notes - 15 seconds
+  5: 15000, // Shopping - 15 seconds
+};
 
 let slides = [];
 let currentSlideIndex = 0;
@@ -58,10 +67,25 @@ function setActiveSlide(index) {
 }
 
 function startRotation() {
-  if (slideTimer) clearInterval(slideTimer);
-  slideTimer = setInterval(() => {
-    setActiveSlide((currentSlideIndex + 1) % slides.length);
-  }, SLIDE_INTERVAL_MS);
+  if (slideTimer) {
+    clearTimeout(slideTimer);
+    slideTimer = null;
+  }
+  
+  function advanceSlide() {
+    const nextIndex = (currentSlideIndex + 1) % slides.length;
+    setActiveSlide(nextIndex);
+    
+    // Get duration for the next slide
+    const duration = SLIDE_DURATIONS[nextIndex] || SLIDE_INTERVAL_MS;
+    
+    // Schedule next advance
+    slideTimer = setTimeout(advanceSlide, duration);
+  }
+  
+  // Start with current slide's duration
+  const currentDuration = SLIDE_DURATIONS[currentSlideIndex] || SLIDE_INTERVAL_MS;
+  slideTimer = setTimeout(advanceSlide, currentDuration);
 }
 
 function renderToday() {
@@ -74,6 +98,35 @@ function renderToday() {
     day: "numeric",
   });
   todayEl.textContent = formatted;
+}
+
+// ===== CLOCK =====
+function updateClock() {
+  const now = new Date();
+  const timeEl = document.getElementById("clock-time");
+  const dateEl = document.getElementById("clock-date");
+  
+  if (timeEl) {
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const seconds = String(now.getSeconds()).padStart(2, "0");
+    timeEl.textContent = `${hours}:${minutes}:${seconds}`;
+  }
+  
+  if (dateEl) {
+    const dateStr = now.toLocaleDateString(undefined, {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+    dateEl.textContent = dateStr;
+  }
+}
+
+function startClock() {
+  updateClock();
+  setInterval(updateClock, 1000); // Update every second
 }
 
 async function fetchProjects() {
@@ -1016,9 +1069,33 @@ window.addEventListener("resize", () => {
   }, 250);
 });
 
+// ===== CAMERA FEEDS =====
+function setupCameras() {
+  // Get camera URLs from localStorage or use defaults
+  // Users can set these via browser console: localStorage.setItem('camera1', 'URL_HERE')
+  const camera1Url = localStorage.getItem("camera1") || "";
+  const camera2Url = localStorage.getItem("camera2") || "";
+  
+  const camera1 = document.getElementById("camera-1");
+  const camera2 = document.getElementById("camera-2");
+  
+  if (camera1 && camera1Url) {
+    camera1.src = camera1Url;
+    camera1.style.display = "block";
+    camera1.parentElement.querySelector(".camera-placeholder")?.remove();
+  }
+  
+  if (camera2 && camera2Url) {
+    camera2.src = camera2Url;
+    camera2.style.display = "block";
+    camera2.parentElement.querySelector(".camera-placeholder")?.remove();
+  }
+}
+
 function init() {
   slides = Array.from(document.querySelectorAll(".slide"));
   renderToday();
+  startClock();
   fetchWeather();
   fetchCalendarEvents();
   refreshProjects();
@@ -1030,6 +1107,7 @@ function init() {
   initSlides();
   setupNavButtons();
   setupMobileMenu();
+  setupCameras();
   initSnow();
   lazyLoadCalendars();
   startRealTimeSync();
