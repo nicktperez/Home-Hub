@@ -19,17 +19,16 @@ module.exports = async (req, res) => {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
   const { method } = req;
-  const { id } = req.query || {};
 
   try {
-    if (method === "GET" && !id) {
+    if (method === "GET") {
       // GET /api/projects
       const { data, error } = await supabase.from("projects").select("*").order("updatedAt", { ascending: false });
       if (error) throw error;
       return res.status(200).json(data || []);
     }
 
-    if (method === "POST" && !id) {
+    if (method === "POST") {
       // POST /api/projects
       const body = req.body || {};
       const { title, note, progress, startDate, endDate } = body;
@@ -61,75 +60,9 @@ module.exports = async (req, res) => {
       return res.status(201).json(data);
     }
 
-    if (method === "PATCH" && id) {
-      // PATCH /api/projects/:id
-      const updates = req.body || {};
-
-      // Fetch current project
-      const { data: current, error: fetchError } = await supabase.from("projects").select("*").eq("id", id).single();
-      if (fetchError || !current) {
-        return res.status(404).json({ error: "Project not found" });
-      }
-
-      const now = new Date().toISOString();
-      const updated = { ...current };
-
-      if (typeof updates.title === "string") {
-        updated.title = updates.title.trim();
-        updated.updatedAt = now;
-      }
-      if (typeof updates.status === "string") {
-        updated.status = updates.status;
-        updated.done = updates.status === "done";
-        updated.updatedAt = now;
-      }
-      if (typeof updates.done === "boolean") {
-        updated.done = updates.done;
-        if (!updates.status) {
-          updated.status = updated.done ? "done" : updated.status === "done" ? "todo" : updated.status || "todo";
-        }
-        updated.updatedAt = now;
-      }
-      if (typeof updates.note === "string") {
-        updated.note = updates.note.trim();
-        updated.updatedAt = now;
-      }
-      if (typeof updates.progress === "number") {
-        const p = Math.min(100, Math.max(0, updates.progress));
-        updated.progress = p;
-        updated.updatedAt = now;
-      }
-      if (typeof updates.startDate === "string") {
-        updated.startDate = updates.startDate;
-        updated.updatedAt = now;
-      }
-      if (typeof updates.endDate === "string") {
-        updated.endDate = updates.endDate;
-        updated.updatedAt = now;
-      }
-      if (Array.isArray(updates.updates)) {
-        updated.updates = updates.updates;
-        updated.updatedAt = now;
-      }
-      if (updates.appendUpdate && typeof updates.appendUpdate === "string") {
-        updated.updates = updated.updates || [];
-        updated.updates.push({ message: updates.appendUpdate.trim(), at: now });
-        updated.updatedAt = now;
-      }
-
-      const { data, error } = await supabase.from("projects").update(updated).eq("id", id).select().single();
-      if (error) throw error;
-      return res.status(200).json(data);
-    }
-
-    if (method === "DELETE" && id) {
-      // DELETE /api/projects/:id
-      const { error } = await supabase.from("projects").delete().eq("id", id);
-      if (error) throw error;
-      return res.status(204).end();
-    }
-
-    return res.status(404).json({ error: "Not found" });
+    // PATCH and DELETE are handled by /api/projects/[id].js
+    res.setHeader("Allow", ["GET", "POST"]);
+    return res.status(405).json({ error: "Method not allowed. Use /api/projects/:id for PATCH/DELETE" });
   } catch (error) {
     console.error("API Error:", error);
     return res.status(500).json({ error: error.message || "Internal server error" });

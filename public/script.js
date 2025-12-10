@@ -83,23 +83,42 @@ async function fetchProjects() {
 }
 
 async function updateProject(id, data) {
-  await fetch(`/api/projects/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
+  try {
+    const res = await fetch(`/api/projects/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`Update failed: ${res.status}`);
+  } catch (error) {
+    console.error("Update project error:", error);
+    throw error;
+  }
 }
 
 async function deleteProject(id) {
-  await fetch(`/api/projects/${id}`, { method: "DELETE" });
+  try {
+    const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
+    if (!res.ok && res.status !== 204) throw new Error(`Delete failed: ${res.status}`);
+  } catch (error) {
+    console.error("Delete project error:", error);
+    throw error;
+  }
 }
 
 async function addProject(title) {
-  await fetch("/api/projects", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title }),
-  });
+  try {
+    const res = await fetch("/api/projects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title }),
+    });
+    if (!res.ok) throw new Error(`Add project failed: ${res.status}`);
+    return await res.json();
+  } catch (error) {
+    console.error("Add project error:", error);
+    throw error;
+  }
 }
 
 function createProjectElement(project, refresh) {
