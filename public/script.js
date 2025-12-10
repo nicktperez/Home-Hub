@@ -242,49 +242,7 @@ function createProjectElement(project, refresh) {
   li.dataset.projectId = project.id;
   li.dataset.order = project.order !== undefined ? project.order : 999999;
 
-  // Drag and drop handlers
-  li.addEventListener("dragstart", (e) => {
-    console.log("Drag started for project:", project.id);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", project.id);
-    li.classList.add("dragging");
-    draggedElement = li;
-    pauseRotation(); // Pause rotation while dragging
-  });
-
-  li.addEventListener("dragend", (e) => {
-    console.log("Drag ended");
-    li.classList.remove("dragging");
-    
-    // Reset drag state
-    draggedElement = null;
-    
-    resumeRotation(); // Resume rotation after dragging
-  });
-
-  // Make the entire item draggable, but allow child elements to work normally
-  // The drag handle and title area will initiate drag
-  dragHandle.addEventListener("mousedown", (e) => {
-    // This will allow the drag to start from the handle
-  });
-  
-  title.style.cursor = "move";
-  title.addEventListener("mousedown", (e) => {
-    // Allow drag to start from title area too
-  });
-  
-  // Prevent interactive elements from starting drag, but allow them to work
-  checkbox.addEventListener("mousedown", (e) => {
-    e.stopPropagation();
-  });
-  statusSelect.addEventListener("mousedown", (e) => {
-    e.stopPropagation();
-  });
-  delBtn.addEventListener("mousedown", (e) => {
-    e.stopPropagation();
-  });
-
-
+  // Create all elements first
   const checkbox = document.createElement("input");
   checkbox.type = "checkbox";
   checkbox.checked = project.done;
@@ -351,16 +309,28 @@ function createProjectElement(project, refresh) {
   dragHandle.style.fontSize = "16px";
   dragHandle.style.lineHeight = "1";
 
-  // Make the entire item draggable, but allow child elements to work normally
-  // The drag handle and title area will initiate drag
-  dragHandle.addEventListener("mousedown", (e) => {
-    // This will allow the drag to start from the handle
+  // Drag and drop handlers on the main item
+  li.addEventListener("dragstart", (e) => {
+    console.log("Drag started for project:", project.id);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", project.id);
+    li.classList.add("dragging");
+    draggedElement = li;
+    pauseRotation(); // Pause rotation while dragging
   });
-  
+
+  li.addEventListener("dragend", (e) => {
+    console.log("Drag ended");
+    li.classList.remove("dragging");
+    
+    // Reset drag state
+    draggedElement = null;
+    
+    resumeRotation(); // Resume rotation after dragging
+  });
+
+  // Make title area draggable
   title.style.cursor = "move";
-  title.addEventListener("mousedown", (e) => {
-    // Allow drag to start from title area too
-  });
   
   // Prevent interactive elements from starting drag, but allow them to work
   checkbox.addEventListener("mousedown", (e) => {
