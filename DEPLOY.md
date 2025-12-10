@@ -74,30 +74,37 @@ CREATE POLICY "Allow all operations on shopping" ON shopping
   FOR ALL USING (true) WITH CHECK (true);
 ```
 
-**If you're getting errors about columns**, run this migration in the SQL Editor:
+**If you're getting errors about columns**, first check what columns exist, then fix them:
 
 ```sql
--- Step 1: First, check what columns currently exist
+-- Step 1: Check what columns currently exist
 SELECT column_name, data_type, is_nullable, column_default
 FROM information_schema.columns
 WHERE table_name = 'shopping'
 ORDER BY ordinal_position;
 
--- Step 2: Remove any incorrectly named columns first
+-- Step 2: Add default values to existing columns (if they don't have defaults)
+-- This makes the columns optional so the code doesn't have to provide values
 ALTER TABLE shopping 
-  DROP COLUMN IF EXISTS "createdAt",
-  DROP COLUMN IF EXISTS "updatedAt",
-  DROP COLUMN IF EXISTS updated_at;
+  ALTER COLUMN createdat SET DEFAULT NOW()::TEXT;
 
--- Step 3: Create the updatedat column (PostgreSQL stores unquoted columns as lowercase)
 ALTER TABLE shopping 
-  ADD COLUMN updatedat TEXT NOT NULL DEFAULT NOW()::TEXT;
+  ALTER COLUMN updatedat SET DEFAULT NOW()::TEXT;
 
--- Step 4: Verify it was created
+-- Step 3: If columns don't exist, create them with defaults
+ALTER TABLE shopping 
+  ADD COLUMN IF NOT EXISTS createdat TEXT NOT NULL DEFAULT NOW()::TEXT;
+
+ALTER TABLE shopping 
+  ADD COLUMN IF NOT EXISTS updatedat TEXT NOT NULL DEFAULT NOW()::TEXT;
+
+-- Step 4: Verify the columns
 SELECT column_name, data_type, is_nullable, column_default
 FROM information_schema.columns
 WHERE table_name = 'shopping';
 ```
+
+**Note:** The code now provides values for both `createdat` and `updatedat`, but having defaults ensures it works even if the code misses a value.
 
 -- Option 2: If you want to remove updatedAt completely (requires code changes)
 -- ALTER TABLE shopping 

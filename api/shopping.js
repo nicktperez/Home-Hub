@@ -37,7 +37,7 @@ module.exports = async (req, res) => {
       }
 
       const now = new Date().toISOString();
-      // Insert with updatedat (lowercase) to match database column name
+      // Insert with all required columns - provide values for createdat and updatedat
       // PostgreSQL stores unquoted identifiers as lowercase
       const { data, error } = await supabase
         .from("shopping")
@@ -45,7 +45,8 @@ module.exports = async (req, res) => {
           id: Date.now().toString(),
           item: item.trim(),
           checked: false,
-          updatedat: now, // Use lowercase to match database column
+          createdat: now, // Provide value for createdat column
+          updatedat: now, // Provide value for updatedat column
         })
         .select()
         .single();
