@@ -311,11 +311,12 @@ function createProjectElement(project, refresh) {
 
   // Drag and drop handlers on the main item
   li.addEventListener("dragstart", (e) => {
-    console.log("Drag started for project:", project.id);
+    console.log("Drag started for project:", project.id, li);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", project.id);
     li.classList.add("dragging");
     draggedElement = li;
+    console.log("Set draggedElement to:", draggedElement);
     pauseRotation(); // Pause rotation while dragging
   });
 
@@ -430,23 +431,34 @@ function setupDragAndDrop(column) {
   if (dragDropSetup.has(column)) return;
   dragDropSetup.set(column, true);
 
+  column.addEventListener("dragenter", (e) => {
+    e.preventDefault();
+    if (draggedElement) {
+      column.style.backgroundColor = "rgba(59, 130, 246, 0.1)";
+    }
+  });
+
+  column.addEventListener("dragleave", (e) => {
+    // Only remove highlight if we're actually leaving the column
+    if (!column.contains(e.relatedTarget)) {
+      column.style.backgroundColor = "";
+    }
+  });
+
   column.addEventListener("dragover", (e) => {
     e.preventDefault();
-    e.stopPropagation();
     e.dataTransfer.dropEffect = "move";
     
-    if (!draggedElement) {
-      console.log("No dragged element in dragover");
-      return;
-    }
+    if (!draggedElement) return;
 
-    // Get all siblings (excluding the dragged element)
+    // Get all project items in this column (excluding the one being dragged)
     const siblings = Array.from(column.children).filter(
-      child => child !== draggedElement && child.classList.contains("project-item")
+      child => child.classList.contains("project-item") && child !== draggedElement
     );
 
-    // Find insertion point
+    // Find insertion point based on mouse Y position
     let nextSibling = null;
+    
     for (const sibling of siblings) {
       const box = sibling.getBoundingClientRect();
       const middle = box.top + box.height / 2;
@@ -457,7 +469,7 @@ function setupDragAndDrop(column) {
       }
     }
 
-    // Move the element
+    // Move the element immediately
     if (nextSibling) {
       column.insertBefore(draggedElement, nextSibling);
     } else {
@@ -467,6 +479,9 @@ function setupDragAndDrop(column) {
 
   column.addEventListener("drop", async (e) => {
     e.preventDefault();
+    
+    // Remove highlight
+    column.style.backgroundColor = "";
     
     if (!draggedElement) return;
 
