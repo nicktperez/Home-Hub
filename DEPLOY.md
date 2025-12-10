@@ -60,10 +60,21 @@ CREATE TABLE shopping (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Energy usage table
+CREATE TABLE energy_usage (
+  id SERIAL PRIMARY KEY,
+  date DATE NOT NULL UNIQUE,
+  usage_kwh DECIMAL(10, 2) NOT NULL,
+  cost DECIMAL(10, 2),
+  updatedat TEXT NOT NULL DEFAULT NOW()::TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Enable Row Level Security
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shopping ENABLE ROW LEVEL SECURITY;
+ALTER TABLE energy_usage ENABLE ROW LEVEL SECURITY;
 
 -- Create policies that allow all operations (for simplicity)
 -- In production, you'd want more restrictive policies
@@ -74,6 +85,9 @@ CREATE POLICY "Allow all operations on notes" ON notes
   FOR ALL USING (true) WITH CHECK (true);
 
 CREATE POLICY "Allow all operations on shopping" ON shopping
+  FOR ALL USING (true) WITH CHECK (true);
+
+CREATE POLICY "Allow all operations on energy_usage" ON energy_usage
   FOR ALL USING (true) WITH CHECK (true);
 ```
 

@@ -183,6 +183,27 @@ This file tracks potential features and improvements for the Family Hub Dashboar
 - **Description**: Integrate with smart home devices (Alexa, Google Home, HomeKit)
 - **Use Cases**: Voice commands, home automation triggers
 
+### Energy Usage Dashboard (SMUD)
+- **Status**: Researching
+- **Complexity**: Medium-High
+- **Description**: Display energy usage data from SMUD (Sacramento Municipal Utility District)
+- **Options**:
+  - **SMUD Customer Portal**: Check if SMUD provides API access or data export
+  - **Green Button Connect My Data**: Standard utility API (if SMUD supports it)
+  - **Manual CSV Import**: Allow users to upload energy usage CSV files from SMUD portal
+  - **Third-party Services**: UtilityAPI or similar services that aggregate utility data
+- **Requirements**:
+  - API authentication (if available)
+  - Data parsing and storage
+  - Daily/weekly/monthly usage visualization
+  - Cost tracking
+  - Usage alerts (high usage notifications)
+- **Benefits**: 
+  - Track energy consumption patterns
+  - Identify high-usage periods
+  - Monitor costs
+  - Set usage goals
+
 ### Email Integration
 - **Status**: Not Started
 - **Complexity**: High

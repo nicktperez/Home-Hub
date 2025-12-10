@@ -7,6 +7,7 @@ const SLIDE_DURATIONS = {
   3: 20000, // Projects - 20 seconds
   4: 15000, // Notes - 15 seconds
   5: 15000, // Shopping - 15 seconds
+  6: 20000, // Energy - 20 seconds
 };
 
 let slides = [];
@@ -741,6 +742,74 @@ function formatEventTime(event) {
   }
 }
 
+function renderTodayFocus() {
+  const focusEl = document.getElementById("today-focus");
+  if (!focusEl) return;
+
+  const focusItems = [];
+
+  // Get in-progress projects (top priority)
+  if (projectsData && projectsData.length > 0) {
+    const inProgress = projectsData
+      .filter(p => (p.status || "todo") === "in_progress")
+      .sort((a, b) => (a.order || 999999) - (b.order || 999999))
+      .slice(0, 3);
+    
+    inProgress.forEach(project => {
+      focusItems.push({
+        type: "project",
+        title: project.title,
+        icon: "📋",
+        priority: "high"
+      });
+    });
+  }
+
+  // Get today's calendar events (especially morning/important ones)
+  if (calendarData && calendarData.today && calendarData.today.length > 0) {
+    const todayEvents = calendarData.today
+      .filter(event => {
+        // Prioritize events happening in the morning or soon
+        if (event.isAllDay) return true;
+        try {
+          const eventTime = new Date(event.startDate);
+          const now = new Date();
+          const hoursUntil = (eventTime - now) / (1000 * 60 * 60);
+          return hoursUntil >= 0 && hoursUntil <= 12; // Next 12 hours
+        } catch {
+          return true;
+        }
+      })
+      .slice(0, 2);
+    
+    todayEvents.forEach(event => {
+      const timeStr = formatEventTime(event);
+      focusItems.push({
+        type: "event",
+        title: event.title,
+        time: timeStr,
+        icon: "📅",
+        priority: "medium"
+      });
+    });
+  }
+
+  // Render focus items
+  if (focusItems.length > 0) {
+    focusEl.innerHTML = focusItems.map(item => `
+      <div class="focus-item flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50">
+        <span class="text-xl">${item.icon}</span>
+        <div class="flex-1">
+          <div class="font-semibold text-sm">${escapeHtml(item.title)}</div>
+          ${item.time ? `<div class="text-xs text-slate-400">${escapeHtml(item.time)}</div>` : ""}
+        </div>
+      </div>
+    `).join("");
+  } else {
+    focusEl.innerHTML = '<p class="text-slate-400 text-center py-2 text-sm">No focus items for today. Great job staying on top of things! 🎉</p>';
+  }
+}
+
 function renderCalendarEvents() {
   if (!calendarData) return;
 
@@ -796,6 +865,9 @@ function renderCalendarEvents() {
       tomorrowEl.innerHTML = '<p class="text-slate-400 text-center py-1 text-xs">No events tomorrow.</p>';
     }
   }
+
+  // Update Today's Focus when calendar data changes
+  renderTodayFocus();
 }
 
 function renderTodayNotes() {
@@ -1310,6 +1382,140 @@ function setupShoppingForm() {
   });
 }
 
+// ===== ENERGY USAGE =====
+async function fetchEnergyData() {
+  try {
+    const res = await fetch("/api/energy");
+    if (!res.ok) throw new Error("Failed to fetch energy data");
+    const data = await res.json();
+    renderEnergyData(data);
+  } catch (error) {
+    console.error("Error fetching energy data:", error);
+  }
+}
+
+function renderEnergyData(data) {
+  if (!data || data.length === 0) {
+    const currentEl = document.getElementById("energy-current");
+    const chartEl = document.getElementById("energy-chart");
+    if (currentEl) {
+      currentEl.innerHTML = '<p class="text-slate-400 text-center py-4 text-sm">No energy data available. Upload a CSV file to get started.</p>';
+    }
+    if (chartEl) {
+      chartEl.innerHTML = '<p class="text-slate-400 text-center py-4 text-sm">No energy data available.</p>';
+    }
+    return;
+  }
+
+  // Sort by date (newest first)
+  const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  // Get current period stats (most recent 30 days)
+  const recentData = sortedData.slice(0, 30);
+  const totalUsage = recentData.reduce((sum, d) => sum + (parseFloat(d.usage_kwh) || 0), 0);
+  const totalCost = recentData.reduce((sum, d) => sum + (parseFloat(d.cost) || 0), 0);
+  const avgDaily = totalUsage / recentData.length;
+  const latest = sortedData[0];
+
+  // Render current stats
+  const currentEl = document.getElementById("energy-current");
+  if (currentEl) {
+    currentEl.innerHTML = `
+      <div class="space-y-3">
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <div class="text-xs text-slate-400 mb-1">Latest Reading</div>
+          <div class="text-2xl font-bold">${latest.usage_kwh ? parseFloat(latest.usage_kwh).toFixed(1) : '--'} kWh</div>
+          <div class="text-xs text-slate-400 mt-1">${latest.date ? new Date(latest.date).toLocaleDateString() : ''}</div>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <div class="text-xs text-slate-400 mb-1">30-Day Average</div>
+          <div class="text-2xl font-bold">${avgDaily.toFixed(1)} kWh/day</div>
+        </div>
+        ${totalCost > 0 ? `
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <div class="text-xs text-slate-400 mb-1">30-Day Cost</div>
+          <div class="text-2xl font-bold">$${totalCost.toFixed(2)}</div>
+        </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // Render simple bar chart
+  const chartEl = document.getElementById("energy-chart");
+  if (chartEl) {
+    const chartData = recentData.slice(0, 30).reverse(); // Oldest to newest for chart
+    const maxUsage = Math.max(...chartData.map(d => parseFloat(d.usage_kwh) || 0));
+    
+    chartEl.innerHTML = `
+      <div class="w-full h-full flex flex-col justify-end">
+        <div class="flex items-end justify-between gap-1 h-full">
+          ${chartData.map(d => {
+            const usage = parseFloat(d.usage_kwh) || 0;
+            const height = maxUsage > 0 ? (usage / maxUsage) * 100 : 0;
+            const date = new Date(d.date);
+            return `
+              <div class="flex-1 flex flex-col items-center gap-1" title="${date.toLocaleDateString()}: ${usage.toFixed(1)} kWh">
+                <div class="w-full bg-gradient-to-t from-blue-500 to-indigo-500 rounded-t" style="height: ${height}%"></div>
+                <div class="text-xs text-slate-400 transform -rotate-45 origin-top-left whitespace-nowrap">${date.getMonth() + 1}/${date.getDate()}</div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  }
+}
+
+function setupEnergyUpload() {
+  const form = document.getElementById("energy-upload-form");
+  const fileInput = document.getElementById("energy-csv-input");
+  if (!form || !fileInput) return;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    pauseRotation();
+
+    const file = fileInput.files[0];
+    if (!file) {
+      alert("Please select a CSV file");
+      resumeRotation();
+      return;
+    }
+
+    try {
+      // Read file as text
+      const text = await file.text();
+      
+      // Send to API
+      const res = await fetch("/api/energy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ csvData: text }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Upload failed");
+      }
+
+      const result = await res.json();
+      alert(`Successfully imported ${result.count} energy records!`);
+      
+      // Refresh energy data
+      await fetchEnergyData();
+      
+      // Clear file input
+      fileInput.value = "";
+    } catch (error) {
+      console.error("Error uploading energy data:", error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      resumeRotation();
+    }
+  });
+}
+
 // ===== QUICK STATS =====
 function updateQuickStats() {
   const projects = projectsData || [];
@@ -1355,6 +1561,7 @@ async function refreshProjects() {
     projectsData = await fetchProjects();
     await renderProjects();
     updateQuickStats();
+    renderTodayFocus(); // Update focus when projects change
   } catch (error) {
     console.error("Error refreshing projects:", error);
   }
@@ -1408,6 +1615,8 @@ function init() {
   setupForm();
   setupNotesForm();
   setupShoppingForm();
+  setupEnergyUpload();
+  fetchEnergyData();
   initSlides();
   setupNavButtons();
   setupMobileMenu();
