@@ -115,25 +115,29 @@
         <header class="mb-4">
           <h1 class="text-4xl font-bold">Today</h1>
         </header>
-        <div class="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div class="lg:col-span-1 flex flex-col gap-4">
-            <div class="today-box p-4 flex flex-col gap-3">
-              <h2 class="text-xl font-semibold mb-1">Today</h2>
-              <p id="today-text" class="text-base text-slate-100 mb-1"></p>
-              
-              <!-- Clock -->
-              <div id="clock-widget" class="clock-widget mb-3">
-                <div id="clock-time" class="text-4xl font-bold text-center mb-1">--:--:--</div>
-                <div id="clock-date" class="text-base text-slate-300 text-center"></div>
+        <div class="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-3">
+          <!-- Left Column: Clock + Weather Combined -->
+          <div class="lg:col-span-1 flex flex-col gap-3">
+            <!-- Clock -->
+            <div class="today-box p-3 flex flex-col">
+              <p id="today-text" class="text-sm text-slate-300 mb-2 text-center"></p>
+              <div id="clock-widget" class="clock-widget">
+                <div id="clock-time" class="text-3xl font-bold text-center mb-1">--:--:--</div>
+                <div id="clock-date" class="text-sm text-slate-300 text-center"></div>
               </div>
+            </div>
+            
+            <!-- Combined Weather: Current + 5-Day Forecast -->
+            <div class="today-box p-3 flex flex-col gap-2">
+              <h2 class="text-base font-semibold mb-1">Weather</h2>
               
-              <!-- Current Weather -->
-              <div id="weather-current" class="weather-current">
+              <!-- Current Weather Compact -->
+              <div id="weather-current" class="weather-current-compact">
                 <div class="flex items-center justify-between mb-2">
                   <div class="flex items-center gap-2">
-                    <img id="weather-icon-now" src="" alt="Weather" class="w-12 h-12" />
+                    <img id="weather-icon-now" src="" alt="Weather" class="w-10 h-10" />
                     <div>
-                      <div id="weather-temp-now" class="text-3xl font-bold">--°</div>
+                      <div id="weather-temp-now" class="text-2xl font-bold">--°</div>
                       <div id="weather-desc-now" class="text-slate-300 text-xs">Getting location...</div>
                     </div>
                   </div>
@@ -142,80 +146,77 @@
                     <div id="weather-feels-like" class="text-slate-300 font-semibold">--°</div>
                   </div>
                 </div>
-                <div id="weather-details-now" class="grid grid-cols-3 gap-2 text-xs text-slate-400 pt-2 border-t border-slate-700">
+                <div id="weather-details-now" class="grid grid-cols-3 gap-1.5 text-xs text-slate-400 pt-2 border-t border-slate-700">
                   <div>
-                    <div class="text-slate-500">Humidity</div>
+                    <div class="text-slate-500 text-xs">Humidity</div>
                     <div id="weather-humidity" class="text-slate-300 font-semibold">--%</div>
                   </div>
                   <div>
-                    <div class="text-slate-500">Wind</div>
+                    <div class="text-slate-500 text-xs">Wind</div>
                     <div id="weather-wind" class="text-slate-300 font-semibold">-- mph</div>
                   </div>
                   <div>
-                    <div class="text-slate-500">Location</div>
-                    <div id="weather-location" class="text-slate-300 font-semibold">--</div>
+                    <div class="text-slate-500 text-xs">Location</div>
+                    <div id="weather-location" class="text-slate-300 font-semibold text-xs">--</div>
                   </div>
                 </div>
               </div>
 
-              <!-- Today's Weather Summary -->
-              <div id="weather-today" class="weather-today mt-3 pt-3 border-t border-slate-700">
-                <h3 class="text-xs font-semibold text-slate-400 mb-1">Today's Weather</h3>
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <img id="weather-icon-today" src="" alt="Today" class="w-8 h-8" />
-                    <div>
-                      <div id="weather-desc-today" class="text-xs text-slate-300">--</div>
-                      <div id="weather-temp-range" class="text-xs text-slate-400">--° / --°</div>
-                    </div>
-                  </div>
+              <!-- 5-Day Forecast Compact -->
+              <div class="mt-2 pt-2 border-t border-slate-700">
+                <h3 class="text-xs font-semibold text-slate-400 mb-1.5">5-Day Forecast</h3>
+                <div id="weather-forecast" class="space-y-1">
+                  <p class="text-slate-400 text-center py-1 text-xs">Loading forecast...</p>
                 </div>
               </div>
             </div>
-            <div class="today-box p-4 flex flex-col gap-3">
-              <h2 class="text-lg font-semibold mb-1">5-Day Forecast</h2>
-              <div id="weather-forecast" class="space-y-1.5 max-h-48 overflow-y-auto">
-                <p class="text-slate-400 text-center py-1 text-xs">Loading forecast...</p>
-              </div>
-            </div>
-            <div class="today-box p-4 flex flex-col">
-              <h2 class="text-lg font-semibold mb-2">Quick Stats</h2>
+            
+            <!-- Quick Stats -->
+            <div class="today-box p-3 flex flex-col">
+              <h2 class="text-base font-semibold mb-2">Quick Stats</h2>
               <div class="grid grid-cols-2 gap-2">
                 <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-2">
-                  <p class="text-slate-400 text-xs mb-1">Active Projects</p>
-                  <p id="quick-projects" class="text-xl font-semibold">0</p>
+                  <p class="text-slate-400 text-xs mb-1">Projects</p>
+                  <p id="quick-projects" class="text-lg font-semibold">0</p>
                 </div>
                 <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-2">
-                  <p class="text-slate-400 text-xs mb-1">Shopping Items</p>
-                  <p id="quick-shopping" class="text-xl font-semibold">0</p>
+                  <p class="text-slate-400 text-xs mb-1">Shopping</p>
+                  <p id="quick-shopping" class="text-lg font-semibold">0</p>
                 </div>
                 <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-2">
                   <p class="text-slate-400 text-xs mb-1">Notes</p>
-                  <p id="quick-notes" class="text-xl font-semibold">0</p>
+                  <p id="quick-notes" class="text-lg font-semibold">0</p>
                 </div>
                 <div class="rounded-xl bg-slate-900/70 border border-slate-800 p-2">
-                  <p class="text-slate-400 text-xs mb-1">Done Today</p>
-                  <p id="quick-done" class="text-xl font-semibold">0</p>
+                  <p class="text-slate-400 text-xs mb-1">Done</p>
+                  <p id="quick-done" class="text-lg font-semibold">0</p>
                 </div>
               </div>
             </div>
           </div>
-          <div class="lg:col-span-2 flex flex-col gap-4">
-            <div class="today-box p-4 flex flex-col">
-              <h2 class="text-xl font-semibold mb-3">Today's Events</h2>
-              <div id="today-events" class="space-y-2 max-h-64 overflow-y-auto">
-                <p class="text-slate-400 text-center py-2 text-sm">Loading events...</p>
+          
+          <!-- Right Column: Events, Notes, Tomorrow -->
+          <div class="lg:col-span-3 grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <!-- Today's Events -->
+            <div class="today-box p-3 flex flex-col">
+              <h2 class="text-lg font-semibold mb-2">Today's Events</h2>
+              <div id="today-events" class="space-y-1.5 max-h-56 overflow-y-auto">
+                <p class="text-slate-400 text-center py-2 text-xs">Loading events...</p>
               </div>
             </div>
-            <div class="today-box p-4 flex flex-col">
-              <h2 class="text-xl font-semibold mb-3">Family Notes</h2>
-              <div id="today-notes" class="space-y-2 max-h-48 overflow-y-auto">
-                <p class="text-slate-400 text-center py-2 text-sm">Loading notes...</p>
+            
+            <!-- Family Notes -->
+            <div class="today-box p-3 flex flex-col">
+              <h2 class="text-lg font-semibold mb-2">Family Notes</h2>
+              <div id="today-notes" class="space-y-1.5 max-h-56 overflow-y-auto">
+                <p class="text-slate-400 text-center py-2 text-xs">Loading notes...</p>
               </div>
             </div>
-            <div class="today-box p-4 flex flex-col">
-              <h2 class="text-lg font-semibold mb-2">Tomorrow Preview</h2>
-              <div id="tomorrow-events" class="space-y-2 max-h-32 overflow-y-auto">
+            
+            <!-- Tomorrow Preview -->
+            <div class="lg:col-span-2 today-box p-3 flex flex-col">
+              <h2 class="text-base font-semibold mb-2">Tomorrow Preview</h2>
+              <div id="tomorrow-events" class="space-y-1.5 max-h-24 overflow-y-auto">
                 <p class="text-slate-400 text-center py-1 text-xs">Loading...</p>
               </div>
             </div>

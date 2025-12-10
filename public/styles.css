@@ -627,6 +627,25 @@ header h1 {
   transform: translateX(2px);
 }
 
+/* Compact forecast items for Today view */
+.forecast-day-item-compact {
+  padding: 0.4rem 0.5rem;
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  margin-bottom: 0.3rem;
+  transition: background 0.15s ease;
+}
+
+.forecast-day-item-compact:hover {
+  background: rgba(30, 41, 59, 0.6);
+}
+
+/* Compact weather current section */
+.weather-current-compact {
+  padding-bottom: 0.5rem;
+}
+
 #weather-icon-now,
 #weather-icon-today {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));

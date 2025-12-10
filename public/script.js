@@ -806,8 +806,6 @@ async function fetchWeather() {
       "weather-humidity": "--%",
       "weather-wind": "-- mph",
       "weather-location": "--",
-      "weather-desc-today": "--",
-      "weather-temp-range": "--° / --°",
     };
     Object.entries(elements).forEach(([id, text]) => {
       const el = document.getElementById(id);
@@ -845,47 +843,34 @@ function renderWeather() {
   if (feelsLikeEl) feelsLikeEl.textContent = `${current.feelsLike}°`;
   if (humidityEl) humidityEl.textContent = `${current.humidity}%`;
   if (windEl) windEl.textContent = `${current.windSpeed} mph`;
-  if (locationEl) locationEl.textContent = `${current.city}${current.country ? `, ${current.country}` : ""}`;
-
-  // Render today's summary
-  const iconTodayEl = document.getElementById("weather-icon-today");
-  const descTodayEl = document.getElementById("weather-desc-today");
-  const tempRangeEl = document.getElementById("weather-temp-range");
-
-  if (iconTodayEl && today) {
-    iconTodayEl.src = `https://openweathermap.org/img/wn/${today.icon}@2x.png`;
-    iconTodayEl.alt = today.description;
-  }
-  if (descTodayEl && today) {
-    descTodayEl.textContent = today.description.charAt(0).toUpperCase() + today.description.slice(1);
-  }
-  if (tempRangeEl && today) {
-    tempRangeEl.textContent = `${today.min}° / ${today.max}°`;
+  if (locationEl) {
+    const locationText = `${current.city}${current.country ? `, ${current.country}` : ""}`;
+    // Truncate long location names
+    locationEl.textContent = locationText.length > 15 ? locationText.substring(0, 12) + "..." : locationText;
   }
 
-  // Render 5-day forecast
+  // Render 5-day forecast (compact version)
   const forecastEl = document.getElementById("weather-forecast");
   if (forecastEl && forecast && forecast.length > 0) {
     forecastEl.innerHTML = forecast
       .map((day, index) => {
-        // Skip today (index 0) as we already show it
+        // Skip today (index 0) as we already show it in current weather
         if (index === 0) return "";
         
-        const date = new Date(day.date);
-        const dayName = index === 1 ? "Tomorrow" : day.dayName;
+        const dayName = index === 1 ? "Tomorrow" : day.dayName?.substring(0, 3) || "Day";
         
         return `
-          <div class="forecast-day-item">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3 flex-1">
-                <img src="https://openweathermap.org/img/wn/${day.icon}@2x.png" alt="${day.description}" class="w-10 h-10" />
-                <div class="flex-1">
-                  <div class="text-sm font-semibold text-slate-200">${dayName}</div>
-                  <div class="text-xs text-slate-400 capitalize">${day.description}</div>
+          <div class="forecast-day-item-compact">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5 flex-1 min-w-0">
+                <img src="https://openweathermap.org/img/wn/${day.icon}.png" alt="${day.description}" class="w-6 h-6 flex-shrink-0" />
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-semibold text-slate-200 truncate">${dayName}</div>
+                  <div class="text-xs text-slate-400 truncate capitalize">${day.description}</div>
                 </div>
               </div>
-              <div class="text-right">
-                <div class="text-sm font-semibold text-slate-200">${day.max}°</div>
+              <div class="text-right flex-shrink-0">
+                <div class="text-xs font-semibold text-slate-200">${day.max}°</div>
                 <div class="text-xs text-slate-400">${day.min}°</div>
               </div>
             </div>
@@ -895,7 +880,7 @@ function renderWeather() {
       .filter(html => html !== "")
       .join("");
   } else if (forecastEl) {
-    forecastEl.innerHTML = '<p class="text-slate-400 text-center py-2 text-sm">No forecast available.</p>';
+    forecastEl.innerHTML = '<p class="text-slate-400 text-center py-1 text-xs">No forecast available.</p>';
   }
 }
 
