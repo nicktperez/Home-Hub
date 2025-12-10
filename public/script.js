@@ -1069,28 +1069,6 @@ window.addEventListener("resize", () => {
   }, 250);
 });
 
-// ===== CAMERA FEEDS =====
-function setupCameras() {
-  // Get camera URLs from localStorage or use defaults
-  // Users can set these via browser console: localStorage.setItem('camera1', 'URL_HERE')
-  const camera1Url = localStorage.getItem("camera1") || "";
-  const camera2Url = localStorage.getItem("camera2") || "";
-  
-  const camera1 = document.getElementById("camera-1");
-  const camera2 = document.getElementById("camera-2");
-  
-  if (camera1 && camera1Url) {
-    camera1.src = camera1Url;
-    camera1.style.display = "block";
-    camera1.parentElement.querySelector(".camera-placeholder")?.remove();
-  }
-  
-  if (camera2 && camera2Url) {
-    camera2.src = camera2Url;
-    camera2.style.display = "block";
-    camera2.parentElement.querySelector(".camera-placeholder")?.remove();
-  }
-}
 
 function init() {
   slides = Array.from(document.querySelectorAll(".slide"));
@@ -1107,7 +1085,7 @@ function init() {
   initSlides();
   setupNavButtons();
   setupMobileMenu();
-  setupCameras();
+  initVoiceCommands();
   initSnow();
   lazyLoadCalendars();
   startRealTimeSync();
@@ -1116,6 +1094,188 @@ function init() {
   weatherTimer = setInterval(fetchWeather, 600000);
   // Refresh calendar events every 5 minutes
   calendarTimer = setInterval(fetchCalendarEvents, 300000);
+}
+
+// ===== VOICE COMMANDS =====
+let recognition = null;
+let isListening = false;
+
+function initVoiceCommands() {
+  // Check if browser supports Web Speech API
+  if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
+    const voiceBtn = document.getElementById("voice-btn");
+    if (voiceBtn) {
+      voiceBtn.style.display = "none";
+    }
+    console.warn("Voice recognition not supported in this browser");
+    return;
+  }
+
+  // Initialize speech recognition
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = "en-US";
+
+  recognition.onstart = () => {
+    isListening = true;
+    showVoiceIndicator();
+  };
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript.toLowerCase().trim();
+    processVoiceCommand(transcript);
+    hideVoiceIndicator();
+  };
+
+  recognition.onerror = (event) => {
+    console.error("Voice recognition error:", event.error);
+    hideVoiceIndicator();
+    if (event.error === "not-allowed") {
+      alert("Microphone permission denied. Please enable microphone access in your browser settings.");
+    }
+  };
+
+  recognition.onend = () => {
+    isListening = false;
+    hideVoiceIndicator();
+  };
+
+  // Setup voice button
+  const voiceBtn = document.getElementById("voice-btn");
+  if (voiceBtn) {
+    voiceBtn.addEventListener("click", toggleVoiceListening);
+  }
+}
+
+function toggleVoiceListening() {
+  if (!recognition) return;
+
+  if (isListening) {
+    recognition.stop();
+    isListening = false;
+    hideVoiceIndicator();
+  } else {
+    try {
+      recognition.start();
+    } catch (error) {
+      console.error("Error starting recognition:", error);
+    }
+  }
+}
+
+function showVoiceIndicator() {
+  const indicator = document.getElementById("voice-indicator");
+  if (indicator) {
+    indicator.classList.remove("hidden");
+  }
+}
+
+function hideVoiceIndicator() {
+  const indicator = document.getElementById("voice-indicator");
+  if (indicator) {
+    indicator.classList.add("hidden");
+  }
+}
+
+function processVoiceCommand(transcript) {
+  console.log("Voice command:", transcript);
+
+  // Add to shopping list
+  const shoppingMatch = transcript.match(/add (.+?) to (?:the )?shopping list/i) ||
+    transcript.match(/shopping list (.+)/i) ||
+    transcript.match(/add (.+?) to shopping/i);
+  if (shoppingMatch) {
+    const item = shoppingMatch[1].trim();
+    if (item) {
+      addShoppingItem(item).then(() => {
+        showVoiceFeedback(`Added "${item}" to shopping list`);
+      });
+      return;
+    }
+  }
+
+  // Add note
+  const noteMatch = transcript.match(/add (.+?) to (?:the )?notes/i) ||
+    transcript.match(/note (.+)/i) ||
+    transcript.match(/remember (.+)/i);
+  if (noteMatch) {
+    const content = noteMatch[1].trim();
+    if (content) {
+      addNote(content, "yellow").then(() => {
+        showVoiceFeedback(`Added note: "${content}"`);
+      });
+      return;
+    }
+  }
+
+  // Add project
+  const projectMatch = transcript.match(/add (.+?) to (?:the )?projects/i) ||
+    transcript.match(/project (.+)/i) ||
+    transcript.match(/new project (.+)/i);
+  if (projectMatch) {
+    const title = projectMatch[1].trim();
+    if (title) {
+      addProject(title).then(() => {
+        refreshProjects();
+        showVoiceFeedback(`Added project: "${title}"`);
+      });
+      return;
+    }
+  }
+
+  // Navigation commands
+  const navCommands = {
+    "show month": 0,
+    "go to month": 0,
+    "month view": 0,
+    "show week": 1,
+    "go to week": 1,
+    "week view": 1,
+    "show today": 2,
+    "go to today": 2,
+    "today view": 2,
+    "show projects": 3,
+    "go to projects": 3,
+    "projects view": 3,
+    "show notes": 4,
+    "go to notes": 4,
+    "notes view": 4,
+    "show shopping": 5,
+    "go to shopping": 5,
+    "shopping view": 5,
+    "shopping list": 5,
+  };
+
+  for (const [command, slideIndex] of Object.entries(navCommands)) {
+    if (transcript.includes(command)) {
+      setActiveSlide(slideIndex);
+      startRotation();
+      showVoiceFeedback(`Navigating to ${command}`);
+      return;
+    }
+  }
+
+  // Default feedback
+  showVoiceFeedback("Command not recognized. Try: 'Add [item] to shopping list'");
+}
+
+function showVoiceFeedback(message) {
+  // Create temporary feedback element
+  const feedback = document.createElement("div");
+  feedback.className = "voice-feedback";
+  feedback.textContent = message;
+  document.body.appendChild(feedback);
+
+  setTimeout(() => {
+    feedback.classList.add("show");
+  }, 10);
+
+  setTimeout(() => {
+    feedback.classList.remove("show");
+    setTimeout(() => feedback.remove(), 300);
+  }, 3000);
 }
 
 document.addEventListener("DOMContentLoaded", init);
