@@ -318,16 +318,34 @@ function createProjectElement(project, refresh) {
     if (target === checkbox || target === statusSelect || target === delBtn || 
         target.tagName === "OPTION" || target.closest("select") === statusSelect ||
         target.closest("button") === delBtn || target.closest("input") === checkbox) {
-      console.log("Clicked on interactive element - not dragging");
       return;
     }
-    console.log("Mouse down on project item (draggable area):", project.id, "target:", target);
   });
 
   li.addEventListener("dragstart", (e) => {
     console.log("✅ DRAGSTART FIRED for project:", project.id);
+    
+    // Create a transparent drag image so the drag doesn't get cancelled
+    const dragImage = document.createElement("div");
+    dragImage.style.position = "absolute";
+    dragImage.style.top = "-1000px";
+    dragImage.style.width = "1px";
+    dragImage.style.height = "1px";
+    dragImage.style.opacity = "0";
+    document.body.appendChild(dragImage);
+    e.dataTransfer.setDragImage(dragImage, 0, 0);
+    
+    // Clean up the drag image after a short delay
+    setTimeout(() => {
+      if (dragImage.parentNode) {
+        dragImage.parentNode.removeChild(dragImage);
+      }
+    }, 0);
+    
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", project.id);
+    e.dataTransfer.setData("application/json", JSON.stringify({ id: project.id }));
+    
     li.classList.add("dragging");
     draggedElement = li;
     console.log("Set draggedElement:", draggedElement);
@@ -337,7 +355,12 @@ function createProjectElement(project, refresh) {
   li.addEventListener("dragend", (e) => {
     console.log("✅ DRAGEND FIRED");
     li.classList.remove("dragging");
-    draggedElement = null;
+    
+    // Only reset if this was the dragged element
+    if (draggedElement === li) {
+      draggedElement = null;
+    }
+    
     resumeRotation();
   });
 
@@ -410,10 +433,14 @@ async function renderProjects() {
     }
   });
 
-  // Setup drag and drop for each column
-  setupDragAndDrop(todoCol);
-  setupDragAndDrop(inprogressCol);
-  setupDragAndDrop(doneCol);
+  // Setup drag and drop for each column - do this AFTER all items are added
+  // Use setTimeout to ensure DOM is fully updated
+  setTimeout(() => {
+    setupDragAndDrop(todoCol);
+    setupDragAndDrop(inprogressCol);
+    setupDragAndDrop(doneCol);
+    console.log("✅ Drag and drop setup complete for all columns");
+  }, 0);
 }
 
 // Setup drag and drop handlers for a project column
@@ -422,10 +449,13 @@ let draggedElement = null;
 
 function setupDragAndDrop(column) {
   // Skip if already set up
-  if (dragDropSetup.has(column)) return;
+  if (dragDropSetup.has(column)) {
+    console.log("Column already set up:", column.id);
+    return;
+  }
   dragDropSetup.set(column, true);
 
-  console.log("Setting up drag and drop for column:", column.id, column);
+  console.log("🔧 Setting up drag and drop for column:", column.id, "Element:", column);
 
   // Make sure column can receive drop events
   column.setAttribute("data-drop-zone", "true");
