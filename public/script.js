@@ -14,6 +14,8 @@ let currentSlideIndex = 0;
 let slideTimer = null;
 let snowCtx = null;
 let snowParticles = [];
+let activityTimer = null;
+const ACTIVITY_TIMEOUT_MS = 10000; // Resume rotation after 10 seconds of inactivity
 
 function initSnow() {
   const canvas = document.getElementById("snow-canvas");
@@ -83,6 +85,35 @@ function resumeRotation() {
     slideTimer = null;
   }
   startRotation();
+}
+
+function handleUserActivity() {
+  // Don't pause if user is typing in an input field (that's handled separately)
+  const activeElement = document.activeElement;
+  if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+    return; // Let the input focus handlers manage pausing
+  }
+  
+  // Pause rotation when user is active
+  if (!rotationPaused) {
+    pauseRotation();
+  }
+  
+  // Clear existing activity timer
+  if (activityTimer) {
+    clearTimeout(activityTimer);
+  }
+  
+  // Resume rotation after period of inactivity
+  activityTimer = setTimeout(() => {
+    // Only resume if not typing and rotation is paused
+    const stillActive = document.activeElement;
+    if (rotationPaused && 
+        stillActive?.tagName !== 'INPUT' && 
+        stillActive?.tagName !== 'TEXTAREA') {
+      resumeRotation();
+    }
+  }, ACTIVITY_TIMEOUT_MS);
 }
 
 function startRotation() {
@@ -391,6 +422,37 @@ function setupNavButtons() {
 }
 
 // ===== MOBILE MENU =====
+function setupUserActivityDetection() {
+  // Pause rotation on mouse movement
+  let mouseMoveTimeout;
+  document.addEventListener("mousemove", () => {
+    handleUserActivity();
+    // Debounce mouse move events to avoid too many calls
+    clearTimeout(mouseMoveTimeout);
+    mouseMoveTimeout = setTimeout(() => {
+      handleUserActivity();
+    }, 100);
+  });
+
+  // Pause rotation on clicks
+  document.addEventListener("click", handleUserActivity);
+
+  // Pause rotation on scroll
+  document.addEventListener("scroll", handleUserActivity, true);
+
+  // Pause rotation on touch (mobile)
+  document.addEventListener("touchstart", handleUserActivity);
+  document.addEventListener("touchmove", handleUserActivity);
+
+  // Pause rotation on keyboard activity (but not when typing in inputs)
+  document.addEventListener("keydown", (e) => {
+    // Don't pause if user is typing in an input/textarea
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      handleUserActivity();
+    }
+  });
+}
+
 function setupMobileMenu() {
   const hamburgerBtn = document.getElementById("hamburger-btn");
   const mobileMenu = document.getElementById("mobile-menu");
@@ -1204,6 +1266,7 @@ function init() {
   setupNavButtons();
   setupMobileMenu();
   initVoiceCommands();
+  setupUserActivityDetection();
   initSnow();
   lazyLoadCalendars();
   startRealTimeSync();
