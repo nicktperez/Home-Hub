@@ -53,7 +53,6 @@ CREATE TABLE shopping (
   id TEXT PRIMARY KEY,
   item TEXT NOT NULL,
   checked BOOLEAN DEFAULT false,
-  updatedAt TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -74,11 +73,12 @@ CREATE POLICY "Allow all operations on shopping" ON shopping
   FOR ALL USING (true) WITH CHECK (true);
 ```
 
-**If you're getting errors about missing `createdAt` column**, run this migration in the SQL Editor:
+**If you're getting errors about missing columns**, run this migration in the SQL Editor:
 
 ```sql
--- Fix shopping table: remove createdAt if it exists, keep only created_at
+-- Fix shopping table: remove camelCase columns if they exist, keep only created_at
 ALTER TABLE shopping DROP COLUMN IF EXISTS "createdAt";
+ALTER TABLE shopping DROP COLUMN IF EXISTS "updatedAt";
 ```
 
 4. Get your Supabase credentials:

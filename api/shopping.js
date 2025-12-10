@@ -36,15 +36,13 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: "Item is required" });
       }
 
-      const now = new Date().toISOString();
-      // Insert without createdAt - use created_at (auto-set by DB) instead
+      // Insert without timestamp columns - let the database handle created_at with default
       const { data, error } = await supabase
         .from("shopping")
         .insert({
           id: Date.now().toString(),
           item: item.trim(),
           checked: false,
-          updatedAt: now,
         })
         .select()
         .single();
@@ -61,8 +59,8 @@ module.exports = async (req, res) => {
         return res.status(404).json({ error: "Item not found" });
       }
 
-      const now = new Date().toISOString();
-      const updated = { ...current, updatedAt: now };
+      // Only update the fields that are being changed, don't include updatedAt
+      const updated = {};
 
       if (typeof updates.item === "string") {
         updated.item = updates.item.trim();
