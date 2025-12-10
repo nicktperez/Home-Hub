@@ -54,53 +54,57 @@ module.exports = async (req, res) => {
     const events = (data.items || []).map(event => {
       const start = event.start?.dateTime || event.start?.date;
       const end = event.end?.dateTime || event.end?.date;
-      const startDate = new Date(start);
-      const endDate = new Date(end);
       
       // Determine if it's all day
       const isAllDay = !event.start?.dateTime;
       
-      // Format time
-      let timeStr = "";
-      if (isAllDay) {
-        timeStr = "All Day";
-      } else {
-        const startTime = startDate.toLocaleTimeString("en-US", { 
-          hour: "numeric", 
-          minute: "2-digit",
-          hour12: true 
-        });
-        const endTime = endDate.toLocaleTimeString("en-US", { 
-          hour: "numeric", 
-          minute: "2-digit",
-          hour12: true 
-        });
-        timeStr = `${startTime} - ${endTime}`;
-      }
-
+      // Return raw ISO strings - let the frontend format times in user's timezone
       return {
         id: event.id,
         title: event.summary || "No Title",
         description: event.description || "",
         start: start,
         end: end,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        time: timeStr,
+        startDate: start,
+        endDate: end,
         isAllDay: isAllDay,
         location: event.location || "",
       };
     });
 
     // Separate into today and tomorrow
+    // Use local date comparison to handle timezones correctly
+    const now = new Date();
+    const todayLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrowLocal = new Date(todayLocal);
+    tomorrowLocal.setDate(tomorrowLocal.getDate() + 1);
+    const dayAfterLocal = new Date(tomorrowLocal);
+    dayAfterLocal.setDate(dayAfterLocal.getDate() + 1);
+
     const todayEvents = events.filter(event => {
-      const eventDate = new Date(event.startDate);
-      return eventDate.toDateString() === today.toDateString();
+      if (event.isAllDay) {
+        // For all-day events, compare just the date part
+        const eventDate = new Date(event.startDate);
+        const eventDateLocal = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+        return eventDateLocal.getTime() === todayLocal.getTime();
+      } else {
+        // For timed events, check if it starts today
+        const eventDate = new Date(event.startDate);
+        return eventDate >= todayLocal && eventDate < tomorrowLocal;
+      }
     });
 
     const tomorrowEvents = events.filter(event => {
-      const eventDate = new Date(event.startDate);
-      return eventDate.toDateString() === tomorrow.toDateString();
+      if (event.isAllDay) {
+        // For all-day events, compare just the date part
+        const eventDate = new Date(event.startDate);
+        const eventDateLocal = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+        return eventDateLocal.getTime() === tomorrowLocal.getTime();
+      } else {
+        // For timed events, check if it starts tomorrow
+        const eventDate = new Date(event.startDate);
+        return eventDate >= tomorrowLocal && eventDate < dayAfterLocal;
+      }
     });
 
     return res.status(200).json({

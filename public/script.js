@@ -528,6 +528,37 @@ async function fetchCalendarEvents() {
   }
 }
 
+function formatEventTime(event) {
+  if (event.isAllDay) {
+    return "All Day";
+  }
+  
+  try {
+    const startDate = new Date(event.startDate);
+    const endDate = new Date(event.endDate);
+    
+    // Format in user's local timezone
+    const startTime = startDate.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    });
+    
+    const endTime = endDate.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    });
+    
+    return `${startTime} - ${endTime}`;
+  } catch (error) {
+    console.error("Error formatting event time:", error);
+    return "Time TBD";
+  }
+}
+
 function renderCalendarEvents() {
   if (!calendarData) return;
 
@@ -539,16 +570,19 @@ function renderCalendarEvents() {
     if (calendarData.today && calendarData.today.length > 0) {
       todayEl.innerHTML = calendarData.today
         .map(
-          (event) => `
+          (event) => {
+            const timeStr = formatEventTime(event);
+            return `
         <div class="calendar-event-item">
-          <div class="event-time">${event.time}</div>
+          <div class="event-time">${timeStr}</div>
           <div class="event-details">
             <div class="event-title">${escapeHtml(event.title)}</div>
             ${event.location ? `<div class="event-location">📍 ${escapeHtml(event.location)}</div>` : ""}
             ${event.description ? `<div class="event-description">${escapeHtml(event.description.substring(0, 100))}${event.description.length > 100 ? "..." : ""}</div>` : ""}
           </div>
         </div>
-      `
+      `;
+          }
         )
         .join("");
     } else {
@@ -563,12 +597,15 @@ function renderCalendarEvents() {
       tomorrowEl.innerHTML = calendarData.tomorrow
         .slice(0, previewCount)
         .map(
-          (event) => `
+          (event) => {
+            const timeStr = formatEventTime(event);
+            return `
         <div class="calendar-event-item-small">
-          <div class="event-time-small">${event.time}</div>
+          <div class="event-time-small">${timeStr}</div>
           <div class="event-title-small">${escapeHtml(event.title)}</div>
         </div>
-      `
+      `;
+          }
         )
         .join("");
       if (calendarData.tomorrow.length > previewCount) {
@@ -783,14 +820,20 @@ async function fetchNotes() {
 
 async function addNote(content, color) {
   try {
-    await fetch("/api/notes", {
+    const res = await fetch("/api/notes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content, color }),
     });
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to add note: ${res.status} - ${errorText}`);
+    }
     await refreshNotes();
+    return await res.json();
   } catch (error) {
     console.error("Add note error:", error);
+    throw error; // Re-throw so caller can handle it
   }
 }
 
@@ -896,14 +939,20 @@ async function fetchShopping() {
 
 async function addShoppingItem(item) {
   try {
-    await fetch("/api/shopping", {
+    const res = await fetch("/api/shopping", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ item }),
     });
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to add shopping item: ${res.status} - ${errorText}`);
+    }
     await refreshShopping();
+    return await res.json();
   } catch (error) {
     console.error("Add shopping error:", error);
+    throw error; // Re-throw so caller can handle it
   }
 }
 
@@ -1124,8 +1173,9 @@ function initVoiceCommands() {
   };
 
   recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript.toLowerCase().trim();
-    processVoiceCommand(transcript);
+    const transcript = event.results[0][0].transcript.trim();
+    console.log("Raw transcript:", transcript);
+    processVoiceCommand(transcript.toLowerCase());
     hideVoiceIndicator();
   };
 
@@ -1182,16 +1232,28 @@ function hideVoiceIndicator() {
 function processVoiceCommand(transcript) {
   console.log("Voice command:", transcript);
 
-  // Add to shopping list
-  const shoppingMatch = transcript.match(/add (.+?) to (?:the )?shopping list/i) ||
-    transcript.match(/shopping list (.+)/i) ||
-    transcript.match(/add (.+?) to shopping/i);
+  // Add to shopping list - improved regex patterns
+  let shoppingMatch = transcript.match(/add (.+?)(?: to (?:the )?shopping list| to shopping| shopping list)/i);
+  if (!shoppingMatch) {
+    shoppingMatch = transcript.match(/shopping list (.+)/i);
+  }
+  if (!shoppingMatch) {
+    shoppingMatch = transcript.match(/add (.+?) to shopping/i);
+  }
+  
   if (shoppingMatch) {
     const item = shoppingMatch[1].trim();
+    console.log("Matched shopping command, item:", item);
     if (item) {
-      addShoppingItem(item).then(() => {
-        showVoiceFeedback(`Added "${item}" to shopping list`);
-      });
+      addShoppingItem(item)
+        .then(() => {
+          console.log("Successfully added shopping item:", item);
+          showVoiceFeedback(`Added "${item}" to shopping list`);
+        })
+        .catch((error) => {
+          console.error("Error adding shopping item:", error);
+          showVoiceFeedback(`Error: Could not add "${item}" to shopping list. Check console for details.`);
+        });
       return;
     }
   }
@@ -1203,9 +1265,14 @@ function processVoiceCommand(transcript) {
   if (noteMatch) {
     const content = noteMatch[1].trim();
     if (content) {
-      addNote(content, "yellow").then(() => {
-        showVoiceFeedback(`Added note: "${content}"`);
-      });
+      addNote(content, "yellow")
+        .then(() => {
+          showVoiceFeedback(`Added note: "${content}"`);
+        })
+        .catch((error) => {
+          console.error("Error adding note:", error);
+          showVoiceFeedback(`Error: Could not add note`);
+        });
       return;
     }
   }
@@ -1217,10 +1284,15 @@ function processVoiceCommand(transcript) {
   if (projectMatch) {
     const title = projectMatch[1].trim();
     if (title) {
-      addProject(title).then(() => {
-        refreshProjects();
-        showVoiceFeedback(`Added project: "${title}"`);
-      });
+      addProject(title)
+        .then(() => {
+          refreshProjects();
+          showVoiceFeedback(`Added project: "${title}"`);
+        })
+        .catch((error) => {
+          console.error("Error adding project:", error);
+          showVoiceFeedback(`Error: Could not add project`);
+        });
       return;
     }
   }
