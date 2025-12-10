@@ -93,6 +93,9 @@ module.exports = async (req, res) => {
       if (typeof updates.endDate === "string") {
         updated.enddate = updates.endDate;
       }
+      if (typeof updates.order === "number") {
+        updated.order = updates.order;
+      }
       if (Array.isArray(updates.updates)) {
         updated.updates = updates.updates;
       }

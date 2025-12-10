@@ -35,6 +35,7 @@ CREATE TABLE projects (
   startDate TEXT DEFAULT '',
   endDate TEXT DEFAULT '',
   updates JSONB DEFAULT '[]'::jsonb,
+  "order" INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -83,6 +84,26 @@ CREATE POLICY "Allow all operations on shopping" ON shopping
 ALTER TABLE notes 
   ADD COLUMN IF NOT EXISTS done BOOLEAN DEFAULT false,
   ADD COLUMN IF NOT EXISTS notedate TEXT DEFAULT NULL;
+```
+
+**To add drag-and-drop ordering for projects**, run this migration:
+
+```sql
+-- Add order column to projects table for drag-and-drop prioritization
+ALTER TABLE projects 
+  ADD COLUMN IF NOT EXISTS "order" INTEGER DEFAULT 0;
+
+-- Set initial order based on updatedat for existing projects
+-- Use a CTE to calculate row numbers, then update
+WITH ordered_projects AS (
+  SELECT id, row_number() OVER (ORDER BY updatedat DESC) - 1 AS new_order
+  FROM projects
+  WHERE "order" IS NULL OR "order" = 0
+)
+UPDATE projects p
+SET "order" = op.new_order
+FROM ordered_projects op
+WHERE p.id = op.id;
 ```
 
 **If you're getting errors about columns**, first check what columns exist, then fix them:

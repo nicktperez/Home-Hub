@@ -143,15 +143,7 @@ function startRotation() {
 }
 
 function renderToday() {
-  const todayEl = document.getElementById("today-text");
-  if (!todayEl) return;
-  const today = new Date();
-  const formatted = today.toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-  todayEl.textContent = formatted;
+  // Date is now shown in clock widget, no need for separate date display
 }
 
 // ===== CLOCK =====
@@ -246,6 +238,23 @@ async function addProject(title) {
 function createProjectElement(project, refresh) {
   const li = document.createElement("div");
   li.className = "project-item";
+  li.draggable = true;
+  li.dataset.projectId = project.id;
+  li.dataset.order = project.order !== undefined ? project.order : 999999;
+
+  // Drag and drop handlers
+  li.addEventListener("dragstart", (e) => {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", project.id);
+    li.classList.add("dragging");
+    pauseRotation(); // Pause rotation while dragging
+  });
+
+  li.addEventListener("dragend", (e) => {
+    li.classList.remove("dragging");
+    resumeRotation(); // Resume rotation after dragging
+  });
+
 
   const checkbox = document.createElement("input");
   checkbox.type = "checkbox";
@@ -352,8 +361,15 @@ async function renderProjects() {
   inprogressCol.innerHTML = "";
   doneCol.innerHTML = "";
 
-  // Populate columns
-  projects.forEach((project) => {
+  // Sort projects by order within each status
+  const sortByOrder = (a, b) => {
+    const orderA = a.order !== undefined ? a.order : 999999;
+    const orderB = b.order !== undefined ? b.order : 999999;
+    return orderA - orderB;
+  };
+
+  // Populate columns (sorted by order)
+  projects.sort(sortByOrder).forEach((project) => {
     const item = createProjectElement(project, renderProjects);
     const status = project.status || "todo";
     
@@ -365,6 +381,84 @@ async function renderProjects() {
       todoCol.appendChild(item);
     }
   });
+
+  // Setup drag and drop for each column
+  setupDragAndDrop(todoCol);
+  setupDragAndDrop(inprogressCol);
+  setupDragAndDrop(doneCol);
+}
+
+// Setup drag and drop handlers for a project column
+// Use a WeakMap to track if handlers are already set up
+const dragDropSetup = new WeakMap();
+
+function setupDragAndDrop(column) {
+  // Skip if already set up
+  if (dragDropSetup.has(column)) return;
+  dragDropSetup.set(column, true);
+
+  column.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    const afterElement = getDragAfterElement(column, e.clientY);
+    const dragging = document.querySelector(".dragging");
+    if (!dragging) return;
+    
+    if (afterElement == null) {
+      column.appendChild(dragging);
+    } else {
+      column.insertBefore(dragging, afterElement);
+    }
+  });
+
+  column.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    const draggedId = e.dataTransfer.getData("text/plain");
+    if (!draggedId) return;
+
+    const allItems = Array.from(column.children);
+    
+    // Get all projects to determine status
+    const projects = await fetchProjects();
+    const draggedProject = projects.find(p => p.id === draggedId);
+    if (!draggedProject) return;
+    
+    const status = draggedProject.status || "todo";
+    const sameStatusProjects = projects.filter(p => (p.status || "todo") === status);
+    
+    // Reorder the projects array based on new DOM order
+    const reorderedProjects = [];
+    allItems.forEach((item, index) => {
+      const projectId = item.dataset.projectId;
+      const proj = sameStatusProjects.find(p => p.id === projectId);
+      if (proj) {
+        reorderedProjects.push({ ...proj, order: index });
+      }
+    });
+
+    // Update all projects with new order
+    for (const proj of reorderedProjects) {
+      await updateProject(proj.id, { order: proj.order });
+    }
+    
+    await renderProjects();
+  });
+}
+
+// Helper function to determine where to insert dragged element
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll(".project-item:not(.dragging)")];
+  
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
 function setupForm() {

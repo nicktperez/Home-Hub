@@ -22,8 +22,12 @@ module.exports = async (req, res) => {
 
   try {
     if (method === "GET") {
-      // GET /api/projects - use lowercase for column name
-      const { data, error } = await supabase.from("projects").select("*").order("updatedat", { ascending: false });
+      // GET /api/projects - order by order field first, then updatedat
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .order("order", { ascending: true, nullsFirst: false })
+        .order("updatedat", { ascending: false });
       if (error) throw error;
       return res.status(200).json(data || []);
     }
@@ -39,6 +43,17 @@ module.exports = async (req, res) => {
       const now = new Date().toISOString();
       const cleanProgress = typeof progress === "number" && progress >= 0 && progress <= 100 ? progress : 0;
 
+      // Get current max order to place new project at the end
+      const { data: existingProjects } = await supabase
+        .from("projects")
+        .select("order")
+        .order("order", { ascending: false })
+        .limit(1);
+      
+      const maxOrder = existingProjects && existingProjects.length > 0 && existingProjects[0].order !== null
+        ? existingProjects[0].order + 1
+        : 0;
+
       // Use lowercase column names to match PostgreSQL (unquoted columns are lowercased)
       const { data, error } = await supabase
         .from("projects")
@@ -53,6 +68,7 @@ module.exports = async (req, res) => {
           startdate: typeof startDate === "string" ? startDate : "",
           enddate: typeof endDate === "string" ? endDate : "",
           updates: [],
+          order: maxOrder,
         })
         .select()
         .single();
