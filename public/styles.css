@@ -848,10 +848,10 @@ header h1 {
 }
 
 .project-item.dragging {
-  opacity: 0.4;
-  transform: scale(0.98);
-  pointer-events: none;
+  opacity: 0.5;
+  transform: scale(0.95);
   z-index: 1000;
+  position: relative;
 }
 
 .project-item-placeholder {
