@@ -201,13 +201,13 @@
       </section>
 
       <section class="slide">
-        <div class="projects-box p-4 flex flex-col gap-3 flex-1 overflow-hidden h-full">
+        <div class="projects-box p-4 pt-24 flex flex-col gap-3 flex-1 overflow-hidden h-full">
           <!-- Compact header with form inline -->
-          <div class="flex items-center justify-between gap-3 flex-shrink-0">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 flex-shrink-0">
             <div>
               <h1 class="text-2xl font-bold">Projects</h1>
             </div>
-            <form id="project-form" class="flex gap-2">
+            <form id="project-form" class="flex gap-2 w-full sm:w-auto">
               <input
                 id="project-input"
                 name="project"
@@ -215,9 +215,9 @@
                 placeholder="Add a project"
                 autocomplete="off"
                 required
-                class="w-48 px-3 py-2 rounded-lg bg-slate-950/70 border border-slate-700 text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                class="flex-1 sm:w-48 px-3 py-2 rounded-lg bg-slate-950/70 border border-slate-700 text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
               />
-              <button type="submit" class="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold shadow-lg text-sm">
+              <button type="submit" class="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold shadow-lg text-sm whitespace-nowrap">
                 Add
               </button>
             </form>
