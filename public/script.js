@@ -242,6 +242,10 @@ function createProjectElement(project, refresh) {
   li.dataset.projectId = project.id;
   li.dataset.order = project.order !== undefined ? project.order : 999999;
 
+  // Prevent text selection during drag
+  li.style.userSelect = "none";
+  li.style.webkitUserSelect = "none";
+
   // Create all elements first
   const checkbox = document.createElement("input");
   checkbox.type = "checkbox";
@@ -254,6 +258,8 @@ function createProjectElement(project, refresh) {
   const title = document.createElement("p");
   title.className = "project-title font-semibold";
   title.textContent = project.title;
+  title.style.userSelect = "none";
+  title.style.cursor = "move";
   if (project.done) {
     title.classList.add("done");
   }
@@ -287,7 +293,6 @@ function createProjectElement(project, refresh) {
         if (!projectId) {
           throw new Error("Project ID is missing");
         }
-        console.log("Attempting to delete project:", projectId, project);
         await deleteProject(projectId);
         await refreshProjects();
       } catch (error) {
@@ -298,56 +303,29 @@ function createProjectElement(project, refresh) {
     }
   });
 
-  // Add a drag handle icon
-  const dragHandle = document.createElement("div");
-  dragHandle.className = "drag-handle";
-  dragHandle.innerHTML = "⋮⋮";
-  dragHandle.style.cursor = "move";
-  dragHandle.style.userSelect = "none";
-  dragHandle.style.padding = "4px 8px";
-  dragHandle.style.opacity = "0.5";
-  dragHandle.style.fontSize = "16px";
-  dragHandle.style.lineHeight = "1";
-
-  // Drag and drop handlers on the main item
+  // Drag and drop handlers
   li.addEventListener("dragstart", (e) => {
-    console.log("Drag started for project:", project.id, li);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", project.id);
     li.classList.add("dragging");
     draggedElement = li;
-    console.log("Set draggedElement to:", draggedElement);
-    pauseRotation(); // Pause rotation while dragging
+    pauseRotation();
   });
 
   li.addEventListener("dragend", (e) => {
-    console.log("Drag ended");
     li.classList.remove("dragging");
-    
-    // Reset drag state
     draggedElement = null;
-    
-    resumeRotation(); // Resume rotation after dragging
+    resumeRotation();
   });
 
-  // Make title area draggable
-  title.style.cursor = "move";
-  
-  // Prevent interactive elements from starting drag, but allow them to work
-  checkbox.addEventListener("mousedown", (e) => {
-    e.stopPropagation();
-  });
-  statusSelect.addEventListener("mousedown", (e) => {
-    e.stopPropagation();
-  });
-  delBtn.addEventListener("mousedown", (e) => {
-    e.stopPropagation();
-  });
+  // Prevent child elements from interfering
+  checkbox.addEventListener("mousedown", (e) => e.stopPropagation());
+  statusSelect.addEventListener("mousedown", (e) => e.stopPropagation());
+  delBtn.addEventListener("mousedown", (e) => e.stopPropagation());
 
-  // Simple layout: drag handle + checkbox + title on one row, status + delete on another
+  // Simple layout: checkbox + title on one row, status + delete on another
   const headerRow = document.createElement("div");
   headerRow.className = "project-header-simple";
-  headerRow.appendChild(dragHandle);
   headerRow.appendChild(checkbox);
   headerRow.appendChild(title);
 
@@ -431,45 +409,26 @@ function setupDragAndDrop(column) {
   if (dragDropSetup.has(column)) return;
   dragDropSetup.set(column, true);
 
-  column.addEventListener("dragenter", (e) => {
-    e.preventDefault();
-    if (draggedElement) {
-      column.style.backgroundColor = "rgba(59, 130, 246, 0.1)";
-    }
-  });
-
-  column.addEventListener("dragleave", (e) => {
-    // Only remove highlight if we're actually leaving the column
-    if (!column.contains(e.relatedTarget)) {
-      column.style.backgroundColor = "";
-    }
-  });
-
   column.addEventListener("dragover", (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     
     if (!draggedElement) return;
 
-    // Get all project items in this column (excluding the one being dragged)
     const siblings = Array.from(column.children).filter(
       child => child.classList.contains("project-item") && child !== draggedElement
     );
 
-    // Find insertion point based on mouse Y position
     let nextSibling = null;
-    
     for (const sibling of siblings) {
       const box = sibling.getBoundingClientRect();
       const middle = box.top + box.height / 2;
-      
       if (e.clientY < middle) {
         nextSibling = sibling;
         break;
       }
     }
 
-    // Move the element immediately
     if (nextSibling) {
       column.insertBefore(draggedElement, nextSibling);
     } else {
@@ -479,18 +438,12 @@ function setupDragAndDrop(column) {
 
   column.addEventListener("drop", async (e) => {
     e.preventDefault();
-    
-    // Remove highlight
-    column.style.backgroundColor = "";
-    
     if (!draggedElement) return;
 
-    // Get final order from DOM
     const allItems = Array.from(column.children).filter(item => 
       item.classList.contains("project-item")
     );
     
-    // Determine status from column ID
     let status = "todo";
     if (column.id === "board-inprogress") {
       status = "in_progress";
@@ -498,11 +451,9 @@ function setupDragAndDrop(column) {
       status = "done";
     }
     
-    // Get all projects to find which ones are in this status column
     const projects = await fetchProjects();
     const sameStatusProjects = projects.filter(p => (p.status || "todo") === status);
     
-    // Reorder projects based on DOM position
     const orderUpdates = [];
     allItems.forEach((item, index) => {
       const projectId = item.dataset.projectId;
@@ -512,22 +463,15 @@ function setupDragAndDrop(column) {
       }
     });
 
-    // Only update if there are changes
     if (orderUpdates.length > 0) {
-      // Batch update all projects in parallel
-      const updatePromises = orderUpdates.map(({ id, order }) => 
+      await Promise.all(orderUpdates.map(({ id, order }) => 
         updateProject(id, { order }).catch(err => {
           console.error(`Failed to update order for project ${id}:`, err);
         })
-      );
-      
-      await Promise.all(updatePromises);
-      
-      // Refresh to ensure UI is in sync
+      ));
       await renderProjects();
     }
     
-    // Reset drag state
     draggedElement = null;
   });
 }
