@@ -832,10 +832,19 @@ header h1 {
   position: relative;
   overflow: hidden;
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
-  cursor: move;
+  cursor: grab;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
   transition: opacity 0.15s ease, transform 0.15s ease;
   will-change: transform, opacity;
+}
+
+.project-item:active {
+  cursor: grabbing;
 }
 
 .project-item.dragging {

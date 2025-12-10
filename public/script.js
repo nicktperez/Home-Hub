@@ -238,13 +238,9 @@ async function addProject(title) {
 function createProjectElement(project, refresh) {
   const li = document.createElement("div");
   li.className = "project-item";
-  li.draggable = true;
+  li.setAttribute("draggable", "true");
   li.dataset.projectId = project.id;
   li.dataset.order = project.order !== undefined ? project.order : 999999;
-
-  // Prevent text selection during drag
-  li.style.userSelect = "none";
-  li.style.webkitUserSelect = "none";
 
   // Create all elements first
   const checkbox = document.createElement("input");
@@ -258,8 +254,6 @@ function createProjectElement(project, refresh) {
   const title = document.createElement("p");
   title.className = "project-title font-semibold";
   title.textContent = project.title;
-  title.style.userSelect = "none";
-  title.style.cursor = "move";
   if (project.done) {
     title.classList.add("done");
   }
@@ -303,26 +297,6 @@ function createProjectElement(project, refresh) {
     }
   });
 
-  // Drag and drop handlers
-  li.addEventListener("dragstart", (e) => {
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", project.id);
-    li.classList.add("dragging");
-    draggedElement = li;
-    pauseRotation();
-  });
-
-  li.addEventListener("dragend", (e) => {
-    li.classList.remove("dragging");
-    draggedElement = null;
-    resumeRotation();
-  });
-
-  // Prevent child elements from interfering
-  checkbox.addEventListener("mousedown", (e) => e.stopPropagation());
-  statusSelect.addEventListener("mousedown", (e) => e.stopPropagation());
-  delBtn.addEventListener("mousedown", (e) => e.stopPropagation());
-
   // Simple layout: checkbox + title on one row, status + delete on another
   const headerRow = document.createElement("div");
   headerRow.className = "project-header-simple";
@@ -336,6 +310,48 @@ function createProjectElement(project, refresh) {
 
   li.appendChild(headerRow);
   li.appendChild(actionsRow);
+
+  // Drag and drop handlers - attach AFTER elements are in DOM
+  li.addEventListener("mousedown", (e) => {
+    // Don't start drag if clicking on interactive elements
+    const target = e.target;
+    if (target === checkbox || target === statusSelect || target === delBtn || 
+        target.tagName === "OPTION" || target.closest("select") === statusSelect ||
+        target.closest("button") === delBtn || target.closest("input") === checkbox) {
+      console.log("Clicked on interactive element - not dragging");
+      return;
+    }
+    console.log("Mouse down on project item (draggable area):", project.id, "target:", target);
+  });
+
+  li.addEventListener("dragstart", (e) => {
+    console.log("✅ DRAGSTART FIRED for project:", project.id);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", project.id);
+    li.classList.add("dragging");
+    draggedElement = li;
+    console.log("Set draggedElement:", draggedElement);
+    pauseRotation();
+  });
+
+  li.addEventListener("dragend", (e) => {
+    console.log("✅ DRAGEND FIRED");
+    li.classList.remove("dragging");
+    draggedElement = null;
+    resumeRotation();
+  });
+
+  // Prevent child elements from interfering - but allow them to work
+  checkbox.addEventListener("mousedown", (e) => {
+    e.stopPropagation();
+  });
+  statusSelect.addEventListener("mousedown", (e) => {
+    e.stopPropagation();
+  });
+  delBtn.addEventListener("mousedown", (e) => {
+    e.stopPropagation();
+  });
+
   return li;
 }
 
