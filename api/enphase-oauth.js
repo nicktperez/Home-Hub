@@ -13,8 +13,9 @@ module.exports = async (req, res) => {
 
   const clientId = process.env.ENPHASE_CLIENT_ID;
   const clientSecret = process.env.ENPHASE_CLIENT_SECRET;
+  // IMPORTANT: This must match EXACTLY what you set in your Enphase app settings
   const redirectUri = process.env.ENPHASE_REDIRECT_URI || 
-    `${req.headers.origin || 'https://' + req.headers.host}/api/enphase-oauth`;
+    `https://${req.headers.host || 'home-hub-six.vercel.app'}/api/enphase-oauth`;
 
   if (req.method === "GET") {
     const { code, error } = req.query;
@@ -61,17 +62,21 @@ module.exports = async (req, res) => {
 
       try {
         // Exchange authorization code for access token
+        // Enphase requires Basic Auth with client_id:client_secret
         const tokenUrl = "https://api.enphaseenergy.com/oauth/token";
+        
+        // Create Basic Auth header
+        const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+        
         const tokenResponse = await fetch(tokenUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": `Basic ${basicAuth}`,
           },
           body: new URLSearchParams({
             grant_type: "authorization_code",
             code: code,
-            client_id: clientId,
-            client_secret: clientSecret,
             redirect_uri: redirectUri,
           }),
         });

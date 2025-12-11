@@ -258,8 +258,9 @@ WHERE table_name = 'shopping';
    # Paste your Client Secret: f3cf33fc18147150dc7c5e67cb5405b2
    
    vercel env add ENPHASE_REDIRECT_URI
-   # Paste: https://your-vercel-app.vercel.app/api/enphase-oauth
-   # Replace "your-vercel-app" with your actual Vercel app name
+   # Paste: https://home-hub-six.vercel.app/api/enphase-oauth
+   # IMPORTANT: This MUST match EXACTLY what you set in your Enphase app's redirect URI settings
+   # Go to your Enphase developer portal and make sure the redirect URI matches
    ```
    
    Step 2: Get Access Token:
