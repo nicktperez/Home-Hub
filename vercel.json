@@ -34,6 +34,10 @@
       "dest": "/api/shopping/[id].js"
     },
     {
+      "src": "/api/energy",
+      "dest": "/api/energy.js"
+    },
+    {
       "src": "/(.*)",
       "dest": "/public/$1"
     }
