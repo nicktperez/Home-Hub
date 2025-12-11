@@ -49,26 +49,15 @@ module.exports = async (req, res) => {
         const today = new Date().toISOString().split("T")[0];
         
         // Enphase API v4 uses API key as query parameter 'key='
+        // IMPORTANT: API key seems more reliable than OAuth token for /production endpoint
+        // Use API key if available, otherwise try OAuth token
         let urlParams = [];
         const headers = {
           "Accept": "application/json",
         };
         
-        if (accessToken) {
-          // Use OAuth access token in header
-          // Enphase requires the token in Authorization header
-          headers["Authorization"] = `Bearer ${accessToken}`;
-          // Also try as a query parameter (some Enphase endpoints might need this)
-          if (summary_date) {
-            urlParams.push(`summary_date=${summary_date}`);
-          } else if (start_date && end_date) {
-            urlParams.push(`start_date=${start_date}`, `end_date=${end_date}`);
-          } else {
-            urlParams.push(`summary_date=${today}`);
-          }
-          
-          console.log("Access token present:", accessToken ? "Yes (length: " + accessToken.length + ")" : "No");
-        } else if (apiKey) {
+        // Prioritize API key over access token (API key works better with /production endpoint)
+        if (apiKey) {
           // API key MUST be first query parameter
           urlParams.push(`key=${apiKey}`);
           if (summary_date) {
@@ -78,6 +67,18 @@ module.exports = async (req, res) => {
           } else {
             urlParams.push(`summary_date=${today}`);
           }
+          console.log("Using API key authentication (preferred)");
+        } else if (accessToken) {
+          // Fallback to OAuth access token
+          headers["Authorization"] = `Bearer ${accessToken}`;
+          if (summary_date) {
+            urlParams.push(`summary_date=${summary_date}`);
+          } else if (start_date && end_date) {
+            urlParams.push(`start_date=${start_date}`, `end_date=${end_date}`);
+          } else {
+            urlParams.push(`summary_date=${today}`);
+          }
+          console.log("Using OAuth access token authentication (fallback)");
         } else {
           return res.status(400).json({
             error: "Authentication required",
@@ -86,15 +87,8 @@ module.exports = async (req, res) => {
         }
         
         // Enphase API v4 endpoint format
-        // Try different endpoint formats based on authentication method
-        let url;
-        if (accessToken) {
-          // With OAuth token, use /systems/{system_id}/summary endpoint
-          url = `${baseUrl}/systems/${systemId}/summary?${urlParams.join('&')}`;
-        } else {
-          // With API key, use /production endpoint
-          url = `${baseUrl}/systems/${systemId}/production?${urlParams.join('&')}`;
-        }
+        // /production endpoint works best with API key
+        const url = `${baseUrl}/systems/${systemId}/production?${urlParams.join('&')}`;
         
         console.log("Enphase API request URL (redacted):", url.replace(/key=[^&]+/, 'key=***'));
         console.log("Using access token:", accessToken ? "Yes (length: " + accessToken.length + ")" : "No");
@@ -120,19 +114,49 @@ module.exports = async (req, res) => {
           
           // If 401, check if access token is missing or try alternative authentication
           if (response.status === 401 && accessToken) {
-            console.log("401 error - checking token format...");
-            // Try with token in query parameter as well (some APIs need both)
+            console.log("401 error - trying alternative authentication methods...");
+            
+            // Try 1: Token without "Bearer" prefix
+            console.log("Trying token without Bearer prefix...");
+            const altHeaders1 = {
+              "Accept": "application/json",
+              "Authorization": accessToken, // No "Bearer" prefix
+            };
+            const altResponse1 = await fetch(url, {
+              method: "GET",
+              headers: altHeaders1,
+            });
+            
+            if (altResponse1.ok) {
+              const altData = await altResponse1.json();
+              return res.status(200).json(altData);
+            }
+            
+            // Try 2: Token in query parameter
+            console.log("Trying token in query parameter...");
             const altUrl = `${baseUrl}/systems/${systemId}/summary?access_token=${accessToken}${urlParams.length > 0 ? '&' + urlParams.join('&') : ''}`;
-            console.log("Trying alternative URL with token in query param...");
-            const altResponse = await fetch(altUrl, {
+            const altResponse2 = await fetch(altUrl, {
               method: "GET",
               headers: {
                 "Accept": "application/json",
               },
             });
             
-            if (altResponse.ok) {
-              const altData = await altResponse.json();
+            if (altResponse2.ok) {
+              const altData = await altResponse2.json();
+              return res.status(200).json(altData);
+            }
+            
+            // Try 3: Different endpoint - /production instead of /summary
+            console.log("Trying /production endpoint instead...");
+            const prodUrl = `${baseUrl}/systems/${systemId}/production?${urlParams.join('&')}`;
+            const altResponse3 = await fetch(prodUrl, {
+              method: "GET",
+              headers: headers,
+            });
+            
+            if (altResponse3.ok) {
+              const altData = await altResponse3.json();
               return res.status(200).json(altData);
             }
           }
