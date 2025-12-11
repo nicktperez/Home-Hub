@@ -61,48 +61,32 @@ module.exports = async (req, res) => {
           "Accept": "application/json",
         };
         
-        // Try both authentication methods - some endpoints require OAuth token
-        // Use API key for /production, OAuth token for /summary endpoints
-        let useApiKey = false;
-        let useOAuthToken = false;
+        // CRITICAL: Enphase API v4 requires BOTH:
+        // 1. OAuth 2.0 access token in Authorization: Bearer header
+        // 2. API key in a header named 'key' (NOT in query params!)
+        // See: https://developer-v4.enphase.com/docs.html
         
-        if (apiKey) {
-          // API key for /production endpoint
-          useApiKey = true;
-          urlParams.push(`key=${apiKey}`);
-          if (summary_date) {
-            urlParams.push(`summary_date=${summary_date}`);
-          } else if (start_date && end_date) {
-            urlParams.push(`start_date=${start_date}`, `end_date=${end_date}`);
-          } else {
-            urlParams.push(`summary_date=${today}`);
-          }
-        }
-        
-        if (accessToken) {
-          // OAuth token for /summary and other endpoints
-          useOAuthToken = true;
-          headers["Authorization"] = `Bearer ${accessToken}`;
-          // Don't add date params if we already have them from API key
-          if (!useApiKey) {
-            if (summary_date) {
-              urlParams.push(`summary_date=${summary_date}`);
-            } else if (start_date && end_date) {
-              urlParams.push(`start_date=${start_date}`, `end_date=${end_date}`);
-            } else {
-              urlParams.push(`summary_date=${today}`);
-            }
-          }
-        }
-        
-        if (!useApiKey && !useOAuthToken) {
+        if (!apiKey || !accessToken) {
           return res.status(400).json({
-            error: "Authentication required",
-            message: "You need either ENPHASE_ACCESS_TOKEN (OAuth) or ENPHASE_API_KEY. See DEPLOY.md for setup instructions."
+            error: "Both credentials required",
+            message: "Enphase API v4 requires BOTH ENPHASE_API_KEY (in 'key' header) AND ENPHASE_ACCESS_TOKEN (in Authorization header). See DEPLOY.md for setup instructions."
           });
         }
         
-        console.log("Auth methods:", { apiKey: useApiKey, oauthToken: useOAuthToken });
+        // Set both headers as required by Enphase API v4
+        headers["Authorization"] = `Bearer ${accessToken}`;
+        headers["key"] = apiKey; // API key goes in header, NOT query parameter!
+        
+        // Add date params
+        if (summary_date) {
+          urlParams.push(`summary_date=${summary_date}`);
+        } else if (start_date && end_date) {
+          urlParams.push(`start_date=${start_date}`, `end_date=${end_date}`);
+        } else {
+          urlParams.push(`summary_date=${today}`);
+        }
+        
+        console.log("Using BOTH OAuth token (Bearer) and API key (header) as required by Enphase API v4");
         
         // Enphase API endpoint format
         // Try multiple API versions and endpoints
@@ -111,67 +95,32 @@ module.exports = async (req, res) => {
         let responseText = "";
         let lastError = null;
         
-        // Try different endpoint combinations with appropriate auth
-        // /production works with API key, /summary works with OAuth token
-        const attempts = [];
-        
-        // Try API key with /production endpoints first
-        if (useApiKey) {
-          attempts.push(
-            { base: "https://api.enphaseenergy.com/api/v4", path: "production", name: "v4/production", useApiKey: true },
-            { base: "https://api.enphaseenergy.com/api/v2", path: "production", name: "v2/production", useApiKey: true }
-          );
-        }
-        
-        // Try OAuth token with /summary endpoints
-        if (useOAuthToken) {
-          attempts.push(
-            { base: "https://api.enphaseenergy.com/api/v4", path: "summary", name: "v4/summary", useOAuthToken: true },
-            { base: "https://api.enphaseenergy.com/api/v2", path: "summary", name: "v2/summary", useOAuthToken: true }
-          );
-        }
-        
-        // Also try cross-combinations
-        if (useApiKey && useOAuthToken) {
-          attempts.push(
-            { base: "https://api.enphaseenergy.com/api/v4", path: "summary", name: "v4/summary (with API key)", useApiKey: true },
-            { base: "https://api.enphaseenergy.com/api/v4", path: "production", name: "v4/production (with OAuth)", useOAuthToken: true }
-          );
-        }
+        // Try different endpoint combinations
+        // All attempts will use BOTH OAuth token and API key in headers (as required by Enphase API v4)
+        const attempts = [
+          { base: "https://api.enphaseenergy.com/api/v4", path: `systems/${systemId}/summary`, name: "v4/summary" },
+          { base: "https://api.enphaseenergy.com/api/v4", path: `systems/${systemId}/rgm_stats`, name: "v4/rgm_stats" },
+          { base: "https://api.enphaseenergy.com/api/v4", path: `systems/${systemId}/stats`, name: "v4/stats" },
+          { base: "https://api.enphaseenergy.com/api/v4", path: `systems/${systemId}/production`, name: "v4/production" },
+        ];
         
         for (const attempt of attempts) {
-          // Build URL and headers based on auth method
-          let attemptUrlParams = [];
-          let attemptHeaders = { ...headers };
-          
-          if (attempt.useApiKey && apiKey) {
-            attemptUrlParams.push(`key=${apiKey}`);
-            // Remove OAuth header if using API key
-            delete attemptHeaders["Authorization"];
+          // Build URL - headers already set with both OAuth token and API key
+          // Note: Some endpoints might not need date params (like rgm_stats)
+          let attemptParams = [...urlParams];
+          if (attempt.path.includes('rgm_stats')) {
+            // rgm_stats might need different params, try without date first
+            attemptParams = attemptParams.filter(p => !p.includes('summary_date') && !p.includes('start_date') && !p.includes('end_date'));
           }
           
-          if (attempt.useOAuthToken && accessToken) {
-            attemptHeaders["Authorization"] = `Bearer ${accessToken}`;
-            // Remove API key from params if using OAuth
-            attemptUrlParams = urlParams.filter(p => !p.startsWith('key='));
-          }
-          
-          // Add date params
-          if (summary_date) {
-            attemptUrlParams.push(`summary_date=${summary_date}`);
-          } else if (start_date && end_date) {
-            attemptUrlParams.push(`start_date=${start_date}`, `end_date=${end_date}`);
-          } else {
-            attemptUrlParams.push(`summary_date=${today}`);
-          }
-          
-          url = `${attempt.base}/systems/${systemId}/${attempt.path}?${attemptUrlParams.join('&')}`;
-          console.log(`Trying ${attempt.name} endpoint:`, url.replace(/key=[^&]+/, 'key=***').substring(0, 100) + "...");
-          console.log(`  Auth: ${attempt.useApiKey ? 'API Key' : 'OAuth Token'}`);
+          const queryString = attemptParams.length > 0 ? `?${attemptParams.join('&')}` : '';
+          url = `${attempt.base}/${attempt.path}${queryString}`;
+          console.log(`Trying ${attempt.name} endpoint:`, url.substring(0, 120) + "...");
+          console.log(`  Headers: Authorization (Bearer token) + key (API key)`);
           
           response = await fetch(url, {
             method: "GET",
-            headers: attemptHeaders,
+            headers: headers, // Both OAuth token and API key are in headers
           });
           
           responseText = await response.text();
