@@ -69,9 +69,19 @@ module.exports = async (req, res) => {
         }
         
         // Enphase API v4 endpoint format
-        const url = `${baseUrl}/systems/${systemId}/production?${urlParams.join('&')}`;
+        // Try different endpoint formats based on authentication method
+        let url;
+        if (accessToken) {
+          // With OAuth token, use /systems/{system_id}/summary endpoint
+          url = `${baseUrl}/systems/${systemId}/summary?${urlParams.join('&')}`;
+        } else {
+          // With API key, use /production endpoint
+          url = `${baseUrl}/systems/${systemId}/production?${urlParams.join('&')}`;
+        }
         
-        console.log("Enphase API request URL (redacted):", url.replace(/key=[^&]+/, 'key=***'));
+        console.log("Enphase API request URL (redacted):", url.replace(/key=[^&]+/, 'key=***').replace(/Bearer [^&]+/, 'Bearer ***'));
+        console.log("Using access token:", accessToken ? "Yes" : "No");
+        console.log("System ID:", systemId);
         
         const response = await fetch(url, {
           method: "GET",
@@ -89,16 +99,43 @@ module.exports = async (req, res) => {
             errorDetails = responseText;
           }
           
+          // If 405 with access token, try the /production endpoint instead
+          if (response.status === 405 && accessToken) {
+            console.log("405 error with access token, trying /production endpoint...");
+            const altUrl = `${baseUrl}/systems/${systemId}/production?${urlParams.join('&')}`;
+            const altResponse = await fetch(altUrl, {
+              method: "GET",
+              headers: headers,
+            });
+            
+            if (altResponse.ok) {
+              const altData = await altResponse.json();
+              return res.status(200).json(altData);
+            }
+            
+            // If still fails, try without query params
+            console.log("Still failing, trying without query params...");
+            const simpleUrl = `${baseUrl}/systems/${systemId}/summary`;
+            const simpleResponse = await fetch(simpleUrl, {
+              method: "GET",
+              headers: headers,
+            });
+            
+            if (simpleResponse.ok) {
+              const simpleData = await simpleResponse.json();
+              return res.status(200).json(simpleData);
+            }
+          }
           
           return res.status(response.status).json({
             error: `Enphase API error: ${response.status}`,
             details: errorDetails,
             message: response.status === 401 
-              ? "Authentication failed. You may need to: 1) Enable API access in your Enphase account settings, 2) Grant access to your application, 3) Use OAuth flow to get an access token."
+              ? "Authentication failed. Check: 1) Access token is correct, 2) Token hasn't expired, 3) API access is enabled in Enphase account."
               : response.status === 404
               ? "System not found. Check your ENPHASE_SYSTEM_ID."
               : response.status === 405
-              ? "Method not allowed. The API endpoint or authentication method may be incorrect. Check: 1) Your API key format, 2) System ID is correct, 3) API access is enabled in Enphase account."
+              ? "Method not allowed. Trying alternative endpoints. Check: 1) System ID is correct, 2) Access token is valid, 3) API access is enabled."
               : "See details for more information"
           });
         }
