@@ -18,10 +18,10 @@ module.exports = async (req, res) => {
   const accessToken = process.env.ENPHASE_ACCESS_TOKEN; // For OAuth flow
 
   // Check what credentials we have
-  if (!apiKey && !clientId) {
+  if (!apiKey && !accessToken) {
     return res.status(500).json({ 
       error: "Missing Enphase credentials",
-      message: "You need either ENPHASE_API_KEY (for older API) or ENPHASE_CLIENT_ID + ENPHASE_CLIENT_SECRET (for OAuth v4 API)"
+      message: "You need either ENPHASE_API_KEY or ENPHASE_ACCESS_TOKEN. If you have Client ID/Secret, visit /api/enphase-oauth to get an access token."
     });
   }
 

@@ -240,13 +240,36 @@ WHERE table_name = 'shopping';
 
 4. **Enphase API (Optional - for solar production data):**
    
-   **Required:**
+   **Option 1: Use API Key (Simpler, but may have limitations)**
    ```bash
    vercel env add ENPHASE_API_KEY
    ```
    - Paste your Enphase API key (from your application page)
    - Example: `341f6138d4d964bdfe78cb7b4adafb56`
    
+   **Option 2: Use OAuth (Recommended for API v4)**
+   
+   Step 1: Add OAuth credentials:
+   ```bash
+   vercel env add ENPHASE_CLIENT_ID
+   # Paste your Client ID: cc821057d4e10bab029b88eb059836a8
+   
+   vercel env add ENPHASE_CLIENT_SECRET
+   # Paste your Client Secret: f3cf33fc18147150dc7c5e67cb5405b2
+   
+   vercel env add ENPHASE_REDIRECT_URI
+   # Paste: https://your-vercel-app.vercel.app/api/enphase-oauth
+   # Replace "your-vercel-app" with your actual Vercel app name
+   ```
+   
+   Step 2: Get Access Token:
+   - After deploying, visit: `https://your-vercel-app.vercel.app/api/enphase-oauth`
+   - This will redirect you to Enphase to authorize
+   - After authorization, you'll get an access token
+   - Add it as: `vercel env add ENPHASE_ACCESS_TOKEN`
+   - Paste the token you received
+   
+   **Required for both options:**
    ```bash
    vercel env add ENPHASE_SYSTEM_ID
    ```
@@ -254,14 +277,6 @@ WHERE table_name = 'shopping';
    - Find it in your Enphase account under "Systems" → Your System → System Details
    - Or check your Enphase app/portal
    - **Important**: The System ID is the number in the URL when viewing your system in MyEnlighten
-   
-   **Optional (for OAuth):**
-   ```bash
-   vercel env add ENPHASE_CLIENT_ID
-   vercel env add ENPHASE_CLIENT_SECRET
-   ```
-   - Only needed if you want to use OAuth instead of API key
-   - You have these from your application page
 
 3. **Enable API Access in Enphase Account:**
    - Log into your Enlighten account at https://enlighten.enphaseenergy.com
