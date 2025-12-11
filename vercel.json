@@ -38,6 +38,10 @@
       "dest": "/api/energy.js"
     },
     {
+      "src": "/api/enphase",
+      "dest": "/api/enphase.js"
+    },
+    {
       "src": "/(.*)",
       "dest": "/public/$1"
     }

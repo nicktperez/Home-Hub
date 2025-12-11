@@ -184,22 +184,26 @@ This file tracks potential features and improvements for the Family Hub Dashboar
 - **Use Cases**: Voice commands, home automation triggers
 
 ### Energy Usage Dashboard (SMUD)
-- **Status**: Researching
+- **Status**: Implemented (CSV Import)
 - **Complexity**: Medium-High
 - **Description**: Display energy usage data from SMUD (Sacramento Municipal Utility District)
-- **Options**:
-  - **SMUD Customer Portal**: Check if SMUD provides API access or data export
-  - **Green Button Connect My Data**: Standard utility API (if SMUD supports it)
-  - **Manual CSV Import**: Allow users to upload energy usage CSV files from SMUD portal
-  - **Third-party Services**: UtilityAPI or similar services that aggregate utility data
-- **Requirements**:
-  - API authentication (if available)
-  - Data parsing and storage
-  - Daily/weekly/monthly usage visualization
-  - Cost tracking
-  - Usage alerts (high usage notifications)
+- **Current Features**:
+  - CSV import from SMUD Green Button export
+  - Usage and cost visualization
+  - Solar export tracking (from SMUD data)
+  - Interactive tooltips with monetary values
+- **Future Enhancements**:
+  - **Enphase Enlighten API Integration**: Direct integration with Enphase solar system
+    - Requires Enphase API key and system ID
+    - Real-time solar production data
+    - Daily/hourly production charts
+    - Net metering visualization
+  - **Automated Data Sync**: Periodic automatic data fetching
+  - **Usage Alerts**: High usage notifications
+  - **Cost Projections**: Estimate future bills based on trends
 - **Benefits**: 
   - Track energy consumption patterns
+  - Monitor solar production and export
   - Identify high-usage periods
   - Monitor costs
   - Set usage goals

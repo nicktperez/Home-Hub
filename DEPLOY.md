@@ -65,6 +65,8 @@ CREATE TABLE energy_usage (
   id SERIAL PRIMARY KEY,
   date DATE NOT NULL UNIQUE,
   usage_kwh DECIMAL(10, 2) NOT NULL,
+  export_kwh DECIMAL(10, 2) DEFAULT 0,
+  import_kwh DECIMAL(10, 2),
   cost DECIMAL(10, 2),
   updatedat TEXT NOT NULL DEFAULT NOW()::TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -235,6 +237,20 @@ WHERE table_name = 'shopping';
    vercel env add GOOGLE_CALENDAR_ID
    ```
    - Paste your Google Calendar ID (found in your calendar embed URL, the part after `src=`)
+
+4. **Enphase API (Optional - for solar production data):**
+   ```bash
+   vercel env add ENPHASE_API_KEY
+   ```
+   - Paste your Enphase API key
+   - Get it from: https://developer-v4.enphase.com/
+   
+   ```bash
+   vercel env add ENPHASE_SYSTEM_ID
+   ```
+   - Paste your Enphase System ID
+   - Find it in your Enphase account under "Systems" → Your System → System Details
+   - Or check your Enphase app/portal
    - If not set, it will use the default calendar ID from your embed URLs
    - Select "Production", "Preview", and "Development" (all three)
 
@@ -269,6 +285,8 @@ WHERE table_name = 'shopping';
    - (Optional) Add `OPENWEATHER_API_KEY` with your OpenWeatherMap API key for weather widget
    - (Recommended) Add `GOOGLE_CALENDAR_API_KEY` with your Google Calendar API key for events widget
    - (Optional) Add `GOOGLE_CALENDAR_ID` with your specific calendar ID (defaults to the one in your embed URLs)
+   - (Optional) Add `ENPHASE_API_KEY` with your Enphase API key for solar production data
+   - (Optional) Add `ENPHASE_SYSTEM_ID` with your Enphase system ID (found in your Enphase account)
    - Make sure to select "Production", "Preview", and "Development" for each
 
 4. **Deploy**:

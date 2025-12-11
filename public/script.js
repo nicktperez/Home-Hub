@@ -1429,6 +1429,7 @@ function renderEnergyData(data) {
   // Get current period stats (most recent billing periods)
   const recentData = sortedData.slice(0, 30);
   const totalUsage = recentData.reduce((sum, d) => sum + (parseFloat(d.usage_kwh) || 0), 0);
+  const totalExport = recentData.reduce((sum, d) => sum + (parseFloat(d.export_kwh) || 0), 0);
   const avgUsagePerPeriod = recentData.length > 0 ? totalUsage / recentData.length : 0;
   const avgCostPerPeriod = recentData.length > 0 
     ? recentData.reduce((sum, d) => sum + (parseFloat(d.cost) || 0), 0) / recentData.length 
@@ -1452,9 +1453,14 @@ function renderEnergyData(data) {
           ${avgCostPerPeriod > 0 ? `<div class="text-sm text-slate-300 mt-1">$${avgCostPerPeriod.toFixed(2)} avg</div>` : ''}
         </div>
         <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
-          <div class="text-xs text-slate-400 mb-1">Total Periods</div>
-          <div class="text-2xl font-bold">${recentData.length}</div>
-          <div class="text-xs text-slate-400 mt-1">Last ${recentData.length} billing periods</div>
+          <div class="text-xs text-slate-400 mb-1">Solar Export (SMUD)</div>
+          <div class="text-2xl font-bold">${totalExport > 0 ? totalExport.toFixed(1) : '0.0'} kWh</div>
+          <div class="text-xs text-slate-400 mt-1">Total exported to grid</div>
+        </div>
+        <div id="enphase-solar" class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <div class="text-xs text-slate-400 mb-1">Solar Production (Enphase)</div>
+          <div id="enphase-production" class="text-2xl font-bold">-- kWh</div>
+          <div class="text-xs text-slate-400 mt-1">Today's production</div>
         </div>
       </div>
     `;
@@ -1481,11 +1487,13 @@ function renderEnergyData(data) {
           <div class="flex-1 flex items-end justify-between gap-0.5" style="height: 100%;">
             ${chartData.map((d, idx) => {
               const usage = parseFloat(d.usage_kwh) || 0;
+              const cost = parseFloat(d.cost) || 0;
               const height = maxUsage > 0 ? Math.max((usage / maxUsage) * 100, 2) : 0; // Min 2% height for visibility
               const date = new Date(d.date);
+              const tooltipText = `${date.toLocaleDateString()}\n${usage.toFixed(1)} kWh${cost > 0 ? `\n$${cost.toFixed(2)}` : ''}`;
               return `
-                <div class="flex-1 flex flex-col items-center justify-end gap-1 h-full" style="min-width: 0;" title="${date.toLocaleDateString()}: ${usage.toFixed(1)} kWh">
-                  <div class="w-full bg-gradient-to-t from-blue-500 to-indigo-500 rounded-t transition-all hover:opacity-80 cursor-pointer" style="height: ${height}%; min-height: 2px;"></div>
+                <div class="flex-1 flex flex-col items-center justify-end gap-1 h-full energy-bar-container" style="min-width: 0;" data-usage="${usage}" data-cost="${cost}" data-date="${date.toLocaleDateString()}">
+                  <div class="w-full bg-gradient-to-t from-blue-500 to-indigo-500 rounded-t transition-all hover:opacity-80 cursor-pointer energy-bar" style="height: ${height}%; min-height: 2px;"></div>
                   <div class="text-[10px] text-slate-400 transform -rotate-45 origin-top-left whitespace-nowrap" style="writing-mode: horizontal-tb; transform-origin: top left;">${date.getMonth() + 1}/${date.getDate()}</div>
                 </div>
               `;
@@ -1499,11 +1507,12 @@ function renderEnergyData(data) {
           <div class="flex-1 flex items-end justify-between gap-0.5" style="height: 100%;">
             ${chartData.map((d, idx) => {
               const cost = parseFloat(d.cost) || 0;
+              const usage = parseFloat(d.usage_kwh) || 0;
               const height = maxCost > 0 ? Math.max((cost / maxCost) * 100, 2) : 0; // Min 2% height for visibility
               const date = new Date(d.date);
               return `
-                <div class="flex-1 flex flex-col items-center justify-end gap-1 h-full" style="min-width: 0;" title="${date.toLocaleDateString()}: $${cost.toFixed(2)}">
-                  <div class="w-full bg-gradient-to-t from-green-500 to-emerald-500 rounded-t transition-all hover:opacity-80 cursor-pointer" style="height: ${height}%; min-height: 2px;"></div>
+                <div class="flex-1 flex flex-col items-center justify-end gap-1 h-full energy-bar-container" style="min-width: 0;" data-usage="${usage}" data-cost="${cost}" data-date="${date.toLocaleDateString()}">
+                  <div class="w-full bg-gradient-to-t from-green-500 to-emerald-500 rounded-t transition-all hover:opacity-80 cursor-pointer energy-bar" style="height: ${height}%; min-height: 2px;"></div>
                 </div>
               `;
             }).join("")}
@@ -1512,6 +1521,87 @@ function renderEnergyData(data) {
         ` : ''}
       </div>
     `;
+    
+    // Add tooltips to bars after rendering
+    setTimeout(() => {
+      const containers = chartEl.querySelectorAll('.energy-bar-container');
+      containers.forEach(container => {
+        const usage = parseFloat(container.dataset.usage) || 0;
+        const cost = parseFloat(container.dataset.cost) || 0;
+        const date = container.dataset.date || '';
+        
+        if (cost > 0 || usage > 0) {
+          const tooltip = document.createElement('div');
+          tooltip.className = 'energy-tooltip';
+          tooltip.innerHTML = `
+            <div class="font-semibold mb-1">${date}</div>
+            <div>${usage.toFixed(1)} kWh</div>
+            ${cost > 0 ? `<div class="text-green-400 font-semibold">$${cost.toFixed(2)}</div>` : ''}
+          `;
+          container.appendChild(tooltip);
+        }
+      });
+    }, 100);
+  }
+}
+
+// ===== ENPHASE SOLAR DATA =====
+async function fetchEnphaseData() {
+  try {
+    const res = await fetch("/api/enphase");
+    if (!res.ok) {
+      // If API key not configured, hide the Enphase section
+      const enphaseEl = document.getElementById("enphase-solar");
+      if (enphaseEl) {
+        enphaseEl.style.display = "none";
+      }
+      return;
+    }
+    const data = await res.json();
+    renderEnphaseData(data);
+  } catch (error) {
+    console.error("Error fetching Enphase data:", error);
+    const enphaseEl = document.getElementById("enphase-solar");
+    if (enphaseEl) {
+      enphaseEl.style.display = "none";
+    }
+  }
+}
+
+function renderEnphaseData(data) {
+  const productionEl = document.getElementById("enphase-production");
+  if (!productionEl) return;
+
+  // Enphase API returns data in different formats depending on endpoint
+  // Handle summary_date format (daily summary)
+  if (data.production && Array.isArray(data.production)) {
+    // Get today's production
+    const today = data.production.find(p => {
+      const prodDate = new Date(p.date || p.end_at);
+      const todayDate = new Date();
+      return prodDate.toDateString() === todayDate.toDateString();
+    });
+    
+    if (today && today.wh_del) {
+      // wh_del is in watt-hours, convert to kWh
+      const kwh = (today.wh_del / 1000).toFixed(1);
+      productionEl.textContent = `${kwh} kWh`;
+    } else if (today && today.watt_hours) {
+      const kwh = (today.watt_hours / 1000).toFixed(1);
+      productionEl.textContent = `${kwh} kWh`;
+    } else {
+      productionEl.textContent = "No data";
+    }
+  } else if (data.watt_hours) {
+    // Direct watt_hours value
+    const kwh = (data.watt_hours / 1000).toFixed(1);
+    productionEl.textContent = `${kwh} kWh`;
+  } else if (data.wh_del) {
+    // wh_del value
+    const kwh = (data.wh_del / 1000).toFixed(1);
+    productionEl.textContent = `${kwh} kWh`;
+  } else {
+    productionEl.textContent = "No data";
   }
 }
 
@@ -1669,6 +1759,7 @@ function init() {
   setupShoppingForm();
   setupEnergyUpload();
   fetchEnergyData();
+  fetchEnphaseData();
   initSlides();
   setupNavButtons();
   setupMobileMenu();

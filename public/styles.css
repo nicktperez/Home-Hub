@@ -855,6 +855,44 @@ header h1 {
   min-height: 200px;
 }
 
+/* Energy Chart Tooltips */
+.energy-bar-container {
+  position: relative;
+}
+
+.energy-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #e8ecf2;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.energy-bar-container:hover .energy-tooltip {
+  opacity: 1;
+}
+
+.energy-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(15, 23, 42, 0.95);
+}
+
 .project-item {
   display: grid;
   grid-template-columns: auto 1fr auto;

@@ -158,6 +158,8 @@ module.exports = async (req, res) => {
         records.push({
           date: date.toISOString().split("T")[0], // YYYY-MM-DD format
           usage_kwh: netUsage > 0 ? netUsage : importUsage, // Use net usage if positive, otherwise just import
+          import_kwh: importUsage,
+          export_kwh: exportUsage,
           cost: cost,
         });
       }
@@ -177,6 +179,8 @@ module.exports = async (req, res) => {
             .upsert({
               date: record.date,
               usage_kwh: record.usage_kwh,
+              import_kwh: record.import_kwh,
+              export_kwh: record.export_kwh || 0,
               cost: record.cost,
               updatedat: new Date().toISOString(),
             }, {
