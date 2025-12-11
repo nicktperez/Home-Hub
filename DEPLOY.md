@@ -239,11 +239,13 @@ WHERE table_name = 'shopping';
    - Paste your Google Calendar ID (found in your calendar embed URL, the part after `src=`)
 
 4. **Enphase API (Optional - for solar production data):**
+   
+   **Required:**
    ```bash
    vercel env add ENPHASE_API_KEY
    ```
-   - Paste your Enphase API key
-   - Get it from: https://developer-v4.enphase.com/
+   - Paste your Enphase API key (from your application page)
+   - Example: `341f6138d4d964bdfe78cb7b4adafb56`
    
    ```bash
    vercel env add ENPHASE_SYSTEM_ID
@@ -252,6 +254,14 @@ WHERE table_name = 'shopping';
    - Find it in your Enphase account under "Systems" → Your System → System Details
    - Or check your Enphase app/portal
    - **Important**: The System ID is the number in the URL when viewing your system in MyEnlighten
+   
+   **Optional (for OAuth):**
+   ```bash
+   vercel env add ENPHASE_CLIENT_ID
+   vercel env add ENPHASE_CLIENT_SECRET
+   ```
+   - Only needed if you want to use OAuth instead of API key
+   - You have these from your application page
 
 3. **Enable API Access in Enphase Account:**
    - Log into your Enlighten account at https://enlighten.enphaseenergy.com

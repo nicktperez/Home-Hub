@@ -35,25 +35,32 @@ module.exports = async (req, res) => {
         const baseUrl = "https://api.enphaseenergy.com/api/v4";
         const today = new Date().toISOString().split("T")[0];
         
-        // Try OAuth first (if access token is available)
-        let authHeader = "";
-        let urlParams = "";
+        // Enphase API v4 uses API key as query parameter 'key='
+        let urlParams = [];
+        const headers = {
+          "Accept": "application/json",
+        };
         
         if (accessToken) {
-          // Use OAuth access token
-          authHeader = `Bearer ${accessToken}`;
-          urlParams = summary_date 
-            ? `summary_date=${summary_date}` 
-            : start_date && end_date
-            ? `start_date=${start_date}&end_date=${end_date}`
-            : `summary_date=${today}`;
+          // Use OAuth access token in header
+          headers["Authorization"] = `Bearer ${accessToken}`;
+          if (summary_date) {
+            urlParams.push(`summary_date=${summary_date}`);
+          } else if (start_date && end_date) {
+            urlParams.push(`start_date=${start_date}`, `end_date=${end_date}`);
+          } else {
+            urlParams.push(`summary_date=${today}`);
+          }
         } else if (apiKey) {
-          // Try direct API key (older method, may not work with v4)
-          urlParams = summary_date 
-            ? `key=${apiKey}&summary_date=${summary_date}` 
-            : start_date && end_date
-            ? `key=${apiKey}&start_date=${start_date}&end_date=${end_date}`
-            : `key=${apiKey}&summary_date=${today}`;
+          // API key MUST be first query parameter
+          urlParams.push(`key=${apiKey}`);
+          if (summary_date) {
+            urlParams.push(`summary_date=${summary_date}`);
+          } else if (start_date && end_date) {
+            urlParams.push(`start_date=${start_date}`, `end_date=${end_date}`);
+          } else {
+            urlParams.push(`summary_date=${today}`);
+          }
         } else {
           return res.status(400).json({
             error: "Authentication required",
@@ -61,15 +68,14 @@ module.exports = async (req, res) => {
           });
         }
         
-        const url = `${baseUrl}/systems/${systemId}/production?${urlParams}`;
+        // Enphase API v4 endpoint format
+        const url = `${baseUrl}/systems/${systemId}/production?${urlParams.join('&')}`;
         
-        console.log("Enphase API request:", url.substring(0, 100) + "...");
+        console.log("Enphase API request URL (redacted):", url.replace(/key=[^&]+/, 'key=***'));
         
         const response = await fetch(url, {
-          headers: {
-            "Accept": "application/json",
-            ...(authHeader && { "Authorization": authHeader }),
-          },
+          method: "GET",
+          headers: headers,
         });
 
         const responseText = await response.text();
@@ -83,6 +89,7 @@ module.exports = async (req, res) => {
             errorDetails = responseText;
           }
           
+          
           return res.status(response.status).json({
             error: `Enphase API error: ${response.status}`,
             details: errorDetails,
@@ -90,6 +97,8 @@ module.exports = async (req, res) => {
               ? "Authentication failed. You may need to: 1) Enable API access in your Enphase account settings, 2) Grant access to your application, 3) Use OAuth flow to get an access token."
               : response.status === 404
               ? "System not found. Check your ENPHASE_SYSTEM_ID."
+              : response.status === 405
+              ? "Method not allowed. The API endpoint or authentication method may be incorrect. Check: 1) Your API key format, 2) System ID is correct, 3) API access is enabled in Enphase account."
               : "See details for more information"
           });
         }
