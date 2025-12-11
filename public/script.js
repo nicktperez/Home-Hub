@@ -1584,37 +1584,65 @@ function renderEnphaseData(data) {
   const productionEl = document.getElementById("enphase-production");
   if (!productionEl) return;
 
-  // Enphase API returns data in different formats depending on endpoint
-  // Handle summary_date format (daily summary)
-  if (data.production && Array.isArray(data.production)) {
-    // Get today's production
-    const today = data.production.find(p => {
-      const prodDate = new Date(p.date || p.end_at);
-      const todayDate = new Date();
-      return prodDate.toDateString() === todayDate.toDateString();
-    });
-    
-    if (today && today.wh_del) {
-      // wh_del is in watt-hours, convert to kWh
-      const kwh = (today.wh_del / 1000).toFixed(1);
+  console.log("Rendering Enphase data:", data);
+  
+  // Handle new combined data structure
+  const summary = data.summary || data;
+  const lifetime = data.lifetime;
+  const productionMeter = data.production_meter;
+  
+  // Try to get today's production from summary
+  let todayProduction = null;
+  
+  // Check summary data (today/yesterday)
+  if (summary) {
+    if (summary.current_power) {
+      // Summary has current_power (watts), convert to kWh for today
+      // This is instantaneous power, not daily total
+      const watts = summary.current_power || 0;
+      productionEl.textContent = `${(watts / 1000).toFixed(2)} kW`;
+      productionEl.parentElement.querySelector('.text-xs').textContent = "Current production";
+      todayProduction = { watts, isCurrent: true };
+    } else if (summary.energy_today) {
+      // energy_today is in watt-hours
+      const kwh = (summary.energy_today / 1000).toFixed(1);
       productionEl.textContent = `${kwh} kWh`;
-    } else if (today && today.watt_hours) {
-      const kwh = (today.watt_hours / 1000).toFixed(1);
-      productionEl.textContent = `${kwh} kWh`;
-    } else {
-      productionEl.textContent = "No data";
+      productionEl.parentElement.querySelector('.text-xs').textContent = "Today's production";
+      todayProduction = { kwh: parseFloat(kwh) };
+    } else if (summary.production && Array.isArray(summary.production)) {
+      // Get most recent production entry
+      const latest = summary.production[summary.production.length - 1];
+      if (latest && latest.wh_del) {
+        const kwh = (latest.wh_del / 1000).toFixed(1);
+        productionEl.textContent = `${kwh} kWh`;
+        productionEl.parentElement.querySelector('.text-xs').textContent = "Latest production";
+        todayProduction = { kwh: parseFloat(kwh) };
+      }
     }
-  } else if (data.watt_hours) {
-    // Direct watt_hours value
-    const kwh = (data.watt_hours / 1000).toFixed(1);
-    productionEl.textContent = `${kwh} kWh`;
-  } else if (data.wh_del) {
-    // wh_del value
-    const kwh = (data.wh_del / 1000).toFixed(1);
-    productionEl.textContent = `${kwh} kWh`;
-  } else {
-    productionEl.textContent = "No data";
   }
+  
+  // If no summary data, try lifetime data
+  if (!todayProduction && lifetime) {
+    if (lifetime.production && Array.isArray(lifetime.production)) {
+      // Get most recent lifetime entry
+      const latest = lifetime.production[lifetime.production.length - 1];
+      if (latest && latest.wh_del) {
+        const kwh = (latest.wh_del / 1000).toFixed(1);
+        productionEl.textContent = `${kwh} kWh`;
+        productionEl.parentElement.querySelector('.text-xs').textContent = "Latest production";
+        todayProduction = { kwh: parseFloat(kwh) };
+      }
+    }
+  }
+  
+  // If still no data, show "No data"
+  if (!todayProduction) {
+    productionEl.textContent = "No data";
+    productionEl.parentElement.querySelector('.text-xs').textContent = "Check system connection";
+  }
+  
+  // TODO: Add chart rendering for lifetime/production_meter data if available
+  // This would show historical production over time
 }
 
 function setupEnergyUpload() {

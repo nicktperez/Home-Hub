@@ -109,33 +109,52 @@ module.exports = async (req, res) => {
         
         // Try different endpoint combinations
         // All attempts will use BOTH OAuth token and API key in headers (as required by Enphase API v4)
+        // Try summary first (today's data), then lifetime endpoints for historical data
         const attempts = [
-          { base: "https://api.enphaseenergy.com/api/v4", path: `systems/${systemId}/summary`, name: "v4/summary" },
-          { base: "https://api.enphaseenergy.com/api/v4", path: `systems/${systemId}/rgm_stats`, name: "v4/rgm_stats" },
-          { base: "https://api.enphaseenergy.com/api/v4", path: `systems/${systemId}/stats`, name: "v4/stats" },
-          { base: "https://api.enphaseenergy.com/api/v4", path: `systems/${systemId}/production`, name: "v4/production" },
+          { base: "https://api.enphaseenergy.com/api/v4", path: `systems/${systemId}/summary`, name: "v4/summary", needsDate: true },
+          { base: "https://api.enphaseenergy.com/api/v4", path: `systems/${systemId}/energy_lifetime`, name: "v4/energy_lifetime", needsDate: false },
+          { base: "https://api.enphaseenergy.com/api/v4", path: `systems/${systemId}/telemetry/production_meter`, name: "v4/production_meter", needsDate: true },
         ];
+        
+        // Collect data from all successful endpoints
+        const allData = {
+          summary: null,
+          lifetime: null,
+          production_meter: null,
+        };
         
         for (const attempt of attempts) {
           // Build URL - headers already set with both OAuth token and API key
-          // Note: Some endpoints might not need date params (like rgm_stats)
-          let attemptParams = [...urlParams];
-          if (attempt.path.includes('rgm_stats')) {
-            // rgm_stats might need different params, try without date first
-            attemptParams = attemptParams.filter(p => !p.includes('summary_date') && !p.includes('start_date') && !p.includes('end_date'));
-          } else if (attempt.path.includes('summary')) {
-            // For summary endpoint, use yesterday if today is considered "in the future"
-            attemptParams = attemptParams.map(p => {
-              if (p.startsWith('summary_date=')) {
-                const dateValue = p.split('=')[1];
-                // If the date is today or in the future, use yesterday instead
-                if (dateValue >= today) {
-                  return `summary_date=${yesterdayStr}`;
+          // Note: Some endpoints don't need date params (like energy_lifetime)
+          let attemptParams = [];
+          
+          if (attempt.needsDate) {
+            // Endpoints that need date params
+            attemptParams = [...urlParams];
+            if (attempt.path.includes('summary')) {
+              // For summary endpoint, use yesterday if today is considered "in the future"
+              attemptParams = attemptParams.map(p => {
+                if (p.startsWith('summary_date=')) {
+                  const dateValue = p.split('=')[1];
+                  // If the date is today or in the future, use yesterday instead
+                  if (dateValue >= today) {
+                    return `summary_date=${yesterdayStr}`;
+                  }
                 }
-              }
-              return p;
-            });
+                return p;
+              });
+            } else if (attempt.path.includes('production_meter')) {
+              // Production meter needs start_date and end_date (last 7 days)
+              const endDate = yesterdayStr;
+              const startDate = new Date(yesterday);
+              startDate.setUTCDate(startDate.getUTCDate() - 6); // 7 days total
+              attemptParams = [
+                `start_at=${startDate.toISOString().split('T')[0]}`,
+                `end_at=${endDate}`
+              ];
+            }
           }
+          // If needsDate is false (like energy_lifetime), no params needed
           
           const queryString = attemptParams.length > 0 ? `?${attemptParams.join('&')}` : '';
           url = `${attempt.base}/${attempt.path}${queryString}`;
@@ -150,14 +169,33 @@ module.exports = async (req, res) => {
           if (response.ok) {
             console.log(`✅ Success with ${attempt.name} endpoint!`);
             // Read response text only once
-            responseText = await response.text();
-            break;
+            const successText = await response.text();
+            let endpointData;
+            try {
+              endpointData = JSON.parse(successText);
+            } catch (e) {
+              console.error(`Failed to parse ${attempt.name} response:`, e);
+              continue;
+            }
+            
+            // Store data by endpoint type
+            if (attempt.name.includes('summary')) {
+              allData.summary = endpointData;
+              responseText = successText; // Keep for backward compatibility
+            } else if (attempt.name.includes('energy_lifetime')) {
+              allData.lifetime = endpointData;
+            } else if (attempt.name.includes('production_meter')) {
+              allData.production_meter = endpointData;
+            }
+            
+            // Continue to try other endpoints for more data
+            // Don't break - we want to collect all available data
+            continue; // Skip error handling for successful requests
           }
           
           // Only read response text if not successful (for error logging)
-          responseText = await response.text();
-          
-          lastError = { status: response.status, text: responseText, endpoint: attempt.name };
+          const errorText = await response.text();
+          lastError = { status: response.status, text: errorText, endpoint: attempt.name };
           
           // Continue trying if 401 or 405 (auth/endpoint issues)
           if (response.status !== 401 && response.status !== 405) {
