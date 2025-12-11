@@ -251,6 +251,35 @@ WHERE table_name = 'shopping';
    - Paste your Enphase System ID
    - Find it in your Enphase account under "Systems" → Your System → System Details
    - Or check your Enphase app/portal
+   - **Important**: The System ID is the number in the URL when viewing your system in MyEnlighten
+
+3. **Enable API Access in Enphase Account:**
+   - Log into your Enlighten account at https://enlighten.enphaseenergy.com
+   - Go to **Settings** → **Privacy Settings**
+   - Scroll to **API Settings**
+   - **Check the box** next to "Allow API access"
+   - Click **Save**
+
+4. **OAuth Setup (Required for API v4):**
+   The Enphase API v4 requires OAuth 2.0 authentication. You have two options:
+   
+   **Option A: Use Access Token (Simpler)**
+   - You'll need to get an access token through OAuth flow
+   - Add it as: `vercel env add ENPHASE_ACCESS_TOKEN`
+   - To get a token, you may need to use a tool or follow Enphase's OAuth documentation
+   
+   **Option B: Use Client ID + Secret (More Complex)**
+   - If you have Client ID and Client Secret from Enphase developer portal:
+   ```bash
+   vercel env add ENPHASE_CLIENT_ID
+   vercel env add ENPHASE_CLIENT_SECRET
+   ```
+   - Note: This still requires OAuth flow to get an access token
+   
+   **Troubleshooting:**
+   - If you see "no applications using API" in Enphase app, you need to enable API access in Settings
+   - The API key alone may not work with v4 - you likely need OAuth
+   - Check browser console for detailed error messages
    - If not set, it will use the default calendar ID from your embed URLs
    - Select "Production", "Preview", and "Development" (all three)
 

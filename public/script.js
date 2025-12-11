@@ -1549,21 +1549,33 @@ function renderEnergyData(data) {
 async function fetchEnphaseData() {
   try {
     const res = await fetch("/api/enphase");
+    const responseData = await res.json();
+    
     if (!res.ok) {
-      // If API key not configured, hide the Enphase section
+      console.error("Enphase API error:", responseData);
       const enphaseEl = document.getElementById("enphase-solar");
       if (enphaseEl) {
-        enphaseEl.style.display = "none";
+        // Show error message instead of hiding
+        const productionEl = document.getElementById("enphase-production");
+        if (productionEl) {
+          productionEl.textContent = "Error";
+          productionEl.parentElement.querySelector('.text-xs').textContent = responseData.message || "Check console";
+        }
       }
       return;
     }
-    const data = await res.json();
-    renderEnphaseData(data);
+    
+    console.log("Enphase data received:", responseData);
+    renderEnphaseData(responseData);
   } catch (error) {
     console.error("Error fetching Enphase data:", error);
     const enphaseEl = document.getElementById("enphase-solar");
     if (enphaseEl) {
-      enphaseEl.style.display = "none";
+      const productionEl = document.getElementById("enphase-production");
+      if (productionEl) {
+        productionEl.textContent = "Error";
+        productionEl.parentElement.querySelector('.text-xs').textContent = "See console";
+      }
     }
   }
 }

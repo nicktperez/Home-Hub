@@ -12,11 +12,17 @@ module.exports = async (req, res) => {
   }
 
   const apiKey = process.env.ENPHASE_API_KEY;
+  const clientId = process.env.ENPHASE_CLIENT_ID;
+  const clientSecret = process.env.ENPHASE_CLIENT_SECRET;
   const systemId = process.env.ENPHASE_SYSTEM_ID;
-  const userId = process.env.ENPHASE_USER_ID; // Optional, for some endpoints
+  const accessToken = process.env.ENPHASE_ACCESS_TOKEN; // For OAuth flow
 
-  if (!apiKey) {
-    return res.status(500).json({ error: "Missing Enphase API key configuration" });
+  // Check what credentials we have
+  if (!apiKey && !clientId) {
+    return res.status(500).json({ 
+      error: "Missing Enphase credentials",
+      message: "You need either ENPHASE_API_KEY (for older API) or ENPHASE_CLIENT_ID + ENPHASE_CLIENT_SECRET (for OAuth v4 API)"
+    });
   }
 
   if (req.method === "GET") {
@@ -26,39 +32,79 @@ module.exports = async (req, res) => {
 
       // If system ID is provided, fetch data for that system
       if (systemId) {
-        // Fetch production data for the system
-        // Enphase API v4 endpoint: /systems/{system_id}/production
         const baseUrl = "https://api.enphaseenergy.com/api/v4";
+        const today = new Date().toISOString().split("T")[0];
         
-        let url;
-        if (summary_date) {
-          // Get summary for a specific date
-          url = `${baseUrl}/systems/${systemId}/production?key=${apiKey}&summary_date=${summary_date}`;
-        } else if (start_date && end_date) {
-          // Get data for a date range
-          url = `${baseUrl}/systems/${systemId}/production?key=${apiKey}&start_date=${start_date}&end_date=${end_date}`;
+        // Try OAuth first (if access token is available)
+        let authHeader = "";
+        let urlParams = "";
+        
+        if (accessToken) {
+          // Use OAuth access token
+          authHeader = `Bearer ${accessToken}`;
+          urlParams = summary_date 
+            ? `summary_date=${summary_date}` 
+            : start_date && end_date
+            ? `start_date=${start_date}&end_date=${end_date}`
+            : `summary_date=${today}`;
+        } else if (apiKey) {
+          // Try direct API key (older method, may not work with v4)
+          urlParams = summary_date 
+            ? `key=${apiKey}&summary_date=${summary_date}` 
+            : start_date && end_date
+            ? `key=${apiKey}&start_date=${start_date}&end_date=${end_date}`
+            : `key=${apiKey}&summary_date=${today}`;
         } else {
-          // Get today's production
-          const today = new Date().toISOString().split("T")[0];
-          url = `${baseUrl}/systems/${systemId}/production?key=${apiKey}&summary_date=${today}`;
+          return res.status(400).json({
+            error: "Authentication required",
+            message: "You need either ENPHASE_ACCESS_TOKEN (OAuth) or ENPHASE_API_KEY. See DEPLOY.md for setup instructions."
+          });
         }
-
+        
+        const url = `${baseUrl}/systems/${systemId}/production?${urlParams}`;
+        
+        console.log("Enphase API request:", url.substring(0, 100) + "...");
+        
         const response = await fetch(url, {
           headers: {
             "Accept": "application/json",
+            ...(authHeader && { "Authorization": authHeader }),
           },
         });
 
+        const responseText = await response.text();
+        
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Enphase API error:", response.status, errorText);
+          console.error("Enphase API error:", response.status, responseText);
+          let errorDetails;
+          try {
+            errorDetails = JSON.parse(responseText);
+          } catch {
+            errorDetails = responseText;
+          }
+          
           return res.status(response.status).json({
             error: `Enphase API error: ${response.status}`,
-            details: errorText,
+            details: errorDetails,
+            message: response.status === 401 
+              ? "Authentication failed. You may need to: 1) Enable API access in your Enphase account settings, 2) Grant access to your application, 3) Use OAuth flow to get an access token."
+              : response.status === 404
+              ? "System not found. Check your ENPHASE_SYSTEM_ID."
+              : "See details for more information"
           });
         }
 
-        const data = await response.json();
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          return res.status(500).json({
+            error: "Invalid JSON response from Enphase API",
+            details: responseText.substring(0, 200)
+          });
+        }
+        
+        console.log("Enphase API success, data keys:", Object.keys(data));
         return res.status(200).json(data);
       } else {
         // If no system ID, try to get systems list (requires user_id or different auth)
