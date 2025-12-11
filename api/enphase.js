@@ -51,7 +51,17 @@ module.exports = async (req, res) => {
           "https://api.enphaseenergy.com/api/v2",
         ];
         const baseUrl = baseUrls[0]; // Start with v4
-        const today = new Date().toISOString().split("T")[0];
+        // Get today's date in YYYY-MM-DD format (UTC)
+        const now = new Date();
+        const today = now.toISOString().split("T")[0];
+        
+        // Enphase API often considers "today" as "in the future" if data isn't available yet
+        // Use yesterday's date as default to ensure we get data
+        const yesterday = new Date(now);
+        yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split("T")[0];
+        
+        console.log(`Date handling: today=${today}, yesterday=${yesterdayStr}`);
         
         // Enphase API v4 uses API key as query parameter 'key='
         // IMPORTANT: API key seems more reliable than OAuth token for /production endpoint
@@ -78,12 +88,14 @@ module.exports = async (req, res) => {
         headers["key"] = apiKey; // API key goes in header, NOT query parameter!
         
         // Add date params
+        // Default to yesterday since "today" is often considered "in the future" by the API
         if (summary_date) {
           urlParams.push(`summary_date=${summary_date}`);
         } else if (start_date && end_date) {
           urlParams.push(`start_date=${start_date}`, `end_date=${end_date}`);
         } else {
-          urlParams.push(`summary_date=${today}`);
+          // Use yesterday by default to avoid "date in future" errors
+          urlParams.push(`summary_date=${yesterdayStr}`);
         }
         
         console.log("Using BOTH OAuth token (Bearer) and API key (header) as required by Enphase API v4");
@@ -111,6 +123,18 @@ module.exports = async (req, res) => {
           if (attempt.path.includes('rgm_stats')) {
             // rgm_stats might need different params, try without date first
             attemptParams = attemptParams.filter(p => !p.includes('summary_date') && !p.includes('start_date') && !p.includes('end_date'));
+          } else if (attempt.path.includes('summary')) {
+            // For summary endpoint, use yesterday if today is considered "in the future"
+            attemptParams = attemptParams.map(p => {
+              if (p.startsWith('summary_date=')) {
+                const dateValue = p.split('=')[1];
+                // If the date is today or in the future, use yesterday instead
+                if (dateValue >= today) {
+                  return `summary_date=${yesterdayStr}`;
+                }
+              }
+              return p;
+            });
           }
           
           const queryString = attemptParams.length > 0 ? `?${attemptParams.join('&')}` : '';
