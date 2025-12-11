@@ -28,7 +28,12 @@ module.exports = async (req, res) => {
         .order("date", { ascending: false })
         .limit(365); // Last year of data
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching energy data:", error);
+        return res.status(500).json({ error: error.message });
+      }
+      
+      console.log(`Fetched ${data?.length || 0} energy records`);
       return res.status(200).json(data || []);
     }
 
@@ -161,21 +166,37 @@ module.exports = async (req, res) => {
       }
 
       // Insert records into database (upsert by date to avoid duplicates)
-      const insertPromises = records.map(record => 
-        supabase
-          .from("energy_usage")
-          .upsert({
-            date: record.date,
-            usage_kwh: record.usage_kwh,
-            cost: record.cost,
-            updatedat: new Date().toISOString(),
-          }, {
-            onConflict: "date"
-          })
+      console.log(`Attempting to insert ${records.length} records`);
+      console.log("Sample record:", records[0]);
+      
+      const insertResults = await Promise.all(
+        records.map(record => 
+          supabase
+            .from("energy_usage")
+            .upsert({
+              date: record.date,
+              usage_kwh: record.usage_kwh,
+              cost: record.cost,
+              updatedat: new Date().toISOString(),
+            }, {
+              onConflict: "date"
+            })
+        )
       );
 
-      await Promise.all(insertPromises);
+      // Check for errors
+      const errors = insertResults.filter(r => r.error);
+      if (errors.length > 0) {
+        console.error("Some records failed to insert:", errors);
+        const firstError = errors[0].error;
+        return res.status(500).json({ 
+          error: `Failed to insert records: ${firstError.message}. Make sure the energy_usage table exists in Supabase.`,
+          count: records.length - errors.length,
+          details: firstError
+        });
+      }
 
+      console.log(`Successfully inserted ${records.length} records`);
       return res.status(201).json({ 
         message: `Successfully imported ${records.length} records`,
         count: records.length 

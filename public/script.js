@@ -1386,15 +1386,31 @@ function setupShoppingForm() {
 async function fetchEnergyData() {
   try {
     const res = await fetch("/api/energy");
-    if (!res.ok) throw new Error("Failed to fetch energy data");
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("Energy API error:", res.status, errorText);
+      throw new Error(`Failed to fetch energy data: ${res.status}`);
+    }
     const data = await res.json();
+    console.log("Fetched energy data:", data.length, "records");
     renderEnergyData(data);
   } catch (error) {
     console.error("Error fetching energy data:", error);
+    // Show error in UI
+    const currentEl = document.getElementById("energy-current");
+    const chartEl = document.getElementById("energy-chart");
+    if (currentEl) {
+      currentEl.innerHTML = `<p class="text-red-400 text-center py-4 text-sm">Error loading data: ${error.message}</p>`;
+    }
+    if (chartEl) {
+      chartEl.innerHTML = `<p class="text-red-400 text-center py-4 text-sm">Error loading chart</p>`;
+    }
   }
 }
 
 function renderEnergyData(data) {
+  console.log("Rendering energy data:", data);
+  
   if (!data || data.length === 0) {
     const currentEl = document.getElementById("energy-current");
     const chartEl = document.getElementById("energy-chart");
@@ -1524,7 +1540,11 @@ function setupEnergyUpload() {
       }
 
       const result = await res.json();
+      console.log("Upload result:", result);
       alert(`Successfully imported ${result.count} energy records!`);
+      
+      // Small delay to ensure database is updated
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Refresh energy data
       await fetchEnergyData();
