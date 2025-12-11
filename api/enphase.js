@@ -17,11 +17,24 @@ module.exports = async (req, res) => {
   const systemId = process.env.ENPHASE_SYSTEM_ID;
   const accessToken = process.env.ENPHASE_ACCESS_TOKEN; // For OAuth flow
 
+  // Debug logging
+  console.log("Enphase API - Environment check:");
+  console.log("- API Key present:", !!apiKey);
+  console.log("- Access Token present:", !!accessToken, accessToken ? "(length: " + accessToken.length + ")" : "");
+  console.log("- System ID present:", !!systemId, systemId ? "(value: " + systemId + ")" : "");
+
   // Check what credentials we have
   if (!apiKey && !accessToken) {
     return res.status(500).json({ 
       error: "Missing Enphase credentials",
       message: "You need either ENPHASE_API_KEY or ENPHASE_ACCESS_TOKEN. If you have Client ID/Secret, visit /api/enphase-oauth to get an access token."
+    });
+  }
+  
+  if (!systemId) {
+    return res.status(500).json({
+      error: "Missing System ID",
+      message: "Please set ENPHASE_SYSTEM_ID in environment variables."
     });
   }
 
@@ -43,7 +56,9 @@ module.exports = async (req, res) => {
         
         if (accessToken) {
           // Use OAuth access token in header
+          // Enphase requires the token in Authorization header
           headers["Authorization"] = `Bearer ${accessToken}`;
+          // Also try as a query parameter (some Enphase endpoints might need this)
           if (summary_date) {
             urlParams.push(`summary_date=${summary_date}`);
           } else if (start_date && end_date) {
@@ -51,6 +66,8 @@ module.exports = async (req, res) => {
           } else {
             urlParams.push(`summary_date=${today}`);
           }
+          
+          console.log("Access token present:", accessToken ? "Yes (length: " + accessToken.length + ")" : "No");
         } else if (apiKey) {
           // API key MUST be first query parameter
           urlParams.push(`key=${apiKey}`);
@@ -79,9 +96,11 @@ module.exports = async (req, res) => {
           url = `${baseUrl}/systems/${systemId}/production?${urlParams.join('&')}`;
         }
         
-        console.log("Enphase API request URL (redacted):", url.replace(/key=[^&]+/, 'key=***').replace(/Bearer [^&]+/, 'Bearer ***'));
-        console.log("Using access token:", accessToken ? "Yes" : "No");
+        console.log("Enphase API request URL (redacted):", url.replace(/key=[^&]+/, 'key=***'));
+        console.log("Using access token:", accessToken ? "Yes (length: " + accessToken.length + ")" : "No");
         console.log("System ID:", systemId);
+        console.log("Request headers:", Object.keys(headers));
+        console.log("Authorization header:", headers["Authorization"] ? "Present" : "Missing");
         
         const response = await fetch(url, {
           method: "GET",
@@ -97,6 +116,25 @@ module.exports = async (req, res) => {
             errorDetails = JSON.parse(responseText);
           } catch {
             errorDetails = responseText;
+          }
+          
+          // If 401, check if access token is missing or try alternative authentication
+          if (response.status === 401 && accessToken) {
+            console.log("401 error - checking token format...");
+            // Try with token in query parameter as well (some APIs need both)
+            const altUrl = `${baseUrl}/systems/${systemId}/summary?access_token=${accessToken}${urlParams.length > 0 ? '&' + urlParams.join('&') : ''}`;
+            console.log("Trying alternative URL with token in query param...");
+            const altResponse = await fetch(altUrl, {
+              method: "GET",
+              headers: {
+                "Accept": "application/json",
+              },
+            });
+            
+            if (altResponse.ok) {
+              const altData = await altResponse.json();
+              return res.status(200).json(altData);
+            }
           }
           
           // If 405 with access token, try the /production endpoint instead
