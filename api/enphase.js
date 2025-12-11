@@ -61,9 +61,14 @@ module.exports = async (req, res) => {
           "Accept": "application/json",
         };
         
-        // Prioritize API key over access token (API key works better with /production endpoint)
+        // Try both authentication methods - some endpoints require OAuth token
+        // Use API key for /production, OAuth token for /summary endpoints
+        let useApiKey = false;
+        let useOAuthToken = false;
+        
         if (apiKey) {
-          // API key MUST be first query parameter
+          // API key for /production endpoint
+          useApiKey = true;
           urlParams.push(`key=${apiKey}`);
           if (summary_date) {
             urlParams.push(`summary_date=${summary_date}`);
@@ -72,24 +77,32 @@ module.exports = async (req, res) => {
           } else {
             urlParams.push(`summary_date=${today}`);
           }
-          console.log("Using API key authentication (preferred)");
-        } else if (accessToken) {
-          // Fallback to OAuth access token
+        }
+        
+        if (accessToken) {
+          // OAuth token for /summary and other endpoints
+          useOAuthToken = true;
           headers["Authorization"] = `Bearer ${accessToken}`;
-          if (summary_date) {
-            urlParams.push(`summary_date=${summary_date}`);
-          } else if (start_date && end_date) {
-            urlParams.push(`start_date=${start_date}`, `end_date=${end_date}`);
-          } else {
-            urlParams.push(`summary_date=${today}`);
+          // Don't add date params if we already have them from API key
+          if (!useApiKey) {
+            if (summary_date) {
+              urlParams.push(`summary_date=${summary_date}`);
+            } else if (start_date && end_date) {
+              urlParams.push(`start_date=${start_date}`, `end_date=${end_date}`);
+            } else {
+              urlParams.push(`summary_date=${today}`);
+            }
           }
-          console.log("Using OAuth access token authentication (fallback)");
-        } else {
+        }
+        
+        if (!useApiKey && !useOAuthToken) {
           return res.status(400).json({
             error: "Authentication required",
             message: "You need either ENPHASE_ACCESS_TOKEN (OAuth) or ENPHASE_API_KEY. See DEPLOY.md for setup instructions."
           });
         }
+        
+        console.log("Auth methods:", { apiKey: useApiKey, oauthToken: useOAuthToken });
         
         // Enphase API endpoint format
         // Try multiple API versions and endpoints
@@ -98,21 +111,67 @@ module.exports = async (req, res) => {
         let responseText = "";
         let lastError = null;
         
-        // Try different endpoint combinations
-        const attempts = [
-          { base: "https://api.enphaseenergy.com/api/v4", path: "summary", name: "v4/summary" },
-          { base: "https://api.enphaseenergy.com/api/v4", path: "production", name: "v4/production" },
-          { base: "https://api.enphaseenergy.com/api/v2", path: "summary", name: "v2/summary" },
-          { base: "https://api.enphaseenergy.com/api/v2", path: "production", name: "v2/production" },
-        ];
+        // Try different endpoint combinations with appropriate auth
+        // /production works with API key, /summary works with OAuth token
+        const attempts = [];
+        
+        // Try API key with /production endpoints first
+        if (useApiKey) {
+          attempts.push(
+            { base: "https://api.enphaseenergy.com/api/v4", path: "production", name: "v4/production", useApiKey: true },
+            { base: "https://api.enphaseenergy.com/api/v2", path: "production", name: "v2/production", useApiKey: true }
+          );
+        }
+        
+        // Try OAuth token with /summary endpoints
+        if (useOAuthToken) {
+          attempts.push(
+            { base: "https://api.enphaseenergy.com/api/v4", path: "summary", name: "v4/summary", useOAuthToken: true },
+            { base: "https://api.enphaseenergy.com/api/v2", path: "summary", name: "v2/summary", useOAuthToken: true }
+          );
+        }
+        
+        // Also try cross-combinations
+        if (useApiKey && useOAuthToken) {
+          attempts.push(
+            { base: "https://api.enphaseenergy.com/api/v4", path: "summary", name: "v4/summary (with API key)", useApiKey: true },
+            { base: "https://api.enphaseenergy.com/api/v4", path: "production", name: "v4/production (with OAuth)", useOAuthToken: true }
+          );
+        }
         
         for (const attempt of attempts) {
-          url = `${attempt.base}/systems/${systemId}/${attempt.path}?${urlParams.join('&')}`;
-          console.log(`Trying ${attempt.name} endpoint:`, url.replace(/key=[^&]+/, 'key=***'));
+          // Build URL and headers based on auth method
+          let attemptUrlParams = [];
+          let attemptHeaders = { ...headers };
+          
+          if (attempt.useApiKey && apiKey) {
+            attemptUrlParams.push(`key=${apiKey}`);
+            // Remove OAuth header if using API key
+            delete attemptHeaders["Authorization"];
+          }
+          
+          if (attempt.useOAuthToken && accessToken) {
+            attemptHeaders["Authorization"] = `Bearer ${accessToken}`;
+            // Remove API key from params if using OAuth
+            attemptUrlParams = urlParams.filter(p => !p.startsWith('key='));
+          }
+          
+          // Add date params
+          if (summary_date) {
+            attemptUrlParams.push(`summary_date=${summary_date}`);
+          } else if (start_date && end_date) {
+            attemptUrlParams.push(`start_date=${start_date}`, `end_date=${end_date}`);
+          } else {
+            attemptUrlParams.push(`summary_date=${today}`);
+          }
+          
+          url = `${attempt.base}/systems/${systemId}/${attempt.path}?${attemptUrlParams.join('&')}`;
+          console.log(`Trying ${attempt.name} endpoint:`, url.replace(/key=[^&]+/, 'key=***').substring(0, 100) + "...");
+          console.log(`  Auth: ${attempt.useApiKey ? 'API Key' : 'OAuth Token'}`);
           
           response = await fetch(url, {
             method: "GET",
-            headers: headers,
+            headers: attemptHeaders,
           });
           
           responseText = await response.text();
@@ -124,13 +183,13 @@ module.exports = async (req, res) => {
           
           lastError = { status: response.status, text: responseText, endpoint: attempt.name };
           
-          if (response.status !== 405) {
-            // If it's not a 405, this endpoint might be correct but has other issues
+          // Continue trying if 401 or 405 (auth/endpoint issues)
+          if (response.status !== 401 && response.status !== 405) {
             console.log(`${attempt.name} returned ${response.status}, stopping endpoint search`);
             break;
           }
           
-          console.log(`${attempt.name} returned 405, trying next endpoint...`);
+          console.log(`${attempt.name} returned ${response.status}, trying next endpoint...`);
         }
         
         // Check if we got a successful response
