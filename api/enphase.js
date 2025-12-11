@@ -45,7 +45,12 @@ module.exports = async (req, res) => {
 
       // If system ID is provided, fetch data for that system
       if (systemId) {
-        const baseUrl = "https://api.enphaseenergy.com/api/v4";
+        // Try different base URLs - Enphase might use different API versions
+        const baseUrls = [
+          "https://api.enphaseenergy.com/api/v4",
+          "https://api.enphaseenergy.com/api/v2",
+        ];
+        const baseUrl = baseUrls[0]; // Start with v4
         const today = new Date().toISOString().split("T")[0];
         
         // Enphase API v4 uses API key as query parameter 'key='
@@ -86,34 +91,61 @@ module.exports = async (req, res) => {
           });
         }
         
-        // Enphase API v4 endpoint format
-        // /production endpoint works best with API key
-        const url = `${baseUrl}/systems/${systemId}/production?${urlParams.join('&')}`;
+        // Enphase API endpoint format
+        // Try multiple API versions and endpoints
+        let url;
+        let response;
+        let responseText = "";
+        let lastError = null;
         
-        console.log("Enphase API request URL (redacted):", url.replace(/key=[^&]+/, 'key=***'));
-        console.log("Using access token:", accessToken ? "Yes (length: " + accessToken.length + ")" : "No");
-        console.log("System ID:", systemId);
-        console.log("Request headers:", Object.keys(headers));
-        console.log("Authorization header:", headers["Authorization"] ? "Present" : "Missing");
+        // Try different endpoint combinations
+        const attempts = [
+          { base: "https://api.enphaseenergy.com/api/v4", path: "summary", name: "v4/summary" },
+          { base: "https://api.enphaseenergy.com/api/v4", path: "production", name: "v4/production" },
+          { base: "https://api.enphaseenergy.com/api/v2", path: "summary", name: "v2/summary" },
+          { base: "https://api.enphaseenergy.com/api/v2", path: "production", name: "v2/production" },
+        ];
         
-        const response = await fetch(url, {
-          method: "GET",
-          headers: headers,
-        });
-
-        const responseText = await response.text();
+        for (const attempt of attempts) {
+          url = `${attempt.base}/systems/${systemId}/${attempt.path}?${urlParams.join('&')}`;
+          console.log(`Trying ${attempt.name} endpoint:`, url.replace(/key=[^&]+/, 'key=***'));
+          
+          response = await fetch(url, {
+            method: "GET",
+            headers: headers,
+          });
+          
+          responseText = await response.text();
+          
+          if (response.ok) {
+            console.log(`✅ Success with ${attempt.name} endpoint!`);
+            break;
+          }
+          
+          lastError = { status: response.status, text: responseText, endpoint: attempt.name };
+          
+          if (response.status !== 405) {
+            // If it's not a 405, this endpoint might be correct but has other issues
+            console.log(`${attempt.name} returned ${response.status}, stopping endpoint search`);
+            break;
+          }
+          
+          console.log(`${attempt.name} returned 405, trying next endpoint...`);
+        }
         
-        if (!response.ok) {
-          console.error("Enphase API error:", response.status, responseText);
+        // Check if we got a successful response
+        if (!response || !response.ok) {
+          const errorText = response ? responseText : JSON.stringify(lastError || { error: "No response" });
+          console.error("Enphase API error:", response?.status || "No response", errorText);
           let errorDetails;
           try {
-            errorDetails = JSON.parse(responseText);
+            errorDetails = JSON.parse(errorText);
           } catch {
-            errorDetails = responseText;
+            errorDetails = errorText;
           }
           
           // If 401, check if access token is missing or try alternative authentication
-          if (response.status === 401 && accessToken) {
+          if (response?.status === 401 && accessToken) {
             console.log("401 error - trying alternative authentication methods...");
             
             // Try 1: Token without "Bearer" prefix
@@ -189,7 +221,7 @@ module.exports = async (req, res) => {
             }
           }
           
-          return res.status(response.status).json({
+          return res.status(response?.status || 500).json({
             error: `Enphase API error: ${response.status}`,
             details: errorDetails,
             message: response.status === 401 
@@ -202,18 +234,22 @@ module.exports = async (req, res) => {
           });
         }
 
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (e) {
-          return res.status(500).json({
-            error: "Invalid JSON response from Enphase API",
-            details: responseText.substring(0, 200)
-          });
+        // Parse successful response
+        if (response && response.ok) {
+          const successText = await response.text();
+          let data;
+          try {
+            data = JSON.parse(successText);
+          } catch (e) {
+            return res.status(500).json({
+              error: "Invalid JSON response from Enphase API",
+              details: successText.substring(0, 200)
+            });
+          }
+          
+          console.log("Enphase API success, data keys:", Object.keys(data));
+          return res.status(200).json(data);
         }
-        
-        console.log("Enphase API success, data keys:", Object.keys(data));
-        return res.status(200).json(data);
       } else {
         // If no system ID, try to get systems list (requires user_id or different auth)
         // For now, return instructions
