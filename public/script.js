@@ -1426,11 +1426,13 @@ function renderEnergyData(data) {
   // Sort by date (newest first)
   const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
   
-  // Get current period stats (most recent 30 days)
+  // Get current period stats (most recent billing periods)
   const recentData = sortedData.slice(0, 30);
   const totalUsage = recentData.reduce((sum, d) => sum + (parseFloat(d.usage_kwh) || 0), 0);
-  const totalCost = recentData.reduce((sum, d) => sum + (parseFloat(d.cost) || 0), 0);
-  const avgDaily = totalUsage / recentData.length;
+  const avgUsagePerPeriod = recentData.length > 0 ? totalUsage / recentData.length : 0;
+  const avgCostPerPeriod = recentData.length > 0 
+    ? recentData.reduce((sum, d) => sum + (parseFloat(d.cost) || 0), 0) / recentData.length 
+    : 0;
   const latest = sortedData[0];
 
   // Render current stats
@@ -1439,20 +1441,21 @@ function renderEnergyData(data) {
     currentEl.innerHTML = `
       <div class="space-y-3">
         <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
-          <div class="text-xs text-slate-400 mb-1">Latest Reading</div>
+          <div class="text-xs text-slate-400 mb-1">Latest Billing Period</div>
           <div class="text-2xl font-bold">${latest.usage_kwh ? parseFloat(latest.usage_kwh).toFixed(1) : '--'} kWh</div>
           <div class="text-xs text-slate-400 mt-1">${latest.date ? new Date(latest.date).toLocaleDateString() : ''}</div>
+          ${latest.cost ? `<div class="text-sm text-slate-300 mt-1">$${parseFloat(latest.cost).toFixed(2)}</div>` : ''}
         </div>
         <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
-          <div class="text-xs text-slate-400 mb-1">30-Day Average</div>
-          <div class="text-2xl font-bold">${avgDaily.toFixed(1)} kWh/day</div>
+          <div class="text-xs text-slate-400 mb-1">Average per Period</div>
+          <div class="text-2xl font-bold">${avgUsagePerPeriod.toFixed(1)} kWh</div>
+          ${avgCostPerPeriod > 0 ? `<div class="text-sm text-slate-300 mt-1">$${avgCostPerPeriod.toFixed(2)} avg</div>` : ''}
         </div>
-        ${totalCost > 0 ? `
         <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
-          <div class="text-xs text-slate-400 mb-1">30-Day Cost</div>
-          <div class="text-2xl font-bold">$${totalCost.toFixed(2)}</div>
+          <div class="text-xs text-slate-400 mb-1">Total Periods</div>
+          <div class="text-2xl font-bold">${recentData.length}</div>
+          <div class="text-xs text-slate-400 mt-1">Last ${recentData.length} billing periods</div>
         </div>
-        ` : ''}
       </div>
     `;
   }
@@ -1462,23 +1465,28 @@ function renderEnergyData(data) {
   if (chartEl) {
     // Show all available data (up to 30 billing periods), oldest to newest
     const chartData = sortedData.slice(0, 30).reverse();
-    const maxUsage = Math.max(...chartData.map(d => parseFloat(d.usage_kwh) || 0));
-    const maxCost = Math.max(...chartData.map(d => parseFloat(d.cost) || 0));
+    const maxUsage = Math.max(...chartData.map(d => parseFloat(d.usage_kwh) || 0), 1);
+    const maxCost = Math.max(...chartData.map(d => parseFloat(d.cost) || 0), 1);
+    
+    if (chartData.length === 0) {
+      chartEl.innerHTML = '<p class="text-slate-400 text-center py-4 text-sm">No data to display</p>';
+      return;
+    }
     
     chartEl.innerHTML = `
-      <div class="w-full h-full flex flex-col gap-2">
+      <div class="w-full h-full flex flex-col gap-3" style="min-height: 300px;">
         <!-- Usage Chart -->
-        <div class="flex-1 flex flex-col">
-          <div class="text-xs text-slate-400 mb-1">Usage (kWh)</div>
-          <div class="flex-1 flex items-end justify-between gap-1">
-            ${chartData.map(d => {
+        <div class="flex-1 flex flex-col" style="min-height: 120px;">
+          <div class="text-xs text-slate-400 mb-2">Usage (kWh)</div>
+          <div class="flex-1 flex items-end justify-between gap-0.5" style="height: 100%;">
+            ${chartData.map((d, idx) => {
               const usage = parseFloat(d.usage_kwh) || 0;
-              const height = maxUsage > 0 ? (usage / maxUsage) * 100 : 0;
+              const height = maxUsage > 0 ? Math.max((usage / maxUsage) * 100, 2) : 0; // Min 2% height for visibility
               const date = new Date(d.date);
               return `
-                <div class="flex-1 flex flex-col items-center gap-1" title="${date.toLocaleDateString()}: ${usage.toFixed(1)} kWh">
-                  <div class="w-full bg-gradient-to-t from-blue-500 to-indigo-500 rounded-t transition-all hover:opacity-80" style="height: ${height}%"></div>
-                  <div class="text-xs text-slate-400 transform -rotate-45 origin-top-left whitespace-nowrap">${date.getMonth() + 1}/${date.getDate()}</div>
+                <div class="flex-1 flex flex-col items-center justify-end gap-1 h-full" style="min-width: 0;" title="${date.toLocaleDateString()}: ${usage.toFixed(1)} kWh">
+                  <div class="w-full bg-gradient-to-t from-blue-500 to-indigo-500 rounded-t transition-all hover:opacity-80 cursor-pointer" style="height: ${height}%; min-height: 2px;"></div>
+                  <div class="text-[10px] text-slate-400 transform -rotate-45 origin-top-left whitespace-nowrap" style="writing-mode: horizontal-tb; transform-origin: top left;">${date.getMonth() + 1}/${date.getDate()}</div>
                 </div>
               `;
             }).join("")}
@@ -1486,16 +1494,16 @@ function renderEnergyData(data) {
         </div>
         <!-- Cost Chart (if available) -->
         ${maxCost > 0 ? `
-        <div class="flex-1 flex flex-col">
-          <div class="text-xs text-slate-400 mb-1">Cost ($)</div>
-          <div class="flex-1 flex items-end justify-between gap-1">
-            ${chartData.map(d => {
+        <div class="flex-1 flex flex-col" style="min-height: 120px;">
+          <div class="text-xs text-slate-400 mb-2">Cost ($)</div>
+          <div class="flex-1 flex items-end justify-between gap-0.5" style="height: 100%;">
+            ${chartData.map((d, idx) => {
               const cost = parseFloat(d.cost) || 0;
-              const height = maxCost > 0 ? (cost / maxCost) * 100 : 0;
+              const height = maxCost > 0 ? Math.max((cost / maxCost) * 100, 2) : 0; // Min 2% height for visibility
               const date = new Date(d.date);
               return `
-                <div class="flex-1 flex flex-col items-center gap-1" title="${date.toLocaleDateString()}: $${cost.toFixed(2)}">
-                  <div class="w-full bg-gradient-to-t from-green-500 to-emerald-500 rounded-t transition-all hover:opacity-80" style="height: ${height}%"></div>
+                <div class="flex-1 flex flex-col items-center justify-end gap-1 h-full" style="min-width: 0;" title="${date.toLocaleDateString()}: $${cost.toFixed(2)}">
+                  <div class="w-full bg-gradient-to-t from-green-500 to-emerald-500 rounded-t transition-all hover:opacity-80 cursor-pointer" style="height: ${height}%; min-height: 2px;"></div>
                 </div>
               `;
             }).join("")}
