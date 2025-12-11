@@ -147,12 +147,15 @@ module.exports = async (req, res) => {
             headers: headers, // Both OAuth token and API key are in headers
           });
           
-          responseText = await response.text();
-          
           if (response.ok) {
             console.log(`✅ Success with ${attempt.name} endpoint!`);
+            // Read response text only once
+            responseText = await response.text();
             break;
           }
+          
+          // Only read response text if not successful (for error logging)
+          responseText = await response.text();
           
           lastError = { status: response.status, text: responseText, endpoint: attempt.name };
           
@@ -267,15 +270,15 @@ module.exports = async (req, res) => {
         }
 
         // Parse successful response
-        if (response && response.ok) {
-          const successText = await response.text();
+        // responseText was already read in the loop above
+        if (response && response.ok && responseText) {
           let data;
           try {
-            data = JSON.parse(successText);
+            data = JSON.parse(responseText);
           } catch (e) {
             return res.status(500).json({
               error: "Invalid JSON response from Enphase API",
-              details: successText.substring(0, 200)
+              details: responseText.substring(0, 200)
             });
           }
           
