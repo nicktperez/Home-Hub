@@ -1546,7 +1546,11 @@ function renderEnergyData(data) {
 }
 
 // ===== ENPHASE SOLAR DATA =====
+// DISABLED: API calls disabled to prevent charges
 async function fetchEnphaseData() {
+  // API calls disabled - function kept for potential future use
+  return;
+  /*
   try {
     const res = await fetch("/api/enphase");
     const responseData = await res.json();
@@ -1578,6 +1582,7 @@ async function fetchEnphaseData() {
       }
     }
   }
+  */
 }
 
 function renderEnphaseData(data) {
@@ -1645,6 +1650,218 @@ function renderEnphaseData(data) {
   // This would show historical production over time
 }
 
+// ===== SPREADSHEET UPLOAD AND DISPLAY =====
+function setupSpreadsheetUpload() {
+  // Google Sheet form
+  const googleForm = document.getElementById("google-sheet-form");
+  const googleUrlInput = document.getElementById("google-sheet-url");
+  
+  if (googleForm && googleUrlInput) {
+    googleForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      pauseRotation();
+
+      const url = googleUrlInput.value.trim();
+      if (!url) {
+        alert("Please enter a Google Sheet URL");
+        resumeRotation();
+        return;
+      }
+
+      try {
+        await loadGoogleSheet(url);
+      } catch (error) {
+        console.error("Error loading Google Sheet:", error);
+        alert(`Error loading Google Sheet: ${error.message}`);
+      } finally {
+        resumeRotation();
+      }
+    });
+  }
+
+  // Excel file upload form
+  const form = document.getElementById("spreadsheet-upload-form");
+  const fileInput = document.getElementById("spreadsheet-input");
+  if (!form || !fileInput) return;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    pauseRotation();
+
+    const file = fileInput.files[0];
+    if (!file) {
+      alert("Please select a file");
+      resumeRotation();
+      return;
+    }
+
+    try {
+      // Check if SheetJS is available
+      if (typeof XLSX === 'undefined') {
+        alert("Excel parser library not loaded. Please refresh the page.");
+        resumeRotation();
+        return;
+      }
+
+      // Read file as array buffer
+      const arrayBuffer = await file.arrayBuffer();
+      
+      // Parse Excel file
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      
+      // Get the first sheet
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      
+      // Convert to JSON array
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+      
+      // Display the spreadsheet
+      displaySpreadsheet(jsonData);
+      
+      alert("Spreadsheet loaded successfully!");
+    } catch (error) {
+      console.error("Error loading spreadsheet:", error);
+      alert(`Error loading spreadsheet: ${error.message}`);
+    } finally {
+      resumeRotation();
+    }
+  });
+}
+
+async function loadGoogleSheet(url) {
+  // Parse Google Sheets URL to extract sheet ID and GID
+  // Format: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit#gid={GID}
+  // Or: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit?usp=sharing
+  // Or: https://docs.google.com/spreadsheets/d/{SHEET_ID}
+  
+  let sheetId = null;
+  let gid = '0'; // Default to first sheet
+  
+  // Extract sheet ID
+  const sheetIdMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (sheetIdMatch) {
+    sheetId = sheetIdMatch[1];
+  } else {
+    throw new Error("Invalid Google Sheets URL. Please use a URL like: https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit");
+  }
+  
+  // Extract GID if present
+  const gidMatch = url.match(/[#&]gid=(\d+)/);
+  if (gidMatch) {
+    gid = gidMatch[1];
+  }
+  
+  // Try to load as CSV (works for publicly shared sheets)
+  // Google Sheets CSV export URL format
+  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+  
+  try {
+    const response = await fetch(csvUrl);
+    
+    if (!response.ok) {
+      // If CSV export fails, try HTML export
+      throw new Error(`Failed to fetch sheet. Make sure the Google Sheet is shared publicly (Anyone with the link can view).`);
+    }
+    
+    const csvText = await response.text();
+    
+    // Parse CSV to array
+    const csvData = parseCSV(csvText);
+    
+    // Display the spreadsheet
+    displaySpreadsheet(csvData);
+    
+    alert("Google Sheet loaded successfully!");
+  } catch (error) {
+    if (error.message.includes("publicly shared")) {
+      throw error;
+    }
+    throw new Error(`Failed to load Google Sheet. Make sure the sheet is shared publicly (Anyone with the link can view). Error: ${error.message}`);
+  }
+}
+
+function parseCSV(csvText) {
+  const lines = csvText.split('\n');
+  const result = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue; // Skip empty lines
+    
+    const row = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let j = 0; j < line.length; j++) {
+      const char = line[j];
+      
+      if (char === '"') {
+        if (inQuotes && line[j + 1] === '"') {
+          // Escaped quote
+          current += '"';
+          j++;
+        } else {
+          // Toggle quote state
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        // End of field
+        row.push(current);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    
+    // Add last field
+    row.push(current);
+    result.push(row);
+  }
+  
+  return result;
+}
+
+function displaySpreadsheet(data) {
+  const container = document.getElementById("spreadsheet-container");
+  if (!container) return;
+
+  if (!data || data.length === 0) {
+    container.innerHTML = '<p class="text-slate-400 text-center py-8 text-sm">No data found in spreadsheet</p>';
+    return;
+  }
+
+  // Find max columns to ensure consistent table structure
+  const maxCols = Math.max(...data.map(row => row.length));
+  
+  // Create table with better styling
+  let html = '<div class="overflow-x-auto"><table class="w-full border-collapse bg-slate-800/50 text-sm spreadsheet-table">';
+  
+  data.forEach((row, rowIndex) => {
+    html += '<tr>';
+    for (let colIndex = 0; colIndex < maxCols; colIndex++) {
+      const cellValue = row[colIndex] !== null && row[colIndex] !== undefined ? String(row[colIndex]) : '';
+      const isHeader = rowIndex === 0;
+      const cellClass = isHeader 
+        ? 'bg-slate-700/70 font-semibold text-slate-100 px-3 py-2 border border-slate-600 sticky top-0 z-10'
+        : 'px-3 py-2 border border-slate-600 text-slate-300 bg-slate-800/30 hover:bg-slate-800/50';
+      
+      html += `<td class="${cellClass}">${escapeHtml(cellValue)}</td>`;
+    }
+    html += '</tr>';
+  });
+  
+  html += '</table></div>';
+  container.innerHTML = html;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ===== ENERGY UPLOAD (DISABLED) =====
 function setupEnergyUpload() {
   const form = document.getElementById("energy-upload-form");
   const fileInput = document.getElementById("energy-csv-input");
@@ -1797,9 +2014,7 @@ function init() {
   setupForm();
   setupNotesForm();
   setupShoppingForm();
-  setupEnergyUpload();
-  fetchEnergyData();
-  fetchEnphaseData();
+  setupSpreadsheetUpload();
   initSlides();
   setupNavButtons();
   setupMobileMenu();

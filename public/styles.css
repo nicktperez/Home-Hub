@@ -1492,3 +1492,24 @@ button[type="submit"]:active {
     filter: brightness(0.9);
   }
 }
+
+/* ===== SPREADSHEET TABLE ===== */
+.spreadsheet-table {
+  min-width: 100%;
+}
+
+.spreadsheet-table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.spreadsheet-table td:hover {
+  overflow: visible;
+  white-space: normal;
+  word-wrap: break-word;
+  z-index: 5;
+  position: relative;
+  background: rgba(30, 41, 59, 0.95) !important;
+}
