@@ -1338,18 +1338,37 @@ function renderShopping() {
       <button class="shopping-delete-btn" data-id="${item.id}">×</button>
     `;
 
+    list.appendChild(li);
+    
+    // Get elements after they're in the DOM
     const checkbox = li.querySelector(".shopping-checkbox");
     const deleteBtn = li.querySelector(".shopping-delete-btn");
 
-    checkbox.addEventListener("change", () => {
-      updateShoppingItem(item.id, { checked: checkbox.checked });
-    });
+    if (checkbox) {
+      checkbox.addEventListener("change", async (e) => {
+        e.stopPropagation();
+        try {
+          await updateShoppingItem(item.id, { checked: checkbox.checked });
+        } catch (error) {
+          console.error("Error updating shopping item:", error);
+          // Revert checkbox state on error
+          checkbox.checked = !checkbox.checked;
+        }
+      });
+    }
 
-    deleteBtn.addEventListener("click", () => {
-      deleteShoppingItem(item.id);
-    });
-
-    list.appendChild(li);
+    if (deleteBtn) {
+      deleteBtn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          await deleteShoppingItem(item.id);
+        } catch (error) {
+          console.error("Error deleting shopping item:", error);
+          alert(`Failed to delete item: ${error.message || "Unknown error"}`);
+        }
+      });
+    }
   });
 }
 
@@ -1651,6 +1670,9 @@ function renderEnphaseData(data) {
 }
 
 // ===== GOOGLE SHEET DISPLAY =====
+let googleSheetRefreshInterval = null;
+const GOOGLE_SHEET_REFRESH_INTERVAL = 30000; // Refresh every 30 seconds
+
 function setupSpreadsheetUpload() {
   // Google Sheet form
   const googleForm = document.getElementById("google-sheet-form");
@@ -1672,6 +1694,9 @@ function setupSpreadsheetUpload() {
       try {
         await loadGoogleSheet(url);
         
+        // Save URL to localStorage for persistence
+        localStorage.setItem('googleSheetUrl', url);
+        
         // Hide the form after successful load
         if (formContainer) {
           formContainer.style.display = 'none';
@@ -1692,7 +1717,7 @@ function setupSpreadsheetUpload() {
   }
 }
 
-async function loadGoogleSheet(url) {
+async function loadGoogleSheet(url, isAutoRefresh = false) {
   // Parse Google Sheets URL to extract sheet ID and GID
   // Format: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit#gid={GID}
   // Or: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit?usp=sharing
@@ -1735,7 +1760,13 @@ async function loadGoogleSheet(url) {
     // Display the spreadsheet
     displaySpreadsheet(csvData);
     
-    alert("Google Sheet loaded successfully!");
+    // Start auto-refresh if not already running
+    startGoogleSheetAutoRefresh(url);
+    
+    if (!localStorage.getItem('googleSheetUrl')) {
+      // Only show alert on first load, not on auto-refresh
+      alert("Google Sheet loaded successfully!");
+    }
   } catch (error) {
     if (error.message.includes("publicly shared")) {
       throw error;
@@ -1833,15 +1864,79 @@ function setupAddSheetButton() {
     addButton.addEventListener("click", () => {
       // Show the form again
       formContainer.style.display = 'block';
-      // Clear the input
+      // Clear the input and localStorage
       const urlInput = document.getElementById("google-sheet-url");
       if (urlInput) {
         urlInput.value = '';
         urlInput.focus();
       }
+      // Clear saved URL so they can enter a new one
+      localStorage.removeItem('googleSheetUrl');
+      // Stop auto-refresh
+      stopGoogleSheetAutoRefresh();
       // Hide the add button
       addButtonContainer.classList.add("hidden");
     });
+  }
+}
+
+function startGoogleSheetAutoRefresh(url) {
+  // Clear any existing interval
+  if (googleSheetRefreshInterval) {
+    clearInterval(googleSheetRefreshInterval);
+  }
+  
+  // Set up auto-refresh
+  googleSheetRefreshInterval = setInterval(async () => {
+    try {
+      await loadGoogleSheet(url, true); // Pass true to indicate it's an auto-refresh
+    } catch (error) {
+      console.error("Error auto-refreshing Google Sheet:", error);
+      // Don't show alerts on auto-refresh failures, just log them
+    }
+  }, GOOGLE_SHEET_REFRESH_INTERVAL);
+}
+
+function stopGoogleSheetAutoRefresh() {
+  if (googleSheetRefreshInterval) {
+    clearInterval(googleSheetRefreshInterval);
+    googleSheetRefreshInterval = null;
+  }
+}
+
+async function loadSavedGoogleSheet() {
+  const savedUrl = localStorage.getItem('googleSheetUrl');
+  if (!savedUrl) return;
+  
+  try {
+    await loadGoogleSheet(savedUrl);
+    
+    // Start auto-refresh for saved sheet
+    startGoogleSheetAutoRefresh(savedUrl);
+    
+    // Hide the form and show the add button
+    const formContainer = document.getElementById("google-sheet-form-container");
+    const addButtonContainer = document.getElementById("add-sheet-button-container");
+    const urlInput = document.getElementById("google-sheet-url");
+    
+    if (formContainer) {
+      formContainer.style.display = 'none';
+    }
+    if (addButtonContainer) {
+      addButtonContainer.classList.remove("hidden");
+    }
+    if (urlInput) {
+      urlInput.value = savedUrl; // Keep the URL in the input for reference
+    }
+  } catch (error) {
+    console.error("Error loading saved Google Sheet:", error);
+    // If loading fails, clear the saved URL and show the form
+    localStorage.removeItem('googleSheetUrl');
+    stopGoogleSheetAutoRefresh();
+    const formContainer = document.getElementById("google-sheet-form-container");
+    if (formContainer) {
+      formContainer.style.display = 'block';
+    }
   }
 }
 
@@ -2000,6 +2095,7 @@ function init() {
   setupShoppingForm();
   setupSpreadsheetUpload();
   setupAddSheetButton();
+  loadSavedGoogleSheet(); // Load saved Google Sheet if available
   initSlides();
   setupNavButtons();
   setupMobileMenu();
