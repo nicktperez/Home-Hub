@@ -220,7 +220,9 @@
         <div class="projects-box px-5 pb-5 pt-12 flex flex-col gap-4 flex-1 overflow-hidden h-full">
           <!-- Title and Add Form -->
           <div class="flex flex-col gap-3 flex-shrink-0">
-            <h1 class="text-3xl font-bold">Projects</h1>
+            <header class="mb-4">
+              <h1 class="text-4xl font-bold">Projects</h1>
+            </header>
             <form id="project-form" class="flex gap-2">
               <input
                 id="project-input"
@@ -350,32 +352,35 @@
       <!-- Spreadsheet Tab -->
       <section class="slide">
         <div class="p-5 pt-12 flex flex-col gap-4 flex-1 overflow-hidden h-full">
-          <div class="flex flex-col gap-2 flex-shrink-0">
-            <div class="flex items-center justify-between flex-wrap gap-4">
-              <div>
-                <h1 class="text-3xl font-bold">Car Information</h1>
-                <p class="text-slate-300 text-sm">Link a Google Sheet to display car information</p>
-              </div>
-              <!-- Google Sheet Link Input -->
-              <div id="google-sheet-form-container" class="bg-slate-900/70 border border-slate-700 rounded-lg p-2.5">
-                <form id="google-sheet-form" class="flex gap-2 items-center">
-                  <input
-                    id="google-sheet-url"
-                    name="google-sheet-url"
-                    type="url"
-                    placeholder="Paste Google Sheet URL"
-                    class="text-xs px-2 py-1.5 rounded bg-slate-950/70 border border-slate-700 text-slate-100 placeholder-slate-500 w-64"
-                  />
-                  <button type="submit" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold shadow-lg text-xs whitespace-nowrap hover:shadow-xl transition-shadow">
-                    Load Sheet
-                  </button>
-                </form>
-              </div>
+          <header class="mb-4">
+            <h1 class="text-4xl font-bold">Car Information</h1>
+          </header>
+          <div class="flex flex-col gap-2 flex-shrink-0 relative">
+            <!-- Google Sheet Link Input -->
+            <div id="google-sheet-form-container" class="bg-slate-900/70 border border-slate-700 rounded-lg p-2.5">
+              <form id="google-sheet-form" class="flex gap-2 items-center">
+                <input
+                  id="google-sheet-url"
+                  name="google-sheet-url"
+                  type="url"
+                  placeholder="Paste Google Sheet URL"
+                  class="text-xs px-2 py-1.5 rounded bg-slate-950/70 border border-slate-700 text-slate-100 placeholder-slate-500 w-64"
+                />
+                <button type="submit" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold shadow-lg text-xs whitespace-nowrap hover:shadow-xl transition-shadow">
+                  Load Sheet
+                </button>
+              </form>
             </div>
           </div>
 
           <!-- Spreadsheet Display -->
-          <div class="flex-1 overflow-auto bg-slate-900/50 rounded-lg border border-slate-700 p-4">
+          <div class="flex-1 overflow-auto bg-slate-900/50 rounded-lg border border-slate-700 p-4 relative group">
+            <!-- Add Another Sheet Button (shown after sheet is loaded, appears on hover) -->
+            <div id="add-sheet-button-container" class="hidden group-hover:block">
+              <button id="add-sheet-button" class="w-8 h-8 rounded-full bg-slate-700/80 hover:bg-slate-600/80 border border-slate-600 text-slate-300 hover:text-white flex items-center justify-center transition-all shadow-lg hover:shadow-xl absolute top-2 right-2 z-10" title="Add another Google Sheet">
+                <span class="text-lg leading-none">+</span>
+              </button>
+            </div>
             <div id="spreadsheet-container" class="w-full">
               <p class="text-slate-400 text-center py-8 text-sm">Link a Google Sheet to view car information</p>
             </div>

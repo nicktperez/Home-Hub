@@ -1676,6 +1676,12 @@ function setupSpreadsheetUpload() {
         if (formContainer) {
           formContainer.style.display = 'none';
         }
+        
+        // Show the add sheet button
+        const addButtonContainer = document.getElementById("add-sheet-button-container");
+        if (addButtonContainer) {
+          addButtonContainer.classList.remove("hidden");
+        }
       } catch (error) {
         console.error("Error loading Google Sheet:", error);
         alert(`Error loading Google Sheet: ${error.message}`);
@@ -1816,6 +1822,27 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+function setupAddSheetButton() {
+  const addButton = document.getElementById("add-sheet-button");
+  const formContainer = document.getElementById("google-sheet-form-container");
+  const addButtonContainer = document.getElementById("add-sheet-button-container");
+  
+  if (addButton && formContainer && addButtonContainer) {
+    addButton.addEventListener("click", () => {
+      // Show the form again
+      formContainer.style.display = 'block';
+      // Clear the input
+      const urlInput = document.getElementById("google-sheet-url");
+      if (urlInput) {
+        urlInput.value = '';
+        urlInput.focus();
+      }
+      // Hide the add button
+      addButtonContainer.classList.add("hidden");
+    });
+  }
 }
 
 // ===== ENERGY UPLOAD (DISABLED) =====
@@ -1972,6 +1999,7 @@ function init() {
   setupNotesForm();
   setupShoppingForm();
   setupSpreadsheetUpload();
+  setupAddSheetButton();
   initSlides();
   setupNavButtons();
   setupMobileMenu();
