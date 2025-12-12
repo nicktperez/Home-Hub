@@ -1650,11 +1650,12 @@ function renderEnphaseData(data) {
   // This would show historical production over time
 }
 
-// ===== SPREADSHEET UPLOAD AND DISPLAY =====
+// ===== GOOGLE SHEET DISPLAY =====
 function setupSpreadsheetUpload() {
   // Google Sheet form
   const googleForm = document.getElementById("google-sheet-form");
   const googleUrlInput = document.getElementById("google-sheet-url");
+  const formContainer = document.getElementById("google-sheet-form-container");
   
   if (googleForm && googleUrlInput) {
     googleForm.addEventListener("submit", async (e) => {
@@ -1670,6 +1671,11 @@ function setupSpreadsheetUpload() {
 
       try {
         await loadGoogleSheet(url);
+        
+        // Hide the form after successful load
+        if (formContainer) {
+          formContainer.style.display = 'none';
+        }
       } catch (error) {
         console.error("Error loading Google Sheet:", error);
         alert(`Error loading Google Sheet: ${error.message}`);
@@ -1678,55 +1684,6 @@ function setupSpreadsheetUpload() {
       }
     });
   }
-
-  // Excel file upload form
-  const form = document.getElementById("spreadsheet-upload-form");
-  const fileInput = document.getElementById("spreadsheet-input");
-  if (!form || !fileInput) return;
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    pauseRotation();
-
-    const file = fileInput.files[0];
-    if (!file) {
-      alert("Please select a file");
-      resumeRotation();
-      return;
-    }
-
-    try {
-      // Check if SheetJS is available
-      if (typeof XLSX === 'undefined') {
-        alert("Excel parser library not loaded. Please refresh the page.");
-        resumeRotation();
-        return;
-      }
-
-      // Read file as array buffer
-      const arrayBuffer = await file.arrayBuffer();
-      
-      // Parse Excel file
-      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-      
-      // Get the first sheet
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-      
-      // Convert to JSON array
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-      
-      // Display the spreadsheet
-      displaySpreadsheet(jsonData);
-      
-      alert("Spreadsheet loaded successfully!");
-    } catch (error) {
-      console.error("Error loading spreadsheet:", error);
-      alert(`Error loading spreadsheet: ${error.message}`);
-    } finally {
-      resumeRotation();
-    }
-  });
 }
 
 async function loadGoogleSheet(url) {

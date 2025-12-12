@@ -22,7 +22,7 @@
       <button class="nav-btn" data-slide="3">Projects</button>
       <button class="nav-btn" data-slide="4">Notes</button>
       <button class="nav-btn" data-slide="5">Shopping</button>
-      <button class="nav-btn" data-slide="6">Spreadsheet</button>
+      <button class="nav-btn" data-slide="6">Car Information</button>
     </div>
 
     <!-- Voice Command Indicator -->
@@ -75,7 +75,7 @@
           <span>🛒</span> Shopping
         </button>
         <button class="mobile-nav-item" data-slide="6">
-          <span>📊</span> Spreadsheet
+          <span>🚗</span> Car Information
         </button>
       </div>
     </div>
@@ -353,40 +353,23 @@
           <div class="flex flex-col gap-2 flex-shrink-0">
             <div class="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h1 class="text-3xl font-bold">Spreadsheet</h1>
-                <p class="text-slate-300 text-sm">Link a Google Sheet or upload Excel files (.xlsx, .xls)</p>
+                <h1 class="text-3xl font-bold">Car Information</h1>
+                <p class="text-slate-300 text-sm">Link a Google Sheet to display car information</p>
               </div>
-              <div class="flex gap-2 flex-wrap">
-                <!-- Google Sheet Link Input -->
-                <div class="bg-slate-900/70 border border-slate-700 rounded-lg p-2.5">
-                  <form id="google-sheet-form" class="flex gap-2 items-center">
-                    <input
-                      id="google-sheet-url"
-                      name="google-sheet-url"
-                      type="url"
-                      placeholder="Paste Google Sheet URL"
-                      class="text-xs px-2 py-1.5 rounded bg-slate-950/70 border border-slate-700 text-slate-100 placeholder-slate-500 w-64"
-                    />
-                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold shadow-lg text-xs whitespace-nowrap hover:shadow-xl transition-shadow">
-                      Load Sheet
-                    </button>
-                  </form>
-                </div>
-                <!-- Excel File Upload -->
-                <div class="bg-slate-900/70 border border-slate-700 rounded-lg p-2.5">
-                  <form id="spreadsheet-upload-form" class="flex gap-2 items-center">
-                    <input
-                      id="spreadsheet-input"
-                      name="spreadsheet-file"
-                      type="file"
-                      accept=".xlsx,.xls"
-                      class="text-xs px-2 py-1.5 rounded bg-slate-950/70 border border-slate-700 text-slate-100 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"
-                    />
-                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold shadow-lg text-xs whitespace-nowrap hover:shadow-xl transition-shadow">
-                      Upload
-                    </button>
-                  </form>
-                </div>
+              <!-- Google Sheet Link Input -->
+              <div id="google-sheet-form-container" class="bg-slate-900/70 border border-slate-700 rounded-lg p-2.5">
+                <form id="google-sheet-form" class="flex gap-2 items-center">
+                  <input
+                    id="google-sheet-url"
+                    name="google-sheet-url"
+                    type="url"
+                    placeholder="Paste Google Sheet URL"
+                    class="text-xs px-2 py-1.5 rounded bg-slate-950/70 border border-slate-700 text-slate-100 placeholder-slate-500 w-64"
+                  />
+                  <button type="submit" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold shadow-lg text-xs whitespace-nowrap hover:shadow-xl transition-shadow">
+                    Load Sheet
+                  </button>
+                </form>
               </div>
             </div>
           </div>
@@ -394,15 +377,13 @@
           <!-- Spreadsheet Display -->
           <div class="flex-1 overflow-auto bg-slate-900/50 rounded-lg border border-slate-700 p-4">
             <div id="spreadsheet-container" class="w-full">
-              <p class="text-slate-400 text-center py-8 text-sm">Upload an Excel file to view it here</p>
+              <p class="text-slate-400 text-center py-8 text-sm">Link a Google Sheet to view car information</p>
             </div>
           </div>
         </div>
       </section>
     </div>
 
-    <!-- SheetJS library for Excel parsing -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="script.js?v=10"></script>
   </body>
 </html>
