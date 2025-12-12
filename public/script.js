@@ -1835,7 +1835,8 @@ function displaySpreadsheet(data) {
     html += '<tr>';
     for (let colIndex = 0; colIndex < maxCols; colIndex++) {
       const cellValue = row[colIndex] !== null && row[colIndex] !== undefined ? String(row[colIndex]) : '';
-      const isHeader = rowIndex === 0;
+      // Row 0 (first row) and row 5 (6th row, index 5) get header styling
+      const isHeader = rowIndex === 0 || rowIndex === 5;
       const cellClass = isHeader 
         ? 'bg-slate-700/70 font-semibold text-slate-100 px-3 py-2 border border-slate-600 sticky top-0 z-10'
         : 'px-3 py-2 border border-slate-600 text-slate-300 bg-slate-800/30 hover:bg-slate-800/50';
