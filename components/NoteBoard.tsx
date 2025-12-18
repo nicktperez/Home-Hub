@@ -23,53 +23,70 @@ export default function NoteBoard() {
     const [notes, setNotes] = useState(INITIAL_NOTES);
     const containerRef = useRef<HTMLDivElement>(null);
 
+    const updateNote = (id: number, text: string) => {
+        setNotes(prev => prev.map(n => n.id === id ? { ...n, text } : n));
+    };
+
     const updateColor = (id: number, newColor: string) => {
         setNotes(prev => prev.map(n => n.id === id ? { ...n, color: newColor } : n));
     };
 
     return (
-        <div className="glass-card rounded-2xl p-6 h-full flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-stone-300 flex items-center gap-2">
-                    <span>📌</span> Sticky Notes
-                </h2>
-                <div className="text-xs text-stone-500 font-mono">
-                    {notes.length} Active
+        <div className="glass-card rounded-3xl p-8 h-full flex flex-col transition-all duration-500 shadow-sm border border-white/40">
+            <div className="flex justify-between items-center mb-8 px-2">
+                <div>
+                    <h2 className="text-3xl font-serif font-black text-cocoa flex items-center gap-3">
+                        <span className="text-rose text-4xl">📌</span> Sticky Notes
+                    </h2>
+                    <p className="text-sm text-secondary font-medium mt-1 italic opacity-80 font-sans">Drag them anywhere, click to edit.</p>
+                </div>
+                <div className="text-[10px] font-black text-rose uppercase tracking-[0.2em] bg-rose/5 px-4 py-1.5 rounded-full border border-rose/10 shadow-inner font-sans">
+                    {notes.length} Active Notes
                 </div>
             </div>
 
-            <div ref={containerRef} className="flex-1 relative overflow-hidden rounded-xl border border-white/5 bg-white/5">
-                <div className="absolute inset-0 p-4 flex flex-wrap content-start gap-8">
+            <div ref={containerRef} className="flex-1 relative overflow-hidden rounded-[32px] border border-white/40 bg-white/10 shadow-[inner_0_4px_12px_rgba(0,0,0,0.02)]">
+                <div className="absolute inset-0 p-8 flex flex-wrap content-start gap-10">
                     {notes.map(note => (
                         <motion.div
                             key={note.id}
                             drag
                             dragConstraints={containerRef}
-                            whileHover={{ scale: 1.05, zIndex: 10 }}
+                            whileHover={{ scale: 1.02, zIndex: 10 }}
                             whileDrag={{ scale: 1.1, zIndex: 20, cursor: 'grabbing' }}
                             className={clsx(
-                                "relative w-64 h-64 p-6 shadow-xl text-stone-800 font-handwriting text-xl leading-relaxed cursor-grab",
+                                "group relative w-72 h-72 p-8 shadow-2xl transition-shadow hover:shadow-cocoa/5",
                                 note.color,
-                                note.rotation
+                                note.rotation,
+                                "rounded-sm flex flex-col"
                             )}
                         >
                             {/* Tape effect */}
-                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-24 h-8 bg-white/30 backdrop-blur-sm rotate-1 shadow-sm pointer-events-none"></div>
+                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-32 h-10 bg-white/40 backdrop-blur-sm rotate-2 shadow-sm pointer-events-none border border-white/20"></div>
 
-                            {note.text}
+                            <textarea
+                                value={note.text}
+                                onChange={(e) => updateNote(note.id, e.target.value)}
+                                className={clsx(
+                                    "flex-1 w-full h-full bg-transparent border-none outline-none resize-none",
+                                    "font-handwriting text-3xl leading-relaxed text-cocoa/90",
+                                    "placeholder:text-cocoa/30"
+                                )}
+                                placeholder="Write something sweet..."
+                            />
 
                             {/* Controls Overlay (Visible on Hover) */}
-                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                 {/* Color Palette */}
                                 <div className="group/colors relative">
-                                    <button className="p-1.5 bg-black/5 hover:bg-black/10 rounded-full text-black/40 hover:text-black/70">
+                                    <button className="p-2 bg-white/50 hover:bg-white shadow-sm rounded-full text-cocoa/60 hover:text-cocoa transition-all">
                                         <Palette className="w-4 h-4" />
                                     </button>
-                                    <div className="absolute right-0 top-8 bg-white/90 backdrop-blur rounded-lg shadow-lg p-2 flex gap-1 hidden group-hover/colors:flex z-50">
+                                    <div className="absolute right-0 top-10 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl p-2.5 flex gap-2 hidden group-hover/colors:flex z-50 border border-white/60 animate-in fade-in zoom-in duration-200">
                                         {COLORS.map(c => (
                                             <button
                                                 key={c.name}
-                                                className={`w-4 h-4 rounded-full ${c.class} border border-black/10 hover:scale-125 transition-transform`}
+                                                className={`w-5 h-5 rounded-full ${c.class} border border-black/5 hover:scale-125 transition-transform shadow-sm`}
                                                 onClick={(e) => { e.stopPropagation(); updateColor(note.id, c.class); }}
                                                 title={c.name}
                                             />
@@ -79,27 +96,25 @@ export default function NoteBoard() {
 
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setNotes(prev => prev.filter(n => n.id !== note.id)); }}
-                                    className="p-1.5 bg-black/5 hover:bg-red-500/10 rounded-full text-black/40 hover:text-red-600"
+                                    className="p-2 bg-white/50 hover:bg-rose shadow-sm rounded-full text-cocoa/60 hover:text-white transition-all"
                                 >
                                     <X className="w-4 h-4" />
                                 </button>
                             </div>
                         </motion.div>
                     ))}
-
-                    {/* Add button placeholder (Static) */}
-
                 </div>
-                <div className="absolute bottom-4 right-4">
+
+                <div className="absolute bottom-10 right-10">
                     <button
-                        className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-all border border-white/10"
+                        className="w-16 h-16 bg-white/20 hover:bg-rose/80 backdrop-blur-md rounded-full flex items-center justify-center text-rose hover:text-white transition-all duration-500 border border-white/40 shadow-lg group hover:scale-110 active:scale-95"
                         title="Add Note"
                         onClick={() => {
-                            const newId = Math.max(...notes.map(n => n.id), 0) + 1;
-                            setNotes([...notes, { id: newId, text: "New Note...", color: "bg-yellow-200", rotation: `rotate-${Math.floor(Math.random() * 6) - 3}` }]);
+                            const newId = notes.length > 0 ? Math.max(...notes.map(n => n.id)) + 1 : 1;
+                            setNotes([...notes, { id: newId, text: "", color: "bg-yellow-200", rotation: `rotate-${Math.floor(Math.random() * 6) - 3}` }]);
                         }}
                     >
-                        <span className="text-2xl font-light">+</span>
+                        <span className="text-4xl font-light group-hover:rotate-90 transition-transform duration-500">+</span>
                     </button>
                 </div>
             </div>

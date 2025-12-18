@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;600&family=Caveat:wght@400;700&display=swap');
 @import "tailwindcss";
 
 
@@ -45,6 +45,7 @@
   --color-foreground: var(--foreground);
   --font-serif: "Cormorant Garamond", serif;
   --font-sans: "Outfit", sans-serif;
+  --font-handwriting: "Caveat", cursive;
 
   --color-rose: #D4A5A5;
   --color-sage: #81B29A;

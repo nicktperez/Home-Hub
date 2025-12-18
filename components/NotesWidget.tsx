@@ -18,10 +18,6 @@ export default function NotesWidget() {
                         {note.text}
                     </div>
                 ))}
-                <div className="border-2 border-dashed border-rose/20 rounded-2xl flex flex-col items-center justify-center text-rose font-black uppercase tracking-widest min-h-[96px] hover:bg-rose/5 transition-colors">
-                    <span className="text-xl mb-1">+</span>
-                    Add Note
-                </div>
             </div>
         </div>
     );

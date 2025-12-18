@@ -12,21 +12,24 @@ import NoteBoard from '../components/NoteBoard';
 import ProjectWidget from '../components/ProjectWidget';
 import NotesWidget from '../components/NotesWidget';
 import FocusWidget from '../components/FocusWidget';
+import GoogleSheetFrame from '../components/GoogleSheetFrame';
 
 const SLIDE_TITLES = [
   "Month",
   "Today",
   "Projects",
   "Notes",
-  "Shopping"
+  "Shopping",
+  "Sheets"
 ];
 
 const SLIDE_DURATIONS = [
   20000, // Month
-  45000, // Today (Give more time for this rich view)
+  45000, // Today
   20000, // Projects
   20000, // Notes
-  20000  // Shopping
+  20000, // Shopping
+  30000  // Sheets
 ];
 
 export default function Dashboard() {
@@ -109,6 +112,15 @@ export default function Dashboard() {
         <Slide isActive={activeSlide === 4} title="Shopping List">
           <div className="w-full h-full">
             <ShoppingList />
+          </div>
+        </Slide>
+
+        <Slide isActive={activeSlide === 5} title="Family Finances & Sheets">
+          <div className="w-full h-full">
+            <GoogleSheetFrame
+              title="Family Budget & Hub Sheet"
+              src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRBE-u5ylx0OV8t5uWwOsEta08lbGvaKMLjYj3z0gwHy2kEWkiNU9dM0n-U8aTyQei5CX6fE4g95-aE/pubhtml?widget=true&headers=false"
+            />
           </div>
         </Slide>
       </div>
