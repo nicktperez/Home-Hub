@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;600&display=swap');
+@import "tailwindcss";
+
+
+:root {
+  /* Warm "Millennial Mom" Palette */
+  --bg-primary: #FAF9F6;
+  /* Soft Cream */
+  --bg-secondary: #F1F8E9;
+  /* Very Light Sage */
+
+  /* Text */
+  --text-primary: #3E2723;
+  /* Deep Cocoa */
+  --text-secondary: #6D4C41;
+  /* Muted Brown */
+
+  /* Accents - Warm & Playful (Slightly darkened for better contrast) */
+  --accent-rose: #C28E8E;
+  /* Darker than D4A5A5 */
+  --accent-sage: #6B9E84;
+  /* Darker than 81B29A */
+  --accent-terracotta: #D46A4A;
+  /* Darker than E07A5F */
+  --accent-gold: #E5B874;
+  /* Darker than F2CC8F */
+
+  /* Glass Effects - More opaque for better legibility */
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-bg-hover: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.8);
+  --glass-shadow: 0 10px 40px rgba(80, 60, 40, 0.08);
+  --backdrop-blur: 16px;
+
+  --background: var(--bg-primary);
+  --foreground: var(--text-primary);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #D4A5A5 0%, #E07A5F 100%);
+  --gradient-glass: linear-gradient(145deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-serif: "Cormorant Garamond", serif;
+  --font-sans: "Outfit", sans-serif;
+
+  --color-rose: #D4A5A5;
+  --color-sage: #81B29A;
+  --color-terracotta: #E07A5F;
+  --color-cream: #FAF9F6;
+  --color-cocoa: #3E2723;
+}
+
+/* ===== BASE & RESET ===== */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  overflow: hidden;
+}
+
+/* ===== BACKGROUND TEXTURE ===== */
+/* Softer, Warm Botanical Background */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-color: var(--bg-primary);
+
+  /* Abstract Botanical/Soft Shape Pattern */
+  background-image:
+    radial-gradient(at 0% 0%, rgba(212, 165, 165, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(129, 178, 154, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(224, 122, 95, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(242, 204, 143, 0.15) 0px, transparent 50%),
+    url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 40c4-4 10-4 14 0 4 4 4 10 0 14-4 4-10 4-14 0-4-4-4-10 0-14zM10 10c2-2 5-2 7 0s2 5 0 7-5 2-7 0-2-5 0-7z' fill='%2381B29A' fill-opacity='0.05'/%3E%3C/svg%3E");
+
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 200px 200px;
+  pointer-events: none;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(circle at 50% 50%, transparent 0%, rgba(250, 249, 246, 0.4) 100%);
+  pointer-events: none;
+}
+
+
+/* Glass Utility */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--backdrop-blur));
+  -webkit-backdrop-filter: blur(var(--backdrop-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  background-image: var(--gradient-glass);
+}
+
+.text-gradient {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
