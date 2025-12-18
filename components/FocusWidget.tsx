@@ -49,25 +49,27 @@ export default function FocusWidget() {
     }
 
     return (
-        <div className="glass-card rounded-3xl p-8 h-full flex flex-col items-center justify-center relative overflow-hidden group transition-all duration-700 hover:bg-white/90">
+        <div className="glass-card rounded-3xl p-8 h-full flex flex-col items-center justify-center relative overflow-hidden group transition-all duration-700 hover:bg-white/95 shadow-sm border border-white/40">
             {/* Soft decorative element */}
-            <div className="absolute -top-10 -right-10 w-32 h-32 bg-rose/5 rounded-full blur-3xl group-hover:bg-rose/10 transition-colors duration-700" />
-            <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-sage/5 rounded-full blur-3xl group-hover:bg-sage/10 transition-colors duration-700" />
+            <div className="absolute -top-10 -right-10 w-48 h-48 bg-rose/10 rounded-full blur-3xl group-hover:bg-rose/15 transition-colors duration-700" />
+            <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-sage/10 rounded-full blur-3xl group-hover:bg-sage/15 transition-colors duration-700" />
 
-            <h2 className="text-[11px] font-bold mb-6 flex items-center gap-3 text-rose uppercase tracking-[0.25em]">
-                <Sparkles className="w-3.5 h-3.5 text-terracotta animate-pulse" />
-                Daily Intention
-                <Sparkles className="w-3.5 h-3.5 text-terracotta animate-pulse" />
-            </h2>
+            <div className="relative z-10 flex flex-col items-center">
+                <h2 className="text-[11px] font-bold mb-6 flex items-center gap-3 text-rose uppercase tracking-[0.3em] opacity-80">
+                    <Sparkles className="w-3.5 h-3.5 text-terracotta" />
+                    Daily Intention
+                    <Sparkles className="w-3.5 h-3.5 text-terracotta" />
+                </h2>
 
-            <div className="w-full text-center transform transition-all duration-1000 group-hover:scale-105">
-                <p className="text-5xl font-serif font-bold text-cocoa leading-tight italic tracking-tight drop-shadow-sm">
-                    "{intention}"
-                </p>
-                <div className="mt-6 flex justify-center gap-1.5 opacity-30 group-hover:opacity-50 transition-opacity">
-                    <div className="w-1.5 h-1.5 rounded-full bg-terracotta" />
-                    <div className="w-1.5 h-1.5 rounded-full bg-rose" />
-                    <div className="w-1.5 h-1.5 rounded-full bg-sage" />
+                <div className="w-full text-center max-w-4xl transform transition-all duration-1000 group-hover:scale-105">
+                    <p className="text-4xl lg:text-6xl font-serif font-bold text-cocoa leading-tight italic tracking-tight">
+                        "{intention}"
+                    </p>
+                    <div className="mt-8 flex justify-center gap-2 opacity-40 group-hover:opacity-60 transition-opacity">
+                        <div className="w-2 h-2 rounded-full bg-terracotta" />
+                        <div className="w-12 h-2 rounded-full bg-rose/40" />
+                        <div className="w-2 h-2 rounded-full bg-sage" />
+                    </div>
                 </div>
             </div>
         </div>

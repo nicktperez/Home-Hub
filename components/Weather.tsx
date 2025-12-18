@@ -82,72 +82,74 @@ export default function Weather() {
     const clothing = weatherData ? getClothingSuggestion(weatherData.current.temperature_2m) : '';
 
     return (
-        <div className="glass-card rounded-3xl p-8 flex flex-col justify-between h-full transition-all duration-500 overflow-hidden">
-            <div>
-                <div className="text-[11px] uppercase tracking-[0.15em] text-rose font-bold mb-4 flex items-center gap-2">
-                    <MapPin className="w-3 h-3 text-terracotta" />
-                    {locationName || "Local Skies"}
-                </div>
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-4">
-                        <div className="drop-shadow-sm scale-125 transition-transform hover:rotate-6 duration-300">
-                            {currentInfo.icon}
-                        </div>
-                        <div>
-                            <div className="text-5xl font-serif font-bold text-cocoa leading-none">
-                                {weatherData?.current?.temperature_2m
-                                    ? Math.round(weatherData.current.temperature_2m) + "°"
-                                    : "--"}
+        <div className="glass-card rounded-3xl p-5 lg:p-6 flex flex-col justify-between h-full transition-all duration-500">
+            <div className="h-full flex flex-col justify-between overflow-hidden">
+                <div className="flex-shrink-0">
+                    <div className="text-[10px] uppercase tracking-[0.2em] text-rose font-bold mb-2 flex items-center gap-2">
+                        <MapPin className="w-3 h-3 text-terracotta" />
+                        {locationName || "Local Skies"}
+                    </div>
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                            <div className="drop-shadow-sm scale-100 lg:scale-110 transition-transform hover:rotate-6 duration-300">
+                                {currentInfo.icon}
                             </div>
-                            <div className="text-sm text-secondary font-medium mt-1">
-                                {currentInfo.text}
+                            <div>
+                                <div className="text-3xl lg:text-4xl font-serif font-bold text-cocoa leading-none">
+                                    {weatherData?.current?.temperature_2m
+                                        ? Math.round(weatherData.current.temperature_2m) + "°"
+                                        : "--"}
+                                </div>
+                                <div className="text-[10px] lg:text-[11px] text-secondary font-bold mt-0.5">
+                                    {currentInfo.text}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="text-right flex flex-col items-end">
+                            <div className="text-[9px] lg:text-[10px] text-rose font-bold italic">RealFeel</div>
+                            <div className="text-lg font-serif font-bold text-terracotta text-shadow-sm">
+                                {weatherData ? Math.round(weatherData.current.apparent_temperature) : '--'}°
                             </div>
                         </div>
                     </div>
-                    <div className="text-right flex flex-col items-end">
-                        <div className="text-xs text-rose font-bold mb-1 italic">RealFeel</div>
-                        <div className="text-xl font-serif font-bold text-terracotta text-shadow-sm">
-                            {weatherData ? Math.round(weatherData.current.apparent_temperature) : '--'}°
-                        </div>
-                    </div>
-                </div>
 
-                {/* Clothing Advice */}
-                <div className="mb-6 p-4 bg-white/60 rounded-2xl text-center text-sm font-bold text-cocoa shadow-sm border border-white/80">
-                    {clothing || "Checking the forecast..."}
-                </div>
+                    {/* Clothing Advice */}
+                    <div className="mb-3 p-2.5 bg-white/60 rounded-xl text-center text-[12px] lg:text-[13px] font-bold text-cocoa shadow-sm border border-white/80">
+                        {clothing || "Checking the forecast..."}
+                    </div>
 
-                {/* Details Grid */}
-                <div className="grid grid-cols-2 gap-4 py-4 border-t border-rose/20">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-sage/20 rounded-xl">
-                            <Droplets className="w-4 h-4 text-sage" />
-                        </div>
-                        <div>
-                            <div className="text-[10px] text-rose font-black uppercase tracking-wider leading-none mb-1">Humidity</div>
-                            <div className="text-sm font-black text-cocoa">
-                                {weatherData ? weatherData.current.relative_humidity_2m : '--'}%
+                    {/* Details Grid */}
+                    <div className="grid grid-cols-2 gap-3 pb-3 border-b border-rose/10">
+                        <div className="flex items-center gap-2">
+                            <div className="p-1.5 bg-sage/20 rounded-lg">
+                                <Droplets className="w-3.5 h-3.5 text-sage" />
+                            </div>
+                            <div>
+                                <div className="text-[9px] text-rose font-black uppercase tracking-wider leading-none mb-0.5">Humid</div>
+                                <div className="text-xs font-black text-cocoa">
+                                    {weatherData ? weatherData.current.relative_humidity_2m : '--'}%
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-terracotta/20 rounded-xl">
-                            <Wind className="w-4 h-4 text-terracotta" />
-                        </div>
-                        <div>
-                            <div className="text-[10px] text-rose font-black uppercase tracking-wider leading-none mb-1">Breeze</div>
-                            <div className="text-sm font-black text-cocoa">
-                                {weatherData ? Math.round(weatherData.current.wind_speed_10m) : '--'} mph
+                        <div className="flex items-center gap-2">
+                            <div className="p-1.5 bg-terracotta/20 rounded-lg">
+                                <Wind className="w-3.5 h-3.5 text-terracotta" />
+                            </div>
+                            <div>
+                                <div className="text-[9px] text-rose font-black uppercase tracking-wider leading-none mb-0.5">Breeze</div>
+                                <div className="text-xs font-black text-cocoa">
+                                    {weatherData ? Math.round(weatherData.current.wind_speed_10m) : '--'} mph
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* 5-Day Mini Forecast */}
-                <div className="mt-4 pt-4 border-t border-rose/20">
-                    <h3 className="text-[10px] font-black text-rose uppercase tracking-[0.2em] mb-3">Thinking Ahead</h3>
+                <div className="pt-3">
+                    <h3 className="text-[9px] font-black text-rose uppercase tracking-[0.2em] mb-2 lg:mb-3 text-center lg:text-left">Thinking Ahead</h3>
                     <div className="flex justify-between gap-1">
-                        {weatherData && weatherData.daily.time.slice(0, 5).map((time: string, i: number) => {
+                        {weatherData?.daily?.time && weatherData.daily.time.slice(0, 5).map((time: string, i: number) => {
                             const date = new Date(time);
                             const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
                             const maxTemp = Math.round(weatherData.daily.temperature_2m_max[i]);
@@ -157,11 +159,11 @@ export default function Weather() {
 
                             return (
                                 <div key={i} className="flex flex-col items-center gap-1 group">
-                                    <span className="text-[10px] font-bold text-secondary uppercase mb-1">{dayName}</span>
-                                    <div className="p-1.5 rounded-lg bg-white/20 group-hover:bg-rose/10 transition-colors">
+                                    <span className="text-[9px] font-bold text-secondary uppercase mb-0.5">{dayName}</span>
+                                    <div className="p-1 rounded-lg bg-white/20 group-hover:bg-rose/10 transition-colors">
                                         <Icon className="w-3 h-3 text-terracotta" />
                                     </div>
-                                    <span className="text-xs font-bold text-cocoa mt-1">{maxTemp}°</span>
+                                    <span className="text-[11px] font-bold text-cocoa mt-0.5">{maxTemp}°</span>
                                 </div>
                             );
                         })}

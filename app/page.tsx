@@ -11,7 +11,6 @@ import ShoppingList from '../components/ShoppingList';
 import NoteBoard from '../components/NoteBoard';
 import ProjectWidget from '../components/ProjectWidget';
 import NotesWidget from '../components/NotesWidget';
-import QuoteWidget from '../components/QuoteWidget';
 import FocusWidget from '../components/FocusWidget';
 
 const SLIDE_TITLES = [
@@ -53,7 +52,7 @@ export default function Dashboard() {
         onNavigate={setActiveSlide}
       />
 
-      <div className="relative w-full h-full pt-20">
+      <div className="relative w-full h-full pt-16 lg:pt-20">
         <Slide isActive={activeSlide === 0} title="Family Calendar">
           <div className="w-full h-full">
             <CalendarFrame
@@ -64,9 +63,9 @@ export default function Dashboard() {
         </Slide>
 
         <Slide isActive={activeSlide === 1} title="Today's Hub">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 h-full min-h-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-7 h-full min-h-0">
             {/* Left Column: Clock & Weather */}
-            <div className="lg:col-span-4 flex flex-col gap-6 lg:gap-8 h-full min-h-0">
+            <div className="lg:col-span-4 flex flex-col gap-5 lg:gap-7 h-full min-h-0">
               <div className="flex-shrink-0">
                 <Clock />
               </div>
@@ -76,19 +75,14 @@ export default function Dashboard() {
             </div>
 
             {/* Right Column: Main Content */}
-            <div className="lg:col-span-8 flex flex-col gap-6 lg:gap-8 h-full min-h-0">
-              {/* Top Row: Focus & Quote */}
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8 flex-shrink-0">
-                <div className="lg:col-span-3">
-                  <FocusWidget />
-                </div>
-                <div className="lg:col-span-2">
-                  <QuoteWidget />
-                </div>
+            <div className="lg:col-span-8 flex flex-col gap-5 lg:gap-7 h-full min-h-0">
+              {/* Top Row: Focus */}
+              <div className="flex-shrink-0">
+                <FocusWidget />
               </div>
 
               {/* Bottom Row: Widgets Grid */}
-              <div className="flex-1 grid grid-cols-2 gap-6 lg:gap-8 min-h-0">
+              <div className="flex-1 grid grid-cols-2 gap-5 lg:gap-7 min-h-0">
                 <div className="h-full min-h-0">
                   <ProjectWidget />
                 </div>

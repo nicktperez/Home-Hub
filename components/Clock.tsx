@@ -41,9 +41,10 @@ export default function Clock() {
 
     if (!isMounted || !time) {
         return (
-            <div className="p-4 bg-white/20 border border-white/30 rounded-2xl text-center h-[140px] animate-pulse flex flex-col justify-center">
-                <div className="h-10 bg-white/30 rounded mb-4 w-3/4 mx-auto"></div>
-                <div className="h-4 bg-white/30 rounded w-1/2 mx-auto"></div>
+            <div className="glass-card p-8 rounded-3xl h-[172px] flex flex-col items-center justify-center gap-4">
+                <div className="h-4 bg-rose/5 rounded w-1/2 mx-auto"></div>
+                <div className="h-12 bg-cocoa/5 rounded w-3/4 mx-auto"></div>
+                <div className="h-4 bg-secondary/5 rounded w-2/3 mx-auto"></div>
             </div>
         );
     }
@@ -75,7 +76,7 @@ export default function Clock() {
                 "flex items-baseline justify-center"
             )}>
                 <span>{displayHours}</span>
-                <span className="animate-pulse mx-1 opacity-50">:</span>
+                <span className="mx-1 text-terracotta/40">:</span>
                 <span>{minutes}</span>
                 <span className="text-2xl ml-2 font-sans font-light text-rose/80 lowercase">{ampm}</span>
             </div>
