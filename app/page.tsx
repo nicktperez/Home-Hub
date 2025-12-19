@@ -38,6 +38,8 @@ const SLIDE_DURATIONS = [
 export default function Dashboard() {
   const [activeSlide, setActiveSlide] = useState(1); // Default to Today
   const [paused, setPaused] = useState(false);
+  const [autoDimEnabled, setAutoDimEnabled] = useState(true);
+  const [isDimmed, setIsDimmed] = useState(false);
 
   useEffect(() => {
     if (paused) return;
@@ -50,6 +52,33 @@ export default function Dashboard() {
     return () => clearTimeout(timer);
   }, [activeSlide, paused]);
 
+  useEffect(() => {
+    const saved = localStorage.getItem('home-hub-auto-dim');
+    if (saved !== null) {
+      setAutoDimEnabled(saved === 'true');
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('home-hub-auto-dim', String(autoDimEnabled));
+  }, [autoDimEnabled]);
+
+  useEffect(() => {
+    const updateDimState = () => {
+      const hour = new Date().getHours();
+      const shouldDim = autoDimEnabled && (hour >= 21 || hour < 6);
+      setIsDimmed(shouldDim);
+    };
+
+    updateDimState();
+    const interval = setInterval(updateDimState, 60000);
+    return () => clearInterval(interval);
+  }, [autoDimEnabled]);
+
+  useEffect(() => {
+    document.body.classList.toggle('night-dim', isDimmed);
+  }, [isDimmed]);
+
   return (
     <main className="relative w-screen h-screen overflow-hidden p-6 lg:p-10 select-none">
       <Navigation
@@ -57,6 +86,20 @@ export default function Dashboard() {
         activeIndex={activeSlide}
         onNavigate={setActiveSlide}
       />
+
+      <div className="fixed top-8 right-8 z-50 flex items-center gap-3">
+        <button
+          onClick={() => setAutoDimEnabled((prev) => !prev)}
+          className="glass-card px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest text-cocoa/70 hover:text-cocoa transition-colors border border-white/60"
+        >
+          Auto Dim: {autoDimEnabled ? 'On' : 'Off'}
+        </button>
+        {isDimmed && (
+          <span className="text-[10px] font-bold uppercase tracking-widest text-rose bg-rose/10 px-3 py-2 rounded-full border border-rose/20">
+            Dimmed
+          </span>
+        )}
+      </div>
 
       <div className="relative w-full h-full pt-16 lg:pt-20">
         <Slide isActive={activeSlide === 0} title="Family Calendar">

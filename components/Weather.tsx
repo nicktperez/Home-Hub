@@ -1,11 +1,29 @@
 'use client';
 
 import { CloudSun, Droplets, MapPin, Wind } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+interface WeatherCurrent {
+    temperature_2m: number;
+    weather_code: number;
+    relative_humidity_2m: number;
+    wind_speed_10m: number;
+    apparent_temperature: number;
+}
+
+interface WeatherDaily {
+    time: string[];
+    temperature_2m_max: number[];
+    weather_code: number[];
+}
+
+interface WeatherResponse {
+    current: WeatherCurrent;
+    daily: WeatherDaily;
+}
 
 export default function Weather() {
-    const [location, setLocation] = useState<{ lat: number; long: number } | null>(null);
-    const [weatherData, setWeatherData] = useState<any>(null);
+    const [weatherData, setWeatherData] = useState<WeatherResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [locationName, setLocationName] = useState<string | null>(null);
@@ -20,25 +38,21 @@ export default function Weather() {
         navigator.geolocation.getCurrentPosition(
             async (position) => {
                 const { latitude, longitude } = position.coords;
-                setLocation({ lat: latitude, long: longitude });
-
                 try {
                     // Fetch Weather
                     const weatherRes = await fetch(
                         `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m,apparent_temperature&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto`
                     );
-                    const weatherJson = await weatherRes.json();
+                    const weatherJson: WeatherResponse = await weatherRes.json();
                     setWeatherData(weatherJson);
 
                     // Fetch City Name (Reverse Geocoding via Proxy)
-                    console.log(`Fetching location for ${latitude}, ${longitude}`);
                     const geoRes = await fetch(
                         `/api/weather?lat=${latitude}&long=${longitude}`
                     );
                     if (!geoRes.ok) throw new Error("Geo proxy failed");
 
                     const geoJson = await geoRes.json();
-                    console.log("Geo response:", geoJson);
 
                     if (geoJson.results && geoJson.results[0]) {
                         const city = geoJson.results[0].name || geoJson.results[0].city || "Unknown City";

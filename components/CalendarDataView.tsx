@@ -108,7 +108,7 @@ export default function CalendarDataView({ icalUrl }: { icalUrl: string }) {
                             >
                                 {date && (
                                     <>
-                                        <div className="flex justify-between items-start">
+                                        <div className="flex justify-between items-start gap-2">
                                             <span className={clsx(
                                                 "text-sm font-black font-sans transition-all flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full",
                                                 isToday ? "text-rose bg-rose/10" : "text-cocoa/40 group-hover:text-cocoa/80",
@@ -116,6 +116,11 @@ export default function CalendarDataView({ icalUrl }: { icalUrl: string }) {
                                             )}>
                                                 {date.getDate()}
                                             </span>
+                                            {isToday && (
+                                                <span className="text-[9px] font-black uppercase tracking-wider text-rose bg-rose/10 px-2 py-0.5 rounded-full border border-rose/20">
+                                                    Today
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="mt-1 space-y-1 overflow-y-auto no-scrollbar flex-1 min-h-0">
                                             {dayEvents.map((event, eIdx) => (
