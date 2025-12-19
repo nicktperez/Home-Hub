@@ -13,21 +13,21 @@ export default function Slide({ children, isActive, title }: SlideProps) {
   return (
     <section
       className={clsx(
-        "absolute inset-0 flex flex-col gap-4 p-4 lg:p-8",
-        "bg-white/5 backdrop-blur-md",
-        "rounded-[40px] border border-white/20 shadow-sm",
+        "absolute inset-0 flex flex-col gap-2 lg:gap-4 p-3 lg:p-8",
+        "bg-white/1 backdrop-blur-xl",
+        "rounded-[32px] lg:rounded-[40px] border border-white/20 shadow-sm",
         "transition-opacity duration-700 ease-in-out",
-        "overflow-y-auto lg:overflow-hidden",
+        "overflow-y-auto lg:overflow-hidden pb-16 lg:pb-8",
         isActive ? "opacity-100 pointer-events-auto z-10" : "opacity-0 pointer-events-none z-0"
       )}
     >
-      <header className="flex-shrink-0 mb-1 lg:mb-2 px-2">
-        <h1 className="text-xl lg:text-3xl font-serif font-black tracking-tight text-cocoa/80">
+      <header className="flex-shrink-0 mb-1 lg:mb-2 px-1">
+        <h1 className="text-lg lg:text-3xl font-serif font-black tracking-tight text-cocoa/80 italic">
           {title}
         </h1>
       </header>
 
-      <div className="flex-1 relative min-h-0">
+      <div className="flex-1 relative">
         {children}
       </div>
     </section>

@@ -115,40 +115,49 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         const newItem: ShoppingItem = { id, text, checked: false, category: 'other' };
         setShoppingList(prev => [...prev, newItem]);
         if (isSupabaseConfigured) {
-            await supabase.from('shopping_list').insert([newItem]);
+            const { error } = await supabase.from('shopping_list').insert([newItem]);
+            if (error) console.error("Error adding shopping item:", error);
         }
     };
 
     const toggleShoppingItem = async (id: string, checked: boolean) => {
         setShoppingList(prev => prev.map(item => item.id === id ? { ...item, checked } : item));
         if (isSupabaseConfigured) {
-            await supabase.from('shopping_list').update({ checked }).eq('id', id);
+            const { error } = await supabase.from('shopping_list').update({ checked }).eq('id', id);
+            if (error) console.error("Error toggling shopping item:", error);
         }
     };
 
     const deleteShoppingItem = async (id: string) => {
         setShoppingList(prev => prev.filter(item => item.id !== id));
         if (isSupabaseConfigured) {
-            await supabase.from('shopping_list').delete().eq('id', id);
+            const { error } = await supabase.from('shopping_list').delete().eq('id', id);
+            if (error) console.error("Error deleting shopping item:", error);
         }
     };
 
     // Helper methods for Notes
     const addNote = async (text: string, color = 'bg-yellow-200') => {
-        // Create a temporary ID for immediate UI update
         const tempId = Date.now();
-        const newNote: Note = { id: tempId, text, color, rotation: `rotate-${Math.floor(Math.random() * 6) - 3}` };
+        const rotation = `rotate-${Math.floor(Math.random() * 6) - 3}`;
+        const newNote: Note = { id: tempId, text, color, rotation };
+
         setNotes(prev => [...prev, newNote]);
 
         if (isSupabaseConfigured) {
-            // Let Supabase generate the real ID (bigint identity)
-            const { data, error } = await supabase.from('notes').insert([
-                { text, color, rotation: newNote.rotation }
-            ]).select();
+            try {
+                const { data, error } = await supabase.from('notes').insert([
+                    { text, color, rotation }
+                ]).select();
 
-            if (data && data[0]) {
-                // Update the temp ID with the real ID from database
-                setNotes(prev => prev.map(n => n.id === tempId ? data[0] : n));
+                if (error) throw error;
+
+                if (data && data[0]) {
+                    setNotes(prev => prev.map(n => n.id === tempId ? data[0] : n));
+                }
+            } catch (e) {
+                console.error("Error adding note to Supabase:", e);
+                // Keep the temp item for now, it's saved to localStorage anyway.
             }
         }
     };
@@ -156,14 +165,16 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     const updateNote = async (id: number, updates: Partial<Note>) => {
         setNotes(prev => prev.map(n => n.id === id ? { ...n, ...updates } : n));
         if (isSupabaseConfigured) {
-            await supabase.from('notes').update(updates).eq('id', id);
+            const { error } = await supabase.from('notes').update(updates).eq('id', id);
+            if (error) console.error("Error updating note:", error);
         }
     };
 
     const deleteNote = async (id: number) => {
         setNotes(prev => prev.filter(n => n.id !== id));
         if (isSupabaseConfigured) {
-            await supabase.from('notes').delete().eq('id', id);
+            const { error } = await supabase.from('notes').delete().eq('id', id);
+            if (error) console.error("Error deleting note:", error);
         }
     };
 
@@ -171,21 +182,24 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         const newProject: Project = { id: crypto.randomUUID(), title, status };
         setProjects(prev => [newProject, ...prev]);
         if (isSupabaseConfigured) {
-            await supabase.from('projects').insert([newProject]);
+            const { error } = await supabase.from('projects').insert([newProject]);
+            if (error) console.error("Error adding project:", error);
         }
     };
 
     const updateProject = async (id: string, updates: Partial<Project>) => {
         setProjects(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
         if (isSupabaseConfigured) {
-            await supabase.from('projects').update(updates).eq('id', id);
+            const { error } = await supabase.from('projects').update(updates).eq('id', id);
+            if (error) console.error("Error updating project:", error);
         }
     };
 
     const deleteProject = async (id: string) => {
         setProjects(prev => prev.filter(p => p.id !== id));
         if (isSupabaseConfigured) {
-            await supabase.from('projects').delete().eq('id', id);
+            const { error } = await supabase.from('projects').delete().eq('id', id);
+            if (error) console.error("Error deleting project:", error);
         }
     };
 
