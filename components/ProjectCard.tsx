@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Project } from '../types/project';
+import { Project } from '@/types';
 import { clsx } from 'clsx';
 import { Trash2 } from 'lucide-react';
 
