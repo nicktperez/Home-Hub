@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Check, Trash2, ShoppingCart } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -19,8 +19,31 @@ const MOCK_ITEMS: Item[] = [
 ];
 
 export default function ShoppingList() {
-    const [items, setItems] = useState(MOCK_ITEMS);
+    // Initialize with MOCK_ITEMS but try to load from localStorage immediately if possible (client-side)
+    // or use an effect to load. Standard Next.js pattern:
+    const [items, setItems] = useState<Item[]>(MOCK_ITEMS);
     const [newItem, setNewItem] = useState('');
+    const [loaded, setLoaded] = useState(false);
+
+    // Load from localStorage on mount
+    useEffect(() => {
+        const saved = localStorage.getItem('shopping-list');
+        if (saved) {
+            try {
+                setItems(JSON.parse(saved));
+            } catch (e) {
+                console.error("Failed to parse shopping list", e);
+            }
+        }
+        setLoaded(true);
+    }, []);
+
+    // Save to localStorage whenever items change
+    useEffect(() => {
+        if (loaded) {
+            localStorage.setItem('shopping-list', JSON.stringify(items));
+        }
+    }, [items, loaded]);
 
     const addItem = (e: React.FormEvent) => {
         e.preventDefault();
@@ -38,6 +61,8 @@ export default function ShoppingList() {
     const deleteItem = (id: string) => {
         setItems(prev => prev.filter(item => item.id !== id));
     };
+
+    if (!loaded) return null; // Prevent hydration mismatch or flash
 
     return (
         <div className="flex flex-col h-full bg-[#fdfaf5] text-stone-800 rounded-xl shadow-xl overflow-hidden relative">

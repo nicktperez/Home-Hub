@@ -78,25 +78,29 @@ export default function NoteBoard() {
                             {/* Controls Overlay (Visible on Hover) */}
                             <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                 {/* Color Palette */}
-                                <div className="group/colors relative">
+                                <div className="group/colors relative pb-2">
                                     <button className="p-2 bg-white/50 hover:bg-white shadow-sm rounded-full text-cocoa/60 hover:text-cocoa transition-all">
                                         <Palette className="w-4 h-4" />
                                     </button>
-                                    <div className="absolute right-0 top-10 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl p-2.5 flex gap-2 hidden group-hover/colors:flex z-50 border border-white/60 animate-in fade-in zoom-in duration-200">
-                                        {COLORS.map(c => (
-                                            <button
-                                                key={c.name}
-                                                className={`w-5 h-5 rounded-full ${c.class} border border-black/5 hover:scale-125 transition-transform shadow-sm`}
-                                                onClick={(e) => { e.stopPropagation(); updateColor(note.id, c.class); }}
-                                                title={c.name}
-                                            />
-                                        ))}
+
+                                    {/* Palette Dropdown */}
+                                    <div className="absolute right-0 top-full pt-2 hidden group-hover/colors:block z-50">
+                                        <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl p-2.5 flex flex-col gap-2 max-h-48 overflow-y-auto no-scrollbar border border-white/60 animate-in fade-in slide-in-from-top-2 duration-200">
+                                            {COLORS.map(c => (
+                                                <button
+                                                    key={c.name}
+                                                    className={`w-6 h-6 rounded-full ${c.class} border border-black/5 hover:scale-125 transition-transform shadow-sm flex-shrink-0`}
+                                                    onClick={(e) => { e.stopPropagation(); updateColor(note.id, c.class); }}
+                                                    title={c.name}
+                                                />
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
 
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setNotes(prev => prev.filter(n => n.id !== note.id)); }}
-                                    className="p-2 bg-white/50 hover:bg-rose shadow-sm rounded-full text-cocoa/60 hover:text-white transition-all"
+                                    className="p-2 bg-white/50 hover:bg-rose shadow-sm rounded-full text-cocoa/60 hover:text-white transition-all h-fit"
                                 >
                                     <X className="w-4 h-4" />
                                 </button>

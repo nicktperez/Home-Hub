@@ -57,7 +57,7 @@ export default function CalendarWidget({ icalUrl }: { icalUrl: string }) {
                             key={idx}
                             className="group/event relative pl-4 border-l-2 border-emerald-400/30 hover:border-emerald-400 transition-colors"
                         >
-                            <div className="text-sm font-bold text-cocoa leading-tight mb-1">
+                            <div className="text-lg font-black text-cocoa leading-snug mb-1">
                                 {event.summary}
                             </div>
                             <div className="flex items-center gap-1.5 text-[10px] font-bold text-secondary uppercase tracking-wider">
