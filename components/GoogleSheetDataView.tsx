@@ -70,7 +70,7 @@ export default function GoogleSheetDataView({ csvUrl }: { csvUrl: string }) {
     };
 
     const isOilOverdue = (dateStr: string) => {
-        const today = new Date('2025-12-18');
+        const today = new Date();
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return false;
         const diffMonths = (today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
