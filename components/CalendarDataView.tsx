@@ -78,9 +78,9 @@ export default function CalendarDataView({ icalUrl }: { icalUrl: string }) {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-7 mb-4 border-b border-rose/10 pb-4">
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                        <div key={day} className="text-center text-[10px] font-black text-rose uppercase tracking-[0.2em]">
+                <div className="grid grid-cols-7 mb-2 lg:mb-4 border-b border-rose/10 pb-2 lg:pb-4">
+                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
+                        <div key={idx} className="text-center text-[10px] font-black text-rose uppercase tracking-[0.2em]">
                             {day}
                         </div>
                     ))}
@@ -101,37 +101,37 @@ export default function CalendarDataView({ icalUrl }: { icalUrl: string }) {
                             <div
                                 key={idx}
                                 className={clsx(
-                                    "p-3 bg-white/40 transition-colors group relative flex flex-col min-h-0",
+                                    "p-1 lg:p-3 bg-white/40 transition-colors group relative flex flex-col min-h-0",
                                     !date && "bg-white/5",
-                                    isToday && "ring-2 ring-rose/30 ring-inset bg-rose/5"
+                                    isToday && "ring-1 lg:ring-2 ring-rose/30 ring-inset bg-rose/5"
                                 )}
                             >
                                 {date && (
                                     <>
-                                        <div className="flex justify-between items-start gap-2">
+                                        <div className="flex justify-between items-start gap-1">
                                             <span className={clsx(
-                                                "text-sm font-black font-sans transition-all flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full",
-                                                isToday ? "text-rose bg-rose/10" : "text-cocoa/40 group-hover:text-cocoa/80",
-                                                hasEvents && !isToday && "bg-emerald-400/20 text-emerald-700 shadow-[0_0_10px_rgba(52,211,153,0.3)] ring-1 ring-emerald-400/40"
+                                                "text-[10px] lg:text-sm font-black font-sans transition-all flex-shrink-0 w-5 h-5 lg:w-7 lg:h-7 flex items-center justify-center rounded-full",
+                                                isToday ? "text-white bg-rose shadow-sm" : "text-cocoa/40 group-hover:text-cocoa/80",
+                                                hasEvents && !isToday && "bg-emerald-400/20 text-emerald-700 shadow-sm ring-1 ring-emerald-400/40"
                                             )}>
                                                 {date.getDate()}
                                             </span>
-                                            {isToday && (
-                                                <span className="text-[9px] font-black uppercase tracking-wider text-rose bg-rose/10 px-2 py-0.5 rounded-full border border-rose/20">
-                                                    Today
-                                                </span>
-                                            )}
                                         </div>
-                                        <div className="mt-1 space-y-1 overflow-y-auto no-scrollbar flex-1 min-h-0">
-                                            {dayEvents.map((event, eIdx) => (
+                                        <div className="mt-0.5 space-y-0.5 overflow-y-auto no-scrollbar flex-1 min-h-0">
+                                            {dayEvents.slice(0, 3).map((event, eIdx) => (
                                                 <div
                                                     key={eIdx}
-                                                    className="text-[9px] font-bold leading-tight px-2 py-1 rounded-lg bg-sage/10 text-sage border border-sage/20 truncate shadow-sm hover:scale-105 transition-transform"
+                                                    className="text-[7px] lg:text-[9px] font-bold leading-tight px-1 lg:px-2 py-0.5 rounded-sm lg:rounded-lg bg-sage/10 text-sage border border-sage/20 truncate shadow-sm"
                                                     title={event.summary}
                                                 >
                                                     {event.summary}
                                                 </div>
                                             ))}
+                                            {dayEvents.length > 3 && (
+                                                <div className="text-[6px] lg:text-[8px] font-bold text-cocoa/40 text-center uppercase tracking-tighter">
+                                                    +{dayEvents.length - 3}
+                                                </div>
+                                            )}
                                         </div>
                                     </>
                                 )}

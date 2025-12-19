@@ -17,12 +17,12 @@ export default function Slide({ children, isActive, title }: SlideProps) {
         "bg-white/5 backdrop-blur-md",
         "rounded-[40px] border border-white/20 shadow-sm",
         "transition-opacity duration-700 ease-in-out",
-        "overflow-hidden",
+        "overflow-y-auto lg:overflow-hidden",
         isActive ? "opacity-100 pointer-events-auto z-10" : "opacity-0 pointer-events-none z-0"
       )}
     >
-      <header className="flex-shrink-0 mb-2 px-2">
-        <h1 className="text-2xl lg:text-3xl font-serif font-black tracking-tight text-cocoa/80">
+      <header className="flex-shrink-0 mb-1 lg:mb-2 px-2">
+        <h1 className="text-xl lg:text-3xl font-serif font-black tracking-tight text-cocoa/80">
           {title}
         </h1>
       </header>

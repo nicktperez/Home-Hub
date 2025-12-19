@@ -75,10 +75,10 @@ export default function VoiceCommander() {
     }, [isListening, processCommand]);
 
     return (
-        <div className="fixed bottom-10 left-10 z-[100] flex items-center gap-4">
+        <div className="fixed bottom-6 right-6 lg:bottom-10 lg:left-10 z-[100] flex flex-row-reverse lg:flex-row items-center gap-4">
             <button
                 onClick={() => setIsListening(!isListening)}
-                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-lg ${isListening ? 'bg-rose text-white animate-pulse scale-110' : 'bg-white/80 backdrop-blur-md text-cocoa hover:bg-white hover:scale-105'
+                className={`w-12 h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center transition-all shadow-lg ${isListening ? 'bg-rose text-white animate-pulse scale-110' : 'bg-white/80 backdrop-blur-md text-cocoa hover:bg-white hover:scale-105'
                     }`}
             >
                 {isListening ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6 opacity-40" />}

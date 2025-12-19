@@ -226,23 +226,23 @@ export default function GoogleSheetDataView({ csvUrl }: { csvUrl: string }) {
                 </div>
             </form>
 
-            <div className="flex justify-between items-end px-2">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4 px-2">
                 <div>
-                    <h2 className="text-4xl font-serif font-black text-cocoa flex items-center gap-3">
+                    <h2 className="text-2xl lg:text-4xl font-serif font-black text-cocoa flex items-center gap-3">
                         Maintenance Hub
                     </h2>
-                    <p className="text-sm text-secondary font-medium mt-1 italic opacity-80 font-sans">Real-time data from your Google Sheet.</p>
+                    <p className="text-xs lg:text-sm text-secondary font-medium mt-1 italic opacity-80 font-sans">Real-time data from your Google Sheet.</p>
                 </div>
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex flex-row lg:flex-col items-center lg:items-end gap-3 w-full lg:w-auto">
                     <button
                         onClick={() => fetchData()}
-                        className="text-[10px] font-black text-rose uppercase tracking-[0.2em] bg-rose/5 px-4 py-1.5 rounded-full border border-rose/10 shadow-inner flex items-center gap-2 hover:bg-rose/10 transition-colors group"
+                        className="flex-1 lg:flex-none text-[9px] lg:text-[10px] font-black text-rose uppercase tracking-[0.2em] bg-rose/5 px-4 py-2 lg:py-1.5 rounded-full border border-rose/10 shadow-inner flex items-center justify-center gap-2 hover:bg-rose/10 transition-colors group"
                     >
                         <RefreshCw className={clsx("w-3 h-3 group-hover:rotate-180 transition-transform duration-500", loading && "animate-spin")} />
                         Refresh Data
                     </button>
                     {lastUpdated && (
-                        <p className="text-[9px] font-medium text-cocoa/30 font-sans uppercase tracking-tight">
+                        <p className="text-[8px] lg:text-[9px] font-medium text-cocoa/30 font-sans uppercase tracking-tight">
                             Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                     )}
@@ -299,15 +299,15 @@ export default function GoogleSheetDataView({ csvUrl }: { csvUrl: string }) {
                                 {section.rows.map((row, rowIdx) => (
                                     <div
                                         key={rowIdx}
-                                        className="flex items-center gap-6 p-4 rounded-3xl bg-white/30 border border-white/60 shadow-sm hover:bg-white/50 transition-colors group/row"
+                                        className="flex items-center gap-3 lg:gap-6 p-2 lg:p-4 rounded-3xl bg-white/30 border border-white/60 shadow-sm hover:bg-white/50 transition-colors group/row"
                                     >
-                                        <div className="flex flex-col items-center justify-center min-w-[70px] h-[70px] bg-cocoa/5 rounded-2xl border border-cocoa/5 shadow-inner">
-                                            <Calendar className="w-4 h-4 text-cocoa/40 mb-1" />
-                                            <span className="text-xs font-black text-cocoa font-sans whitespace-nowrap">{row[0]}</span>
+                                        <div className="flex flex-col items-center justify-center min-w-[60px] lg:min-w-[70px] h-[60px] lg:h-[70px] bg-cocoa/5 rounded-2xl border border-cocoa/5 shadow-inner shrink-0">
+                                            <Calendar className="w-3 h-3 lg:w-4 lg:h-4 text-cocoa/40 mb-0.5 lg:mb-1" />
+                                            <span className="text-[10px] lg:text-xs font-black text-cocoa font-sans">{row[0]}</span>
                                         </div>
 
                                         <div className="flex-1 overflow-x-auto no-scrollbar">
-                                            <div className="flex gap-6">
+                                            <div className="flex gap-4 lg:gap-6">
                                                 {section.headers.map((h, hIdx) => {
                                                     const val = row[hIdx + 1];
                                                     if (!val || val === '') return null;

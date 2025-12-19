@@ -52,20 +52,20 @@ export default function NoteBoard() {
                 </div>
             </div>
 
-            <div ref={containerRef} className="flex-1 relative overflow-hidden rounded-[32px] border border-white/40 bg-white/10 shadow-[inner_0_4px_12px_rgba(0,0,0,0.02)]">
-                <div className="absolute inset-0 p-8 flex flex-wrap content-start gap-10">
+            <div ref={containerRef} className="flex-1 relative overflow-y-auto lg:overflow-hidden rounded-[32px] border border-white/40 bg-white/10 shadow-[inner_0_4px_12px_rgba(0,0,0,0.02)] min-h-[600px] lg:min-h-0">
+                <div className="lg:absolute lg:inset-0 p-4 lg:p-8 flex flex-wrap content-start gap-4 lg:gap-10">
                     {notes.map(note => (
                         <motion.div
                             key={note.id}
-                            drag
+                            drag={typeof window !== 'undefined' && window.innerWidth > 1024}
                             dragConstraints={containerRef}
                             whileHover={{ scale: 1.02, zIndex: 10 }}
                             whileDrag={{ scale: 1.1, zIndex: 20, cursor: 'grabbing' }}
                             className={clsx(
-                                "group relative w-72 h-72 p-8 shadow-2xl transition-shadow hover:shadow-cocoa/5",
+                                "group relative w-full lg:w-72 h-64 lg:h-72 p-6 lg:p-8 shadow-2xl transition-shadow hover:shadow-cocoa/5",
                                 note.color,
-                                note.rotation,
-                                "rounded-sm flex flex-col"
+                                "lg:" + note.rotation,
+                                "rounded-sm flex flex-col shrink-0"
                             )}
                         >
                             {/* Tape effect */}

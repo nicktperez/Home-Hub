@@ -45,45 +45,49 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
                         supabase.from('shopping_list').select('*').order('created_at', { ascending: true })
                     ]);
 
-                    // If we got data, use it. If data is empty but we have local data, we might want to "merge" or keep local?
-                    // For now, let's just use Supabase as source of truth if configured.
-                    if (pRes.data) setProjects(pRes.data);
-                    if (nRes.data) setNotes(nRes.data);
-                    if (sRes.data) setShoppingList(sRes.data);
+                    const localProjects = localStorage.getItem('home-hub-projects');
+                    const localNotes = localStorage.getItem('home-hub-notes');
+                    const localShopping = localStorage.getItem('shopping-list');
 
-                    // Fallback to local storage ONLY if both Supabase returns nothing (null) AND we have local data.
-                    // This handles the first-time setup scenario.
-                    if (pRes.data?.length === 0 && nRes.data?.length === 0 && sRes.data?.length === 0) {
-                        const localProjects = localStorage.getItem('home-hub-projects');
-                        const localNotes = localStorage.getItem('home-hub-notes');
-                        const localShopping = localStorage.getItem('shopping-list');
-
-                        // If we have local data, let's use it and optionally push to Supabase?
-                        // For simplicity, just load it so the user doesn't lose data.
-                        if (localProjects) setProjects(JSON.parse(localProjects));
-                        if (localNotes) setNotes(JSON.parse(localNotes));
-                        if (localShopping) setShoppingList(JSON.parse(localShopping));
+                    // Projects loading/fallback
+                    if (pRes.data && pRes.data.length > 0) {
+                        setProjects(pRes.data);
+                    } else if (localProjects) {
+                        setProjects(JSON.parse(localProjects));
                     }
+
+                    // Notes loading/fallback
+                    if (nRes.data && nRes.data.length > 0) {
+                        setNotes(nRes.data);
+                    } else if (localNotes) {
+                        setNotes(JSON.parse(localNotes));
+                    }
+
+                    // Shopping List loading/fallback
+                    if (sRes.data && sRes.data.length > 0) {
+                        setShoppingList(sRes.data);
+                    } else if (localShopping) {
+                        setShoppingList(JSON.parse(localShopping));
+                    }
+
                 } catch (e) {
                     console.error("Supabase load failed, falling back to localStorage", e);
-                    const savedProjects = localStorage.getItem('home-hub-projects');
-                    const savedNotes = localStorage.getItem('home-hub-notes');
-                    const savedShopping = localStorage.getItem('shopping-list');
-
-                    if (savedProjects) setProjects(JSON.parse(savedProjects));
-                    if (savedNotes) setNotes(JSON.parse(savedNotes));
-                    if (savedShopping) setShoppingList(JSON.parse(savedShopping));
+                    loadFromLocalStorage();
                 }
             } else {
-                const savedProjects = localStorage.getItem('home-hub-projects');
-                const savedNotes = localStorage.getItem('home-hub-notes');
-                const savedShopping = localStorage.getItem('shopping-list');
-
-                if (savedProjects) setProjects(JSON.parse(savedProjects));
-                if (savedNotes) setNotes(JSON.parse(savedNotes));
-                if (savedShopping) setShoppingList(JSON.parse(savedShopping));
+                loadFromLocalStorage();
             }
             setLoading(false);
+        };
+
+        const loadFromLocalStorage = () => {
+            const savedProjects = localStorage.getItem('home-hub-projects');
+            const savedNotes = localStorage.getItem('home-hub-notes');
+            const savedShopping = localStorage.getItem('shopping-list');
+
+            if (savedProjects) setProjects(JSON.parse(savedProjects));
+            if (savedNotes) setNotes(JSON.parse(savedNotes));
+            if (savedShopping) setShoppingList(JSON.parse(savedShopping));
         };
 
         loadData();
@@ -131,11 +135,21 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
     // Helper methods for Notes
     const addNote = async (text: string, color = 'bg-yellow-200') => {
-        const newId = notes.length > 0 ? Math.max(...notes.map(n => n.id)) + 1 : 1;
-        const newNote: Note = { id: newId, text, color, rotation: `rotate-${Math.floor(Math.random() * 6) - 3}` };
+        // Create a temporary ID for immediate UI update
+        const tempId = Date.now();
+        const newNote: Note = { id: tempId, text, color, rotation: `rotate-${Math.floor(Math.random() * 6) - 3}` };
         setNotes(prev => [...prev, newNote]);
+
         if (isSupabaseConfigured) {
-            await supabase.from('notes').insert([newNote]);
+            // Let Supabase generate the real ID (bigint identity)
+            const { data, error } = await supabase.from('notes').insert([
+                { text, color, rotation: newNote.rotation }
+            ]).select();
+
+            if (data && data[0]) {
+                // Update the temp ID with the real ID from database
+                setNotes(prev => prev.map(n => n.id === tempId ? data[0] : n));
+            }
         }
     };
 
@@ -153,7 +167,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    // Helper methods for Projects
     const addProject = async (title: string, status: Project['status'] = 'todo') => {
         const newProject: Project = { id: crypto.randomUUID(), title, status };
         setProjects(prev => [newProject, ...prev]);

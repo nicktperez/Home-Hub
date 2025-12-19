@@ -81,7 +81,7 @@ export default function Dashboard() {
   }, [isDimmed]);
 
   return (
-    <main className="relative w-screen h-screen overflow-hidden p-6 lg:p-10 select-none">
+    <main className="relative w-screen min-h-screen lg:h-screen overflow-y-auto lg:overflow-hidden p-4 lg:p-10 select-none pb-20 lg:pb-10">
       <Navigation
         slides={SLIDE_TITLES}
         activeIndex={activeSlide}
@@ -102,9 +102,9 @@ export default function Dashboard() {
         )}
       </div>
 
-      <div className="relative w-full h-full pt-16 lg:pt-20">
+      <div className="relative w-full h-full pt-20 lg:pt-24 pb-12 lg:pb-0">
         <Slide isActive={activeSlide === 0} title="Family Calendar">
-          <div className="w-full h-full">
+          <div className="w-full h-full min-h-[600px] lg:min-h-0">
             <CalendarDataView
               icalUrl={ICAL_URL}
             />
@@ -112,13 +112,13 @@ export default function Dashboard() {
         </Slide>
 
         <Slide isActive={activeSlide === 1} title="Today's Hub">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-7 h-full min-h-0">
+          <div className="flex flex-col lg:grid lg:grid-cols-12 gap-5 lg:gap-7 h-full min-h-0">
             {/* Left Column: Clock & Weather */}
             <div className="lg:col-span-4 flex flex-col gap-5 lg:gap-7 h-full min-h-0">
               <div className="flex-shrink-0">
                 <Clock />
               </div>
-              <div className="flex-1 min-h-0">
+              <div className="flex-1 min-h-[300px] lg:min-h-0">
                 <Weather />
               </div>
             </div>
@@ -131,14 +131,14 @@ export default function Dashboard() {
               </div>
 
               {/* Bottom Row: Widgets Grid */}
-              <div className="flex-1 grid grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-7 min-h-0">
-                <div className="h-full min-h-0">
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-7 min-h-0 pb-10 lg:pb-0">
+                <div className="h-[200px] lg:h-full">
                   <ProjectWidget />
                 </div>
-                <div className="h-full min-h-0">
+                <div className="h-[250px] lg:h-full">
                   <CalendarWidget icalUrl={ICAL_URL} />
                 </div>
-                <div className="h-full min-h-0">
+                <div className="h-[200px] lg:h-full">
                   <NotesWidget />
                 </div>
               </div>

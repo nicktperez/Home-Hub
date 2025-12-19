@@ -104,55 +104,55 @@ export default function Weather() {
                         <MapPin className="w-3 h-3 text-terracotta" />
                         {locationName || "Local Skies"}
                     </div>
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                            <div className="drop-shadow-sm scale-100 lg:scale-110 transition-transform group-hover:rotate-6 duration-300">
+                    <div className="flex items-center justify-between mb-2 lg:mb-3">
+                        <div className="flex items-center gap-2 lg:gap-3">
+                            <div className="drop-shadow-sm scale-90 lg:scale-110 transition-transform group-hover:rotate-6 duration-300">
                                 {currentInfo.icon}
                             </div>
                             <div>
-                                <div className="text-3xl lg:text-4xl font-serif font-bold text-cocoa leading-none">
+                                <div className="text-2xl lg:text-4xl font-serif font-bold text-cocoa leading-none">
                                     {weatherData?.current?.temperature_2m
                                         ? Math.round(weatherData.current.temperature_2m) + "°"
                                         : "--"}
                                 </div>
-                                <div className="text-[10px] lg:text-[11px] text-secondary font-bold mt-0.5">
+                                <div className="text-[9px] lg:text-[11px] text-secondary font-bold mt-0.5">
                                     {currentInfo.text}
                                 </div>
                             </div>
                         </div>
                         <div className="text-right flex flex-col items-end">
-                            <div className="text-[9px] lg:text-[10px] text-rose font-bold italic">RealFeel</div>
-                            <div className="text-lg font-serif font-bold text-terracotta text-shadow-sm">
+                            <div className="text-[8px] lg:text-[10px] text-rose font-bold italic">RealFeel</div>
+                            <div className="text-base lg:text-lg font-serif font-bold text-terracotta text-shadow-sm">
                                 {weatherData ? Math.round(weatherData.current.apparent_temperature) : '--'}°
                             </div>
                         </div>
                     </div>
 
                     {/* Clothing Advice */}
-                    <div className="mb-3 p-2.5 bg-white/60 rounded-xl text-center text-[12px] lg:text-[13px] font-bold text-cocoa shadow-sm border border-white/80">
+                    <div className="mb-2 lg:mb-3 p-2 lg:p-2.5 bg-white/60 rounded-xl text-center text-[11px] lg:text-[13px] font-bold text-cocoa shadow-sm border border-white/80">
                         {clothing || "Checking the forecast..."}
                     </div>
 
                     {/* Details Grid */}
-                    <div className="grid grid-cols-2 gap-3 pb-3 border-b border-rose/10">
-                        <div className="flex items-center gap-2">
-                            <div className="p-1.5 bg-sage/20 rounded-lg">
-                                <Droplets className="w-3.5 h-3.5 text-sage" />
+                    <div className="grid grid-cols-2 gap-2 lg:gap-3 pb-2 lg:pb-3 border-b border-rose/10">
+                        <div className="flex items-center gap-1.5 lg:gap-2">
+                            <div className="p-1 lg:p-1.5 bg-sage/20 rounded-lg">
+                                <Droplets className="w-3 lg:w-3.5 h-3 lg:h-3.5 text-sage" />
                             </div>
                             <div>
-                                <div className="text-[9px] text-rose font-black uppercase tracking-wider leading-none mb-0.5">Humid</div>
-                                <div className="text-xs font-black text-cocoa">
+                                <div className="text-[8px] lg:text-[9px] text-rose font-black uppercase tracking-wider leading-none mb-0.5">Humid</div>
+                                <div className="text-[10px] lg:text-xs font-black text-cocoa">
                                     {weatherData ? weatherData.current.relative_humidity_2m : '--'}%
                                 </div>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <div className="p-1.5 bg-terracotta/20 rounded-lg">
-                                <Wind className="w-3.5 h-3.5 text-terracotta" />
+                        <div className="flex items-center gap-1.5 lg:gap-2">
+                            <div className="p-1 lg:p-1.5 bg-terracotta/20 rounded-lg">
+                                <Wind className="w-3 lg:w-3.5 h-3 lg:h-3.5 text-terracotta" />
                             </div>
                             <div>
-                                <div className="text-[9px] text-rose font-black uppercase tracking-wider leading-none mb-0.5">Breeze</div>
-                                <div className="text-xs font-black text-cocoa">
+                                <div className="text-[8px] lg:text-[9px] text-rose font-black uppercase tracking-wider leading-none mb-0.5">Breeze</div>
+                                <div className="text-[10px] lg:text-xs font-black text-cocoa">
                                     {weatherData ? Math.round(weatherData.current.wind_speed_10m) : '--'} mph
                                 </div>
                             </div>
@@ -161,9 +161,9 @@ export default function Weather() {
                 </div>
 
                 {/* 5-Day Mini Forecast */}
-                <div className="pt-3">
-                    <h3 className="text-[9px] font-black text-rose uppercase tracking-[0.2em] mb-2 lg:mb-3 text-center lg:text-left">Thinking Ahead</h3>
-                    <div className="flex justify-between gap-1">
+                <div className="pt-2 lg:pt-3">
+                    <h3 className="text-[8px] lg:text-[9px] font-black text-rose uppercase tracking-[0.2em] mb-2 lg:mb-3 text-center lg:text-left">Thinking Ahead</h3>
+                    <div className="flex justify-between gap-1 overflow-x-auto no-scrollbar">
                         {weatherData?.daily?.time && weatherData.daily.time.slice(0, 5).map((time: string, i: number) => {
                             const date = new Date(time);
                             const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
@@ -173,12 +173,12 @@ export default function Weather() {
                             if (code > 50) Icon = Droplets;
 
                             return (
-                                <div key={i} className="flex flex-col items-center gap-1 group/day">
-                                    <span className="text-[9px] font-bold text-secondary uppercase mb-0.5">{dayName}</span>
+                                <div key={i} className="flex flex-col items-center gap-1 group/day shrink-0 min-w-[45px] lg:min-w-0">
+                                    <span className="text-[8px] lg:text-[9px] font-bold text-secondary uppercase mb-0.5">{dayName}</span>
                                     <div className="p-1 rounded-lg bg-white/20 group-hover/day:bg-rose/10 transition-colors">
-                                        <Icon className="w-3 h-3 text-terracotta" />
+                                        <Icon className="w-2.5 h-2.5 lg:w-3 lg:h-3 text-terracotta" />
                                     </div>
-                                    <span className="text-[11px] font-bold text-cocoa mt-0.5">{maxTemp}°</span>
+                                    <span className="text-[10px] lg:text-[11px] font-bold text-cocoa mt-0.5">{maxTemp}°</span>
                                 </div>
                             );
                         })}
