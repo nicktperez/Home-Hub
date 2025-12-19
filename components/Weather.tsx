@@ -1,16 +1,35 @@
 'use client';
 
 import { CloudSun, Droplets, MapPin, Wind } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+interface WeatherCurrent {
+    temperature_2m: number;
+    weather_code: number;
+    relative_humidity_2m: number;
+    wind_speed_10m: number;
+    apparent_temperature: number;
+}
+
+interface WeatherDaily {
+    time: string[];
+    temperature_2m_max: number[];
+    weather_code: number[];
+}
+
+interface WeatherResponse {
+    current: WeatherCurrent;
+    daily: WeatherDaily;
+}
 
 export default function Weather() {
-    const [location, setLocation] = useState<{ lat: number; long: number } | null>(null);
-    const [weatherData, setWeatherData] = useState<any>(null);
+    const [weatherData, setWeatherData] = useState<WeatherResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [locationName, setLocationName] = useState<string | null>(null);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-    useEffect(() => {
+    const fetchWeather = async () => {
         if (!navigator.geolocation) {
             setError("Geolocation not supported");
             setLoading(false);
@@ -20,25 +39,21 @@ export default function Weather() {
         navigator.geolocation.getCurrentPosition(
             async (position) => {
                 const { latitude, longitude } = position.coords;
-                setLocation({ lat: latitude, long: longitude });
-
                 try {
                     // Fetch Weather
                     const weatherRes = await fetch(
                         `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m,apparent_temperature&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto`
                     );
-                    const weatherJson = await weatherRes.json();
+                    const weatherJson: WeatherResponse = await weatherRes.json();
                     setWeatherData(weatherJson);
 
                     // Fetch City Name (Reverse Geocoding via Proxy)
-                    console.log(`Fetching location for ${latitude}, ${longitude}`);
                     const geoRes = await fetch(
                         `/api/weather?lat=${latitude}&long=${longitude}`
                     );
                     if (!geoRes.ok) throw new Error("Geo proxy failed");
 
                     const geoJson = await geoRes.json();
-                    console.log("Geo response:", geoJson);
 
                     if (geoJson.results && geoJson.results[0]) {
                         const city = geoJson.results[0].name || geoJson.results[0].city || "Unknown City";
@@ -46,6 +61,7 @@ export default function Weather() {
                     } else if (geoJson.error) {
                         console.error("Geo API Error:", geoJson.error);
                     }
+                    setLastUpdated(new Date());
                 } catch (e) {
                     console.error(e);
                     setError("Failed to fetch weather data");
@@ -53,11 +69,17 @@ export default function Weather() {
                     setLoading(false);
                 }
             },
-            (err) => {
+            () => {
                 setError("Location access denied");
                 setLoading(false);
             }
         );
+    };
+
+    useEffect(() => {
+        fetchWeather();
+        const interval = setInterval(fetchWeather, 1000 * 60 * 30);
+        return () => clearInterval(interval);
     }, []);
 
     // Helper to map WMO codes to Icons/Text
@@ -89,6 +111,11 @@ export default function Weather() {
                         <MapPin className="w-3 h-3 text-terracotta" />
                         {locationName || "Local Skies"}
                     </div>
+                    {lastUpdated && (
+                        <div className="text-[9px] text-secondary font-semibold mb-2">
+                            Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                    )}
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                             <div className="drop-shadow-sm scale-100 lg:scale-110 transition-transform hover:rotate-6 duration-300">

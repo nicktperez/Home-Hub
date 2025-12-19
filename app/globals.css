@@ -63,6 +63,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   overflow: hidden;
+  transition: filter 0.6s ease, background-color 0.6s ease;
 }
 
 /* ===== BACKGROUND TEXTURE ===== */
@@ -93,6 +94,16 @@ body::after {
   z-index: -1;
   background: radial-gradient(circle at 50% 50%, transparent 0%, rgba(250, 249, 246, 0.4) 100%);
   pointer-events: none;
+}
+
+body.night-dim {
+  filter: brightness(var(--dim-level, 0.6)) saturate(0.9);
+}
+
+body.quiet-hours * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
 }
 
 

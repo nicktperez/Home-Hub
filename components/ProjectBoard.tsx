@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Reorder } from 'framer-motion';
 import { Project } from '../types/project';
 import { Plus, X, AlignLeft } from 'lucide-react';
 import { clsx } from 'clsx';
 import ProjectCard from './ProjectCard';
+
+const STORAGE_KEY = 'home-hub-projects';
 
 const MOCK_PROJECTS: Project[] = [
     { id: '1', title: 'Fix the garage door', status: 'todo' },
@@ -18,6 +20,27 @@ const MOCK_PROJECTS: Project[] = [
 export default function ProjectBoard() {
     const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const [loaded, setLoaded] = useState(false);
+
+    useEffect(() => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved) as Project[];
+                if (Array.isArray(parsed)) {
+                    setProjects(parsed);
+                }
+            } catch (error) {
+                console.error('Failed to parse projects', error);
+            }
+        }
+        setLoaded(true);
+    }, []);
+
+    useEffect(() => {
+        if (!loaded) return;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+    }, [loaded, projects]);
 
     const handleDelete = (id: string) => {
         setProjects(prev => prev.filter(p => p.id !== id));

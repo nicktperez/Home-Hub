@@ -1,11 +1,20 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X, Palette } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { clsx } from 'clsx';
 
-const INITIAL_NOTES = [
+interface Note {
+    id: number;
+    text: string;
+    color: string;
+    rotation: string;
+}
+
+const STORAGE_KEY = 'home-hub-notes';
+
+const INITIAL_NOTES: Note[] = [
     { id: 1, text: "Welcome to the new dashboard!", color: "bg-yellow-200", rotation: "-rotate-1" },
     { id: 2, text: "WiFi: familyhub123", color: "bg-blue-200", rotation: "rotate-2" },
 ];
@@ -20,8 +29,29 @@ const COLORS = [
 ];
 
 export default function NoteBoard() {
-    const [notes, setNotes] = useState(INITIAL_NOTES);
+    const [notes, setNotes] = useState<Note[]>(INITIAL_NOTES);
+    const [loaded, setLoaded] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved) as Note[];
+                if (Array.isArray(parsed)) {
+                    setNotes(parsed);
+                }
+            } catch (error) {
+                console.error('Failed to parse notes', error);
+            }
+        }
+        setLoaded(true);
+    }, []);
+
+    useEffect(() => {
+        if (!loaded) return;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+    }, [loaded, notes]);
 
     const updateNote = (id: number, text: string) => {
         setNotes(prev => prev.map(n => n.id === id ? { ...n, text } : n));

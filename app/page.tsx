@@ -23,7 +23,8 @@ const SLIDE_TITLES = [
   "Projects",
   "Notes",
   "Shopping",
-  "Car Info"
+  "Car Info",
+  "Settings"
 ];
 
 const SLIDE_DURATIONS = [
@@ -32,12 +33,17 @@ const SLIDE_DURATIONS = [
   20000, // Projects
   20000, // Notes
   20000, // Shopping
-  30000  // Sheets
+  30000, // Sheets
+  20000  // Settings
 ];
 
 export default function Dashboard() {
   const [activeSlide, setActiveSlide] = useState(1); // Default to Today
   const [paused, setPaused] = useState(false);
+  const [autoDimEnabled, setAutoDimEnabled] = useState(true);
+  const [isDimmed, setIsDimmed] = useState(false);
+  const [dimLevel, setDimLevel] = useState(0.6);
+  const [heartbeat, setHeartbeat] = useState(new Date());
 
   useEffect(() => {
     if (paused) return;
@@ -50,6 +56,55 @@ export default function Dashboard() {
     return () => clearTimeout(timer);
   }, [activeSlide, paused]);
 
+  useEffect(() => {
+    const saved = localStorage.getItem('home-hub-auto-dim');
+    if (saved !== null) {
+      setAutoDimEnabled(saved === 'true');
+    }
+
+    const savedDim = localStorage.getItem('home-hub-dim-level');
+    if (savedDim) {
+      const parsed = Number(savedDim);
+      if (!Number.isNaN(parsed)) {
+        setDimLevel(Math.min(1, Math.max(0.4, parsed)));
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('home-hub-auto-dim', String(autoDimEnabled));
+  }, [autoDimEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem('home-hub-dim-level', String(dimLevel));
+  }, [dimLevel]);
+
+  useEffect(() => {
+    const updateDimState = () => {
+      const hour = new Date().getHours();
+      const shouldDim = autoDimEnabled && (hour >= 21 || hour < 6);
+      setIsDimmed(shouldDim);
+    };
+
+    updateDimState();
+    const interval = setInterval(updateDimState, 60000);
+    return () => clearInterval(interval);
+  }, [autoDimEnabled]);
+
+  useEffect(() => {
+    document.body.classList.toggle('night-dim', isDimmed);
+    document.body.classList.toggle('quiet-hours', isDimmed);
+  }, [isDimmed]);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--dim-level', dimLevel.toString());
+  }, [dimLevel]);
+
+  useEffect(() => {
+    const interval = setInterval(() => setHeartbeat(new Date()), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <main className="relative w-screen h-screen overflow-hidden p-6 lg:p-10 select-none">
       <Navigation
@@ -57,6 +112,20 @@ export default function Dashboard() {
         activeIndex={activeSlide}
         onNavigate={setActiveSlide}
       />
+
+      <div className="fixed top-8 right-8 z-50 flex items-center gap-3">
+        <button
+          onClick={() => setAutoDimEnabled((prev) => !prev)}
+          className="glass-card px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest text-cocoa/70 hover:text-cocoa transition-colors border border-white/60"
+        >
+          Auto Dim: {autoDimEnabled ? 'On' : 'Off'}
+        </button>
+        {isDimmed && (
+          <span className="text-[10px] font-bold uppercase tracking-widest text-rose bg-rose/10 px-3 py-2 rounded-full border border-rose/20">
+            Dimmed
+          </span>
+        )}
+      </div>
 
       <div className="relative w-full h-full pt-16 lg:pt-20">
         <Slide isActive={activeSlide === 0} title="Family Calendar">
@@ -127,6 +196,74 @@ export default function Dashboard() {
             />
           </div>
         </Slide>
+
+        <Slide isActive={activeSlide === 6} title="Settings">
+          <div className="glass-card rounded-3xl p-8 h-full flex flex-col gap-6">
+            <div>
+              <h2 className="text-xl font-serif font-black text-cocoa">Display Controls</h2>
+              <p className="text-sm text-secondary mt-1">Tune the wall display for different rooms and times of day.</p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="rounded-2xl bg-white/60 border border-white/60 p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-rose">Auto Dim</p>
+                    <p className="text-sm text-secondary mt-1">Automatically dim between 9pm and 6am.</p>
+                  </div>
+                  <button
+                    onClick={() => setAutoDimEnabled((prev) => !prev)}
+                    className="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest bg-rose/10 text-rose border border-rose/20 hover:bg-rose/20 transition-colors"
+                  >
+                    {autoDimEnabled ? 'Enabled' : 'Disabled'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-white/60 border border-white/60 p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-rose">Dim Level</p>
+                    <p className="text-sm text-secondary mt-1">Adjust brightness during quiet hours.</p>
+                  </div>
+                  <span className="text-xs font-bold text-cocoa">{Math.round(dimLevel * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={40}
+                  max={100}
+                  value={Math.round(dimLevel * 100)}
+                  onChange={(event) => setDimLevel(Number(event.target.value) / 100)}
+                  className="mt-4 w-full accent-rose"
+                />
+              </div>
+
+              <div className="rounded-2xl bg-white/60 border border-white/60 p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-rose">Slide Rotation</p>
+                    <p className="text-sm text-secondary mt-1">Pause auto-advance when needed.</p>
+                  </div>
+                  <button
+                    onClick={() => setPaused((prev) => !prev)}
+                    className="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest bg-rose/10 text-rose border border-rose/20 hover:bg-rose/20 transition-colors"
+                  >
+                    {paused ? 'Paused' : 'Running'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-white/60 border border-white/60 p-5">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-rose">Display Status</p>
+                <p className="text-sm text-secondary mt-1">Keep an eye on the live heartbeat.</p>
+                <div className="mt-4 flex items-center gap-3">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span className="text-sm font-semibold text-cocoa">Live • {heartbeat.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Slide>
       </div>
 
       {/* Pause Indicator */}
@@ -135,6 +272,10 @@ export default function Dashboard() {
           PAUSED
         </div>
       )}
+
+      <div className="fixed bottom-8 left-8 z-50 text-[10px] font-bold uppercase tracking-widest text-cocoa/50">
+        Live • {heartbeat.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+      </div>
     </main>
   );
 }
