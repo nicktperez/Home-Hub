@@ -36,7 +36,7 @@ export default function NoteBoard() {
             <div className="flex justify-between items-center mb-8 px-2">
                 <div>
                     <h2 className="text-3xl font-serif font-black text-cocoa flex items-center gap-3">
-                        <span className="text-rose text-4xl">📌</span> Sticky Notes
+                        Sticky Notes
                     </h2>
                     <p className="text-sm text-secondary font-medium mt-1 italic opacity-80 font-sans">Drag them anywhere, click to edit.</p>
                 </div>

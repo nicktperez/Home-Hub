@@ -5,14 +5,17 @@ import Slide from '../components/Slide';
 import Navigation from '../components/Navigation';
 import Clock from '../components/Clock';
 import Weather from '../components/Weather';
-import CalendarFrame from '../components/CalendarFrame';
+import CalendarDataView from '../components/CalendarDataView';
 import ProjectBoard from '../components/ProjectBoard';
 import ShoppingList from '../components/ShoppingList';
 import NoteBoard from '../components/NoteBoard';
 import ProjectWidget from '../components/ProjectWidget';
 import NotesWidget from '../components/NotesWidget';
 import FocusWidget from '../components/FocusWidget';
-import GoogleSheetFrame from '../components/GoogleSheetFrame';
+import GoogleSheetDataView from '../components/GoogleSheetDataView';
+import CalendarWidget from '../components/CalendarWidget';
+
+const ICAL_URL = "https://calendar.google.com/calendar/ical/19fc18fe1e0342336012fb0530d644d8c3ea9d6e14fe63b65db9b8b1ade07504%40group.calendar.google.com/public/basic.ics";
 
 const SLIDE_TITLES = [
   "Month",
@@ -20,7 +23,7 @@ const SLIDE_TITLES = [
   "Projects",
   "Notes",
   "Shopping",
-  "Sheets"
+  "Car Info"
 ];
 
 const SLIDE_DURATIONS = [
@@ -58,9 +61,8 @@ export default function Dashboard() {
       <div className="relative w-full h-full pt-16 lg:pt-20">
         <Slide isActive={activeSlide === 0} title="Family Calendar">
           <div className="w-full h-full">
-            <CalendarFrame
-              title="Family Calendar Month"
-              src="https://calendar.google.com/calendar/embed?src=19fc18fe1e0342336012fb0530d644d8c3ea9d6e14fe63b65db9b8b1ade07504%40group.calendar.google.com&ctz=America%2FLos_Angeles&mode=MONTH"
+            <CalendarDataView
+              icalUrl={ICAL_URL}
             />
           </div>
         </Slide>
@@ -85,9 +87,12 @@ export default function Dashboard() {
               </div>
 
               {/* Bottom Row: Widgets Grid */}
-              <div className="flex-1 grid grid-cols-2 gap-5 lg:gap-7 min-h-0">
+              <div className="flex-1 grid grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-7 min-h-0">
                 <div className="h-full min-h-0">
                   <ProjectWidget />
+                </div>
+                <div className="h-full min-h-0">
+                  <CalendarWidget icalUrl={ICAL_URL} />
                 </div>
                 <div className="h-full min-h-0">
                   <NotesWidget />
@@ -115,11 +120,10 @@ export default function Dashboard() {
           </div>
         </Slide>
 
-        <Slide isActive={activeSlide === 5} title="Family Finances & Sheets">
+        <Slide isActive={activeSlide === 5} title="Vehicle Maintenance Data">
           <div className="w-full h-full">
-            <GoogleSheetFrame
-              title="Family Budget & Hub Sheet"
-              src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRBE-u5ylx0OV8t5uWwOsEta08lbGvaKMLjYj3z0gwHy2kEWkiNU9dM0n-U8aTyQei5CX6fE4g95-aE/pubhtml?widget=true&headers=false"
+            <GoogleSheetDataView
+              csvUrl="https://docs.google.com/spreadsheets/d/e/2PACX-1vRBE-u5ylx0OV8t5uWwOsEta08lbGvaKMLjYj3z0gwHy2kEWkiNU9dM0n-U8aTyQei5CX6fE4g95-aE/pub?output=csv"
             />
           </div>
         </Slide>

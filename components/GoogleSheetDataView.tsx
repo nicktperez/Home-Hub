@@ -1,0 +1,226 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Wrench, Calendar, ChevronRight, RefreshCw, AlertCircle } from 'lucide-react';
+import { clsx } from 'clsx';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface SheetRow {
+    [key: string]: string;
+}
+
+interface SheetSection {
+    title: string;
+    headers: string[];
+    rows: string[][];
+}
+
+export default function GoogleSheetDataView({ csvUrl }: { csvUrl: string }) {
+    const [sections, setSections] = useState<SheetSection[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch(csvUrl);
+            if (!response.ok) throw new Error('Failed to fetch sheet data');
+            const csvText = await response.text();
+            parseCSV(csvText);
+            setLastUpdated(new Date());
+            setError(null);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'An error occurred');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const parseCSV = (text: string) => {
+        const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+        const newSections: SheetSection[] = [];
+        let currentSection: SheetSection | null = null;
+
+        lines.forEach(line => {
+            const parts = line.split(',').map(p => p.trim());
+            const isDate = /^\d{1,2}\/\d{1,2}\/(\d{2}|\d{4})/.test(parts[0]);
+
+            if (!isDate && parts.length > 1 && parts[1] !== '') {
+                if (currentSection) {
+                    currentSection.rows.sort((a: string[], b: string[]) => new Date(b[0]).getTime() - new Date(a[0]).getTime());
+                    newSections.push(currentSection);
+                }
+                currentSection = {
+                    title: parts[0],
+                    headers: parts.slice(1).filter(h => h !== ''),
+                    rows: []
+                };
+            } else if (currentSection) {
+                currentSection.rows.push(parts);
+            }
+        });
+
+        if (currentSection) {
+            const section: SheetSection = currentSection;
+            section.rows.sort((a: string[], b: string[]) => new Date(b[0]).getTime() - new Date(a[0]).getTime());
+            newSections.push(section);
+        }
+        setSections(newSections);
+    };
+
+    const isOilOverdue = (dateStr: string) => {
+        const today = new Date('2025-12-18');
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return false;
+        const diffMonths = (today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
+        return diffMonths > 6;
+    };
+
+    useEffect(() => {
+        fetchData();
+        const interval = setInterval(fetchData, 60000 * 5); // Refresh every 5 mins
+        return () => clearInterval(interval);
+    }, [csvUrl]);
+
+    if (loading && sections.length === 0) {
+        return (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-cocoa/40">
+                <RefreshCw className="w-8 h-8 animate-spin" />
+                <p className="font-serif italic text-lg text-cocoa/60 animate-pulse">Gathering your logs...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="w-full h-80 flex flex-col items-center justify-center gap-4 text-rose bg-rose/5 rounded-3xl border border-rose/20 p-8 text-center">
+                <AlertCircle className="w-12 h-12" />
+                <div>
+                    <h3 className="text-xl font-serif font-bold">Something went wrong</h3>
+                    <p className="text-sm opacity-80 mt-1">{error}</p>
+                </div>
+                <button
+                    onClick={fetchData}
+                    className="px-6 py-2 bg-rose text-white rounded-full text-sm font-bold shadow-sm hover:scale-105 transition-transform"
+                >
+                    Try Again
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="w-full h-full flex flex-col gap-8 pb-12 overflow-y-auto custom-scrollbar pr-2">
+            <div className="flex justify-between items-end px-2">
+                <div>
+                    <h2 className="text-4xl font-serif font-black text-cocoa flex items-center gap-3">
+                        Maintenance Hub
+                    </h2>
+                    <p className="text-sm text-secondary font-medium mt-1 italic opacity-80 font-sans">Real-time data from your Google Sheet.</p>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                    <button
+                        onClick={fetchData}
+                        className="text-[10px] font-black text-rose uppercase tracking-[0.2em] bg-rose/5 px-4 py-1.5 rounded-full border border-rose/10 shadow-inner flex items-center gap-2 hover:bg-rose/10 transition-colors group"
+                    >
+                        <RefreshCw className={clsx("w-3 h-3 group-hover:rotate-180 transition-transform duration-500", loading && "animate-spin")} />
+                        Refresh Data
+                    </button>
+                    {lastUpdated && (
+                        <p className="text-[9px] font-medium text-cocoa/30 font-sans uppercase tracking-tight">
+                            Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                    )}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                <AnimatePresence mode="popLayout">
+                    {sections.map((section, idx) => (
+                        <motion.div
+                            key={section.title}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.1 }}
+                            className="glass-card rounded-[40px] p-8 border border-white/40 shadow-xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500"
+                        >
+                            {/* Decorative background element */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-sage/5 rounded-bl-full -mr-8 -mt-8 transition-all duration-500 group-hover:scale-110"></div>
+
+                            <div className="relative mb-6 flex items-center gap-4">
+                                <div className="w-14 h-14 bg-rose/10 rounded-2xl flex items-center justify-center text-rose shadow-inner ring-1 ring-rose/20">
+                                    <Wrench className="w-7 h-7" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-serif font-black text-cocoa">{section.title}</h3>
+                                    {(() => {
+                                        const oilColIdx = section.headers.findIndex(h => h.toLowerCase().includes('oil'));
+                                        if (oilColIdx === -1) return null;
+
+                                        // Find the most recent oil change (rows are already sorted desc)
+                                        const latestOilRow = section.rows.find(row => row[oilColIdx + 1] && row[oilColIdx + 1] !== '');
+                                        const needsAttention = latestOilRow ? isOilOverdue(latestOilRow[0]) : false;
+
+                                        return (
+                                            <div className="flex items-center gap-2 mt-1">
+                                                {needsAttention ? (
+                                                    <span className="text-[10px] font-black text-rose bg-rose/10 px-2 py-0.5 rounded-md uppercase tracking-wider border border-rose/10 flex items-center gap-1.5 animate-pulse">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-rose"></span>
+                                                        Oil Change Recommended
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[10px] font-bold text-sage bg-sage/10 px-2 py-0.5 rounded-md uppercase tracking-wider border border-sage/10 flex items-center gap-1.5">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-sage"></span>
+                                                        Maintenance Up to Date
+                                                    </span>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                {section.rows.map((row, rowIdx) => (
+                                    <div
+                                        key={rowIdx}
+                                        className="flex items-center gap-6 p-4 rounded-3xl bg-white/30 border border-white/60 shadow-sm hover:bg-white/50 transition-colors group/row"
+                                    >
+                                        <div className="flex flex-col items-center justify-center min-w-[70px] h-[70px] bg-cocoa/5 rounded-2xl border border-cocoa/5 shadow-inner">
+                                            <Calendar className="w-4 h-4 text-cocoa/40 mb-1" />
+                                            <span className="text-xs font-black text-cocoa font-sans whitespace-nowrap">{row[0]}</span>
+                                        </div>
+
+                                        <div className="flex-1 overflow-x-auto no-scrollbar">
+                                            <div className="flex gap-6">
+                                                {section.headers.map((h, hIdx) => {
+                                                    const val = row[hIdx + 1];
+                                                    if (!val || val === '') return null;
+                                                    return (
+                                                        <div key={hIdx} className="flex flex-col gap-1 min-w-[100px]">
+                                                            <span className="text-[9px] font-black text-rose/60 uppercase tracking-[0.1em]">{h}</span>
+                                                            <p className="text-sm font-serif font-bold text-cocoa/80 leading-tight">
+                                                                {val && val.includes('xxx') ? (
+                                                                    <span className="italic opacity-60">{val}</span>
+                                                                ) : val}
+                                                            </p>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/50 group-hover/row:bg-rose group-hover/row:text-white transition-all text-cocoa/20">
+                                            <ChevronRight className="w-4 h-4" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+            </div>
+        </div>
+    );
+}
