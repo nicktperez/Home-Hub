@@ -151,7 +151,7 @@ export default function GoogleSheetDataView({ csvUrl }: { csvUrl: string }) {
 
     useEffect(() => {
         fetchData();
-        const interval = setInterval(fetchData, 60000 * 5); // Refresh every 5 mins
+        const interval = setInterval(() => fetchData(), 60000 * 5); // Refresh every 5 mins
         return () => {
             clearInterval(interval);
             abortRef.current?.abort();
@@ -176,7 +176,7 @@ export default function GoogleSheetDataView({ csvUrl }: { csvUrl: string }) {
                     <p className="text-sm opacity-80 mt-1">{error}</p>
                 </div>
                 <button
-                    onClick={fetchData}
+                    onClick={() => fetchData()}
                     className="px-6 py-2 bg-rose text-white rounded-full text-sm font-bold shadow-sm hover:scale-105 transition-transform"
                 >
                     Try Again
@@ -235,7 +235,7 @@ export default function GoogleSheetDataView({ csvUrl }: { csvUrl: string }) {
                 </div>
                 <div className="flex flex-col items-end gap-1">
                     <button
-                        onClick={fetchData}
+                        onClick={() => fetchData()}
                         className="text-[10px] font-black text-rose uppercase tracking-[0.2em] bg-rose/5 px-4 py-1.5 rounded-full border border-rose/10 shadow-inner flex items-center gap-2 hover:bg-rose/10 transition-colors group"
                     >
                         <RefreshCw className={clsx("w-3 h-3 group-hover:rotate-180 transition-transform duration-500", loading && "animate-spin")} />
