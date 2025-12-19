@@ -16,15 +16,23 @@ const COLORS = [
 ];
 
 export default function NoteBoard() {
-    const { notes, setNotes, loading } = useDashboard();
+    const { notes, loading, addNote, updateNote, deleteNote } = useDashboard();
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const updateNote = (id: number, text: string) => {
-        setNotes(prev => prev.map(n => n.id === id ? { ...n, text } : n));
+    const handleUpdateNote = async (id: number, text: string) => {
+        await updateNote(id, { text });
     };
 
-    const updateColor = (id: number, newColor: string) => {
-        setNotes(prev => prev.map(n => n.id === id ? { ...n, color: newColor } : n));
+    const handleUpdateColor = async (id: number, newColor: string) => {
+        await updateNote(id, { color: newColor });
+    };
+
+    const handleAddNote = async () => {
+        await addNote("");
+    };
+
+    const handleDeleteNote = async (id: number) => {
+        await deleteNote(id);
     };
 
     if (loading) return null;
@@ -65,7 +73,7 @@ export default function NoteBoard() {
 
                             <textarea
                                 value={note.text}
-                                onChange={(e) => updateNote(note.id, e.target.value)}
+                                onChange={(e) => handleUpdateNote(note.id, e.target.value)}
                                 className={clsx(
                                     "flex-1 w-full h-full bg-transparent border-none outline-none resize-none",
                                     "font-handwriting text-3xl leading-relaxed text-cocoa/90",
@@ -89,7 +97,7 @@ export default function NoteBoard() {
                                                 <button
                                                     key={c.name}
                                                     className={`w-6 h-6 rounded-full ${c.class} border border-black/5 hover:scale-125 transition-transform shadow-sm flex-shrink-0`}
-                                                    onClick={(e) => { e.stopPropagation(); updateColor(note.id, c.class); }}
+                                                    onClick={(e) => { e.stopPropagation(); handleUpdateColor(note.id, c.class); }}
                                                     title={c.name}
                                                 />
                                             ))}
@@ -98,7 +106,7 @@ export default function NoteBoard() {
                                 </div>
 
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); setNotes(prev => prev.filter(n => n.id !== note.id)); }}
+                                    onClick={(e) => { e.stopPropagation(); handleDeleteNote(note.id); }}
                                     className="p-2 bg-white/50 hover:bg-rose shadow-sm rounded-full text-cocoa/60 hover:text-white transition-all h-fit"
                                 >
                                     <X className="w-4 h-4" />
@@ -112,10 +120,7 @@ export default function NoteBoard() {
                     <button
                         className="w-16 h-16 bg-white/20 hover:bg-rose/80 backdrop-blur-md rounded-full flex items-center justify-center text-rose hover:text-white transition-all duration-500 border border-white/40 shadow-lg group hover:scale-110 active:scale-95"
                         title="Add Note"
-                        onClick={() => {
-                            const newId = notes.length > 0 ? Math.max(...notes.map(n => n.id)) + 1 : 1;
-                            setNotes([...notes, { id: newId, text: "", color: "bg-yellow-200", rotation: `rotate-${Math.floor(Math.random() * 6) - 3}` }]);
-                        }}
+                        onClick={handleAddNote}
                     >
                         <span className="text-4xl font-light group-hover:rotate-90 transition-transform duration-500">+</span>
                     </button>

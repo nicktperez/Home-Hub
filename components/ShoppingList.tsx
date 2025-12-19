@@ -6,24 +6,28 @@ import { ShoppingItem } from '@/types';
 import GlassCard from './GlassCard';
 
 export default function ShoppingList() {
-    const { shoppingList: items, setShoppingList: setItems, loading } = useDashboard();
+    const {
+        shoppingList: items,
+        loading,
+        addShoppingItem,
+        toggleShoppingItem,
+        deleteShoppingItem
+    } = useDashboard();
     const [newItem, setNewItem] = useState('');
 
-    const addItem = (e: React.FormEvent) => {
+    const addItem = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newItem.trim()) return;
-        setItems(prev => [...prev, { id: Date.now().toString(), text: newItem, checked: false, category: 'other' }]);
+        await addShoppingItem(newItem.trim());
         setNewItem('');
     };
 
-    const toggleItem = (id: string) => {
-        setItems(prev => prev.map(item =>
-            item.id === id ? { ...item, checked: !item.checked } : item
-        ));
+    const toggleItem = async (id: string, checked: boolean) => {
+        await toggleShoppingItem(id, checked);
     };
 
-    const deleteItem = (id: string) => {
-        setItems(prev => prev.filter(item => item.id !== id));
+    const deleteItem = async (id: string) => {
+        await deleteShoppingItem(id);
     };
 
     if (loading) return null;
@@ -49,7 +53,7 @@ export default function ShoppingList() {
                 {items.map(item => (
                     <div
                         key={item.id}
-                        onClick={() => toggleItem(item.id)}
+                        onClick={() => toggleItem(item.id, !item.checked)}
                         className={clsx(
                             "flex items-center justify-between p-3 mx-2 rounded-lg cursor-pointer transition-all group",
                             item.checked
