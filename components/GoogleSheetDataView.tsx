@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Wrench, Calendar, ChevronRight, RefreshCw, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,17 +20,34 @@ export default function GoogleSheetDataView({ csvUrl }: { csvUrl: string }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const [sheetUrl, setSheetUrl] = useState(csvUrl);
+    const [urlInput, setUrlInput] = useState(csvUrl);
+    const abortRef = useRef<AbortController | null>(null);
 
-    const fetchData = async () => {
+    useEffect(() => {
+        const saved = localStorage.getItem('google-sheet-url');
+        if (saved) {
+            setSheetUrl(saved);
+            setUrlInput(saved);
+        }
+    }, []);
+
+    const fetchData = async (targetUrl?: string) => {
+        const url = targetUrl || sheetUrl;
+        if (!url) return;
+        abortRef.current?.abort();
+        const controller = new AbortController();
+        abortRef.current = controller;
         setLoading(true);
         try {
-            const response = await fetch(csvUrl);
+            const response = await fetch(url, { signal: controller.signal });
             if (!response.ok) throw new Error('Failed to fetch sheet data');
             const csvText = await response.text();
             parseCSV(csvText);
             setLastUpdated(new Date());
             setError(null);
         } catch (err) {
+            if ((err as Error).name === 'AbortError') return;
             setError(err instanceof Error ? err.message : 'An error occurred');
         } finally {
             setLoading(false);
@@ -38,26 +55,26 @@ export default function GoogleSheetDataView({ csvUrl }: { csvUrl: string }) {
     };
 
     const parseCSV = (text: string) => {
-        const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+        const rows = parseCsvToRows(text).filter(r => r.some(cell => cell.trim() !== ''));
         const newSections: SheetSection[] = [];
         let currentSection: SheetSection | null = null;
 
-        lines.forEach(line => {
-            const parts = line.split(',').map(p => p.trim());
-            const isDate = /^\d{1,2}\/\d{1,2}\/(\d{2}|\d{4})/.test(parts[0]);
+        rows.forEach(parts => {
+            const firstCell = (parts[0] || '').trim();
+            const isDate = /^\d{1,2}\/\d{1,2}\/(\d{2}|\d{4})/.test(firstCell);
 
-            if (!isDate && parts.length > 1 && parts[1] !== '') {
+            if (!isDate && parts.length > 1 && (parts[1] || '').trim() !== '') {
                 if (currentSection) {
                     currentSection.rows.sort((a: string[], b: string[]) => new Date(b[0]).getTime() - new Date(a[0]).getTime());
                     newSections.push(currentSection);
                 }
                 currentSection = {
-                    title: parts[0],
-                    headers: parts.slice(1).filter(h => h !== ''),
-                    rows: []
+                    title: firstCell,
+                    headers: parts.slice(1).filter(h => h.trim() !== ''),
+                    rows: [],
                 };
             } else if (currentSection) {
-                currentSection.rows.push(parts);
+                currentSection.rows.push(parts.map(cell => cell.trim()));
             }
         });
 
@@ -67,6 +84,61 @@ export default function GoogleSheetDataView({ csvUrl }: { csvUrl: string }) {
             newSections.push(section);
         }
         setSections(newSections);
+    };
+
+    const parseCsvToRows = (text: string): string[][] => {
+        const rows: string[][] = [];
+        let currentRow: string[] = [];
+        let currentValue = '';
+        let inQuotes = false;
+
+        const pushValue = () => {
+            currentRow.push(currentValue);
+            currentValue = '';
+        };
+
+        const pushRow = () => {
+            rows.push(currentRow);
+            currentRow = [];
+        };
+
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const next = text[i + 1];
+
+            if (char === '"') {
+                if (inQuotes && next === '"') {
+                    currentValue += '"';
+                    i++; // skip next
+                } else {
+                    inQuotes = !inQuotes;
+                }
+                continue;
+            }
+
+            if (char === ',' && !inQuotes) {
+                pushValue();
+                continue;
+            }
+
+            if ((char === '\n' || char === '\r') && !inQuotes) {
+                // handle \r\n together
+                if (char === '\r' && next === '\n') i++;
+                pushValue();
+                pushRow();
+                continue;
+            }
+
+            currentValue += char;
+        }
+
+        // push last value/row
+        pushValue();
+        if (currentRow.length > 0) {
+            pushRow();
+        }
+
+        return rows;
     };
 
     const isOilOverdue = (dateStr: string) => {
@@ -80,8 +152,11 @@ export default function GoogleSheetDataView({ csvUrl }: { csvUrl: string }) {
     useEffect(() => {
         fetchData();
         const interval = setInterval(fetchData, 60000 * 5); // Refresh every 5 mins
-        return () => clearInterval(interval);
-    }, [csvUrl]);
+        return () => {
+            clearInterval(interval);
+            abortRef.current?.abort();
+        };
+    }, [sheetUrl]);
 
     if (loading && sections.length === 0) {
         return (
@@ -112,6 +187,45 @@ export default function GoogleSheetDataView({ csvUrl }: { csvUrl: string }) {
 
     return (
         <div className="w-full h-full flex flex-col gap-8 pb-12 overflow-y-auto custom-scrollbar pr-2">
+            <form
+                className="glass-card rounded-3xl border border-white/40 shadow-md p-4 flex flex-wrap items-center gap-3"
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!urlInput.trim()) return;
+                    setSheetUrl(urlInput.trim());
+                    localStorage.setItem('google-sheet-url', urlInput.trim());
+                    fetchData(urlInput.trim());
+                }}
+            >
+                <div className="flex flex-col flex-1 min-w-[220px]">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-cocoa/60 mb-1">
+                        Google Sheet CSV URL
+                    </label>
+                    <input
+                        value={urlInput}
+                        onChange={(e) => setUrlInput(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-white/50 bg-white/60 text-sm text-cocoa placeholder:text-cocoa/40 focus:outline-none focus:ring-2 focus:ring-rose/40"
+                        placeholder="Paste CSV export link"
+                    />
+                </div>
+                <div className="flex items-end gap-2">
+                    <button
+                        type="submit"
+                        className="px-4 py-2 rounded-full bg-rose text-white text-xs font-bold uppercase tracking-[0.18em] shadow-md hover:shadow-lg transition-all"
+                    >
+                        Save & Refresh
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => fetchData()}
+                        className="px-3 py-2 rounded-full border border-cocoa/15 text-[11px] font-bold text-cocoa/70 bg-white/50 hover:bg-white/70 transition-colors flex items-center gap-2"
+                    >
+                        <RefreshCw className={clsx("w-3 h-3", loading && "animate-spin")} />
+                        Refresh
+                    </button>
+                </div>
+            </form>
+
             <div className="flex justify-between items-end px-2">
                 <div>
                     <h2 className="text-4xl font-serif font-black text-cocoa flex items-center gap-3">

@@ -1,31 +1,39 @@
-'use client';
-
 import { useState } from 'react';
 import { Reorder } from 'framer-motion';
-import { Project } from '../types/project';
+import { Project } from '../types';
 import { Plus, X, AlignLeft } from 'lucide-react';
 import { clsx } from 'clsx';
 import ProjectCard from './ProjectCard';
-
-const MOCK_PROJECTS: Project[] = [
-    { id: '1', title: 'Fix the garage door', status: 'todo' },
-    { id: '2', title: 'Plan summer vacation', status: 'in_progress', note: 'Check flights' },
-    { id: '3', title: 'Buy groceries', status: 'done' },
-    { id: '4', title: 'Update Family Wall Dashboard', status: 'in_progress', note: 'Migrating to Next.js' },
-    { id: '5', title: 'Call Grandma', status: 'todo' },
-];
+import { useDashboard } from '@/context/DashboardContext';
+import GlassCard from './GlassCard';
 
 export default function ProjectBoard() {
-    const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
+    const { projects, setProjects, loading } = useDashboard();
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
+    const updateProjects = (updater: (prev: Project[]) => Project[]) => {
+        setProjects(prev => updater(prev));
+    };
+
+    if (loading) return null;
+
     const handleDelete = (id: string) => {
-        setProjects(prev => prev.filter(p => p.id !== id));
+        updateProjects(prev => prev.filter(p => p.id !== id));
     };
 
     const handleUpdateProject = (updated: Project) => {
-        setProjects(prev => prev.map(p => p.id === updated.id ? updated : p));
+        updateProjects(prev => prev.map(p => p.id === updated.id ? updated : p));
         setSelectedProject(updated);
+    };
+
+    const handleAddProject = () => {
+        const newProject: Project = {
+            id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+            title: 'New Project',
+            status: 'todo',
+        };
+        updateProjects(prev => [newProject, ...prev]);
+        setSelectedProject(newProject);
     };
 
     const columns = [
@@ -42,7 +50,10 @@ export default function ProjectBoard() {
                     <span>Total: {projects.length}</span>
                     <span>Todo: {projects.filter(p => p.status === 'todo').length}</span>
                 </div>
-                <button className="flex items-center gap-1.5 px-4 py-2 bg-stone-100 hover:bg-white text-stone-900 text-sm font-bold rounded-lg shadow-lg transition-all active:scale-95">
+                <button
+                    onClick={handleAddProject}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-stone-100 hover:bg-white text-stone-900 text-sm font-bold rounded-lg shadow-lg transition-all active:scale-95"
+                >
                     <Plus className="w-4 h-4" /> New Project
                 </button>
             </div>
@@ -53,7 +64,7 @@ export default function ProjectBoard() {
                     const columnProjects = projects.filter(p => p.status === col.id);
 
                     return (
-                        <div key={col.id} className={`glass-card rounded-2xl border-t-4 h-full overflow-hidden flex flex-col ${col.color}`}>
+                        <GlassCard key={col.id} className={`rounded-2xl border-t-4 h-full overflow-hidden flex flex-col ${col.color}`} hover={false}>
                             <div className="p-4 border-b border-white/5 flex justify-between items-center bg-white/5 text-xs uppercase tracking-widest">
                                 {col.title}
                                 <span className="bg-stone-800 px-2.5 py-0.5 rounded-full text-stone-300 text-[10px]">
@@ -64,13 +75,10 @@ export default function ProjectBoard() {
                             <Reorder.Group
                                 axis="y"
                                 onReorder={(newOrder) => {
-                                    // Merge reordered column items back into global state
-                                    // 1. Get items NOT in this column
-                                    const otherItems = projects.filter(p => p.status !== col.id);
-                                    // 2. Combine others + newOrder (which is this column reordered)
-                                    // Note: This puts reordered column at the end of the array, which is fine for data structure
-                                    // but ideally we'd preserve relative positions. For this simple app, this is sufficient.
-                                    setProjects([...otherItems, ...newOrder]);
+                                    updateProjects(() => {
+                                        const otherItems = projects.filter(p => p.status !== col.id);
+                                        return [...otherItems, ...newOrder];
+                                    });
                                 }}
                                 values={columnProjects}
                                 className="flex-1 p-3 overflow-y-auto space-y-3 custom-scrollbar"
@@ -91,7 +99,7 @@ export default function ProjectBoard() {
                                     </Reorder.Item>
                                 ))}
                             </Reorder.Group>
-                        </div>
+                        </GlassCard>
                     );
                 })}
             </div>

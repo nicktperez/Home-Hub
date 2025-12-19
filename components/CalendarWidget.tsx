@@ -4,6 +4,7 @@ import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import { Calendar, Clock } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useState, useEffect } from 'react';
+import GlassCard from './GlassCard';
 
 export default function CalendarWidget({ icalUrl }: { icalUrl: string }) {
     const { events, loading } = useCalendarEvents(icalUrl);
@@ -27,7 +28,7 @@ export default function CalendarWidget({ icalUrl }: { icalUrl: string }) {
     };
 
     return (
-        <div className="glass-card rounded-3xl p-6 h-full flex flex-col relative overflow-hidden group transition-all duration-500 hover:bg-white/40 shadow-sm border border-white/40">
+        <GlassCard className="p-6 h-full flex flex-col relative overflow-hidden">
             {/* Header */}
             <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-emerald-400/10 rounded-xl flex items-center justify-center text-emerald-600 ring-1 ring-emerald-400/20 shadow-inner">
@@ -84,6 +85,6 @@ export default function CalendarWidget({ icalUrl }: { icalUrl: string }) {
                     </div>
                 )}
             </div>
-        </div>
+        </GlassCard>
     );
 }

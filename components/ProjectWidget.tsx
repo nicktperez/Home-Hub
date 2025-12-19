@@ -1,31 +1,21 @@
-'use client';
-
 import { clsx } from 'clsx';
-import { CheckCircle2, Circle } from 'lucide-react';
-
-interface Project {
-    id: string;
-    title: string;
-    status: 'todo' | 'in_progress' | 'done';
-}
-
-// Mock data matching the main board
-const PROJECTS: Project[] = [
-    { id: '1', title: 'Fix the garage door', status: 'todo' },
-    { id: '2', title: 'Plan summer vacation', status: 'in_progress' },
-    { id: '4', title: 'Update Family Wall Dashboard', status: 'in_progress' },
-];
+import { Circle } from 'lucide-react';
+import { useDashboard } from '@/context/DashboardContext';
+import GlassCard from './GlassCard';
 
 export default function ProjectWidget() {
+    const { projects } = useDashboard();
+    const activeProjects = projects.filter(p => p.status !== 'done');
+
     return (
-        <div className="glass-card rounded-3xl p-6 flex flex-col h-full hover:bg-white/60 transition-all duration-500 cursor-pointer shadow-sm">
+        <GlassCard className="p-6 flex flex-col h-full cursor-pointer">
             <h3 className="text-[11px] font-bold text-rose uppercase tracking-[0.15em] mb-4 flex items-center gap-2 justify-between">
                 <span className="flex items-center gap-2">📌 Open Projects</span>
-                <span className="text-[10px] bg-terracotta text-white px-2 py-0.5 rounded-full shadow-sm">3</span>
+                <span className="text-[10px] bg-terracotta text-white px-2 py-0.5 rounded-full shadow-sm">{activeProjects.length}</span>
             </h3>
 
             <div className="space-y-2 overflow-y-auto pr-1 custom-scrollbar">
-                {PROJECTS.map(project => (
+                {activeProjects.slice(0, 5).map(project => (
                     <div key={project.id} className="flex items-start gap-4 p-3 rounded-2xl bg-white/40 border border-white/60 hover:border-terracotta/30 transition-colors">
                         {project.status === 'in_progress' ? (
                             <Circle className="w-4 h-4 text-terracotta mt-0.5 fill-terracotta/20" />
@@ -43,6 +33,7 @@ export default function ProjectWidget() {
                     </div>
                 ))}
             </div>
-        </div>
+        </GlassCard>
     );
 }
+

@@ -1,23 +1,10 @@
-'use client';
-
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { X, Palette } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { clsx } from 'clsx';
-
-interface Note {
-    id: number;
-    text: string;
-    color: string;
-    rotation: string;
-}
-
-const STORAGE_KEY = 'home-hub-notes';
-
-const INITIAL_NOTES: Note[] = [
-    { id: 1, text: "Welcome to the new dashboard!", color: "bg-yellow-200", rotation: "-rotate-1" },
-    { id: 2, text: "WiFi: familyhub123", color: "bg-blue-200", rotation: "rotate-2" },
-];
+import { useDashboard } from '@/context/DashboardContext';
+import { Note } from '@/types';
+import GlassCard from './GlassCard';
 
 const COLORS = [
     { name: 'Yellow', class: 'bg-yellow-200' },
@@ -29,29 +16,8 @@ const COLORS = [
 ];
 
 export default function NoteBoard() {
-    const [notes, setNotes] = useState<Note[]>(INITIAL_NOTES);
-    const [loaded, setLoaded] = useState(false);
+    const { notes, setNotes, loading } = useDashboard();
     const containerRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved) as Note[];
-                if (Array.isArray(parsed)) {
-                    setNotes(parsed);
-                }
-            } catch (error) {
-                console.error('Failed to parse notes', error);
-            }
-        }
-        setLoaded(true);
-    }, []);
-
-    useEffect(() => {
-        if (!loaded) return;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
-    }, [loaded, notes]);
 
     const updateNote = (id: number, text: string) => {
         setNotes(prev => prev.map(n => n.id === id ? { ...n, text } : n));
@@ -61,8 +27,11 @@ export default function NoteBoard() {
         setNotes(prev => prev.map(n => n.id === id ? { ...n, color: newColor } : n));
     };
 
+    if (loading) return null;
+
     return (
-        <div className="glass-card rounded-3xl p-8 h-full flex flex-col transition-all duration-500 shadow-sm border border-white/40">
+        <GlassCard className="rounded-[40px] p-8 h-full flex flex-col transition-all duration-500 shadow-sm border border-white/40" hover={false}>
+
             <div className="flex justify-between items-center mb-8 px-2">
                 <div>
                     <h2 className="text-3xl font-serif font-black text-cocoa flex items-center gap-3">
@@ -152,6 +121,6 @@ export default function NoteBoard() {
                     </button>
                 </div>
             </div>
-        </div>
+        </GlassCard>
     );
 }

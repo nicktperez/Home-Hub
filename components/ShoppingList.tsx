@@ -1,49 +1,13 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, Check, Trash2, ShoppingCart } from 'lucide-react';
 import { clsx } from 'clsx';
-
-interface Item {
-    id: string;
-    text: string;
-    checked: boolean;
-    category: 'produce' | 'dairy' | 'pantry' | 'other';
-}
-
-const MOCK_ITEMS: Item[] = [
-    { id: '1', text: 'Almond Milk', checked: false, category: 'dairy' },
-    { id: '2', text: 'Avocados (3)', checked: false, category: 'produce' },
-    { id: '3', text: 'Sourdough Bread', checked: true, category: 'pantry' },
-    { id: '4', text: 'Espresso Beans', checked: false, category: 'pantry' },
-];
+import { useDashboard } from '@/context/DashboardContext';
+import { ShoppingItem } from '@/types';
+import GlassCard from './GlassCard';
 
 export default function ShoppingList() {
-    // Initialize with MOCK_ITEMS but try to load from localStorage immediately if possible (client-side)
-    // or use an effect to load. Standard Next.js pattern:
-    const [items, setItems] = useState<Item[]>(MOCK_ITEMS);
+    const { shoppingList: items, setShoppingList: setItems, loading } = useDashboard();
     const [newItem, setNewItem] = useState('');
-    const [loaded, setLoaded] = useState(false);
-
-    // Load from localStorage on mount
-    useEffect(() => {
-        const saved = localStorage.getItem('shopping-list');
-        if (saved) {
-            try {
-                setItems(JSON.parse(saved));
-            } catch (e) {
-                console.error("Failed to parse shopping list", e);
-            }
-        }
-        setLoaded(true);
-    }, []);
-
-    // Save to localStorage whenever items change
-    useEffect(() => {
-        if (loaded) {
-            localStorage.setItem('shopping-list', JSON.stringify(items));
-        }
-    }, [items, loaded]);
 
     const addItem = (e: React.FormEvent) => {
         e.preventDefault();
@@ -62,10 +26,11 @@ export default function ShoppingList() {
         setItems(prev => prev.filter(item => item.id !== id));
     };
 
-    if (!loaded) return null; // Prevent hydration mismatch or flash
+    if (loading) return null;
 
     return (
-        <div className="flex flex-col h-full bg-[#fdfaf5] text-stone-800 rounded-xl shadow-xl overflow-hidden relative">
+        <GlassCard className="flex flex-col h-full bg-[#fdfaf5]/90 text-stone-800 overflow-hidden relative" hover={false}>
+
             {/* Paper Texture Effect */}
             <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#a8a29e 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
 
@@ -133,6 +98,6 @@ export default function ShoppingList() {
                     </button>
                 </form>
             </div>
-        </div>
+        </GlassCard>
     );
 }

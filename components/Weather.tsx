@@ -2,6 +2,7 @@
 
 import { CloudSun, Droplets, MapPin, Wind } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import GlassCard from './GlassCard';
 
 interface WeatherCurrent {
     temperature_2m: number;
@@ -96,7 +97,7 @@ export default function Weather() {
     const clothing = weatherData ? getClothingSuggestion(weatherData.current.temperature_2m) : '';
 
     return (
-        <div className="glass-card rounded-3xl p-5 lg:p-6 flex flex-col justify-between h-full transition-all duration-500">
+        <GlassCard className="p-5 lg:p-6 flex flex-col justify-between h-full group" hover={true}>
             <div className="h-full flex flex-col justify-between overflow-hidden">
                 <div className="flex-shrink-0">
                     <div className="text-[10px] uppercase tracking-[0.2em] text-rose font-bold mb-2 flex items-center gap-2">
@@ -105,7 +106,7 @@ export default function Weather() {
                     </div>
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
-                            <div className="drop-shadow-sm scale-100 lg:scale-110 transition-transform hover:rotate-6 duration-300">
+                            <div className="drop-shadow-sm scale-100 lg:scale-110 transition-transform group-hover:rotate-6 duration-300">
                                 {currentInfo.icon}
                             </div>
                             <div>
@@ -172,9 +173,9 @@ export default function Weather() {
                             if (code > 50) Icon = Droplets;
 
                             return (
-                                <div key={i} className="flex flex-col items-center gap-1 group">
+                                <div key={i} className="flex flex-col items-center gap-1 group/day">
                                     <span className="text-[9px] font-bold text-secondary uppercase mb-0.5">{dayName}</span>
-                                    <div className="p-1 rounded-lg bg-white/20 group-hover:bg-rose/10 transition-colors">
+                                    <div className="p-1 rounded-lg bg-white/20 group-hover/day:bg-rose/10 transition-colors">
                                         <Icon className="w-3 h-3 text-terracotta" />
                                     </div>
                                     <span className="text-[11px] font-bold text-cocoa mt-0.5">{maxTemp}°</span>
@@ -184,6 +185,6 @@ export default function Weather() {
                     </div>
                 </div>
             </div>
-        </div>
+        </GlassCard>
     );
 }

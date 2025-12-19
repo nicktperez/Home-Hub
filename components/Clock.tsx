@@ -15,6 +15,8 @@ const GREETINGS = [
     "Sweet dreams tonight!",
 ];
 
+import GlassCard from './GlassCard';
+
 export default function Clock() {
     const [time, setTime] = useState<Date | null>(null);
     const [isMounted, setIsMounted] = useState(false);
@@ -41,11 +43,11 @@ export default function Clock() {
 
     if (!isMounted || !time) {
         return (
-            <div className="glass-card p-8 rounded-3xl h-[172px] flex flex-col items-center justify-center gap-4">
+            <GlassCard className="p-8 rounded-3xl h-[172px] flex flex-col items-center justify-center gap-4">
                 <div className="h-4 bg-rose/5 rounded w-1/2 mx-auto"></div>
                 <div className="h-12 bg-cocoa/5 rounded w-3/4 mx-auto"></div>
                 <div className="h-4 bg-secondary/5 rounded w-2/3 mx-auto"></div>
-            </div>
+            </GlassCard>
         );
     }
 
@@ -53,7 +55,7 @@ export default function Clock() {
     const ampm = hoursNum >= 12 ? 'pm' : 'am';
     const displayHours = hoursNum % 12 || 12;
     const minutes = String(time.getMinutes()).padStart(2, '0');
-    const seconds = String(time.getSeconds()).padStart(2, '0');
+    // const seconds = String(time.getSeconds()).padStart(2, '0');
 
     const dateStr = time.toLocaleDateString(undefined, {
         weekday: 'long',
@@ -64,10 +66,7 @@ export default function Clock() {
     const greeting = GREETINGS[greetingIndex];
 
     return (
-        <div className={clsx(
-            "glass-card p-8 rounded-3xl text-center",
-            "flex flex-col justify-center gap-4 transition-all duration-500"
-        )}>
+        <GlassCard className="p-8 text-center flex flex-col justify-center gap-4">
             <div className="text-sm font-serif italic text-rose font-semibold tracking-wide">
                 {greeting}
             </div>
@@ -83,6 +82,6 @@ export default function Clock() {
             <div className="text-base font-medium text-secondary tracking-tight">
                 {dateStr}
             </div>
-        </div>
+        </GlassCard>
     );
 }

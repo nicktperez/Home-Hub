@@ -174,7 +174,6 @@ This file tracks potential features and improvements for the Family Hub Dashboar
 - **Complexity**: Medium
 - **Description**: Import data from other sources
 - **Use Cases**: Import from Google Keep, Todoist, etc.
-
 ## Integration Features
 
 ### Smart Home Integration
@@ -183,30 +182,6 @@ This file tracks potential features and improvements for the Family Hub Dashboar
 - **Description**: Integrate with smart home devices (Alexa, Google Home, HomeKit)
 - **Use Cases**: Voice commands, home automation triggers
 
-### Energy Usage Dashboard (SMUD)
-- **Status**: Implemented (CSV Import)
-- **Complexity**: Medium-High
-- **Description**: Display energy usage data from SMUD (Sacramento Municipal Utility District)
-- **Current Features**:
-  - CSV import from SMUD Green Button export
-  - Usage and cost visualization
-  - Solar export tracking (from SMUD data)
-  - Interactive tooltips with monetary values
-- **Future Enhancements**:
-  - **Enphase Enlighten API Integration**: Direct integration with Enphase solar system
-    - Requires Enphase API key and system ID
-    - Real-time solar production data
-    - Daily/hourly production charts
-    - Net metering visualization
-  - **Automated Data Sync**: Periodic automatic data fetching
-  - **Usage Alerts**: High usage notifications
-  - **Cost Projections**: Estimate future bills based on trends
-- **Benefits**: 
-  - Track energy consumption patterns
-  - Monitor solar production and export
-  - Identify high-usage periods
-  - Monitor costs
-  - Set usage goals
 
 ### Email Integration
 - **Status**: Not Started

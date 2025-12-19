@@ -22,6 +22,8 @@ const INTENTIONS = [
     "Trust the Journey"
 ];
 
+import GlassCard from './GlassCard';
+
 export default function FocusWidget() {
     const [intention, setIntention] = useState('');
     const [isMounted, setIsMounted] = useState(false);
@@ -41,15 +43,15 @@ export default function FocusWidget() {
 
     if (!isMounted) {
         return (
-            <div className="glass-card rounded-3xl p-8 min-h-[200px] flex flex-col items-center justify-center animate-pulse">
+            <GlassCard className="p-8 min-h-[200px] flex flex-col items-center justify-center animate-pulse">
                 <div className="h-4 bg-rose/10 rounded w-1/2 mb-4" />
                 <div className="h-10 bg-rose/10 rounded w-3/4" />
-            </div>
+            </GlassCard>
         );
     }
 
     return (
-        <div className="glass-card rounded-3xl p-8 h-full flex flex-col items-center justify-center relative overflow-hidden group transition-all duration-700 hover:bg-white/95 shadow-sm border border-white/40">
+        <GlassCard className="p-8 h-full flex flex-col items-center justify-center relative overflow-hidden group">
             {/* Soft decorative element */}
             <div className="absolute -top-10 -right-10 w-48 h-48 bg-rose/10 rounded-full blur-3xl group-hover:bg-rose/15 transition-colors duration-700" />
             <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-sage/10 rounded-full blur-3xl group-hover:bg-sage/15 transition-colors duration-700" />
@@ -72,6 +74,6 @@ export default function FocusWidget() {
                     </div>
                 </div>
             </div>
-        </div>
+        </GlassCard>
     );
 }
