@@ -38,12 +38,19 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const loadData = async () => {
             if (isSupabaseConfigured) {
+                console.log("DashboardContext: Starting initial sync with Supabase...");
                 try {
                     const [pRes, nRes, sRes] = await Promise.all([
                         supabase.from('projects').select('*').order('created_at', { ascending: false }),
                         supabase.from('notes').select('*').order('id', { ascending: true }),
                         supabase.from('shopping_list').select('*').order('created_at', { ascending: true })
                     ]);
+
+                    if (pRes.error) console.error("Supabase Projects Error:", pRes.error);
+                    if (nRes.error) console.error("Supabase Notes Error:", nRes.error);
+                    if (sRes.error) console.error("Supabase Shopping Error:", sRes.error);
+
+                    console.log(`Cloud data counts - Projects: ${pRes.data?.length}, Notes: ${nRes.data?.length}, Shopping: ${sRes.data?.length}`);
 
                     const localProjects = localStorage.getItem('home-hub-projects');
                     const localNotes = localStorage.getItem('home-hub-notes');
@@ -53,14 +60,27 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
                     if (pRes.data && pRes.data.length > 0) {
                         setProjects(pRes.data);
                     } else if (localProjects) {
-                        setProjects(JSON.parse(localProjects));
+                        const parsed = JSON.parse(localProjects);
+                        console.log("Seeding Projects from Local Storage to Cloud...");
+                        setProjects(parsed);
+                        // Optional: push to cloud if cloud is empty
+                        if (!pRes.data || pRes.data.length === 0) {
+                            supabase.from('projects').insert(parsed).then(() => console.log("Seeded Projects"));
+                        }
                     }
 
                     // Notes loading/fallback
                     if (nRes.data && nRes.data.length > 0) {
                         setNotes(nRes.data);
                     } else if (localNotes) {
-                        setNotes(JSON.parse(localNotes));
+                        const parsed = JSON.parse(localNotes);
+                        console.log("Seeding Notes from Local Storage to Cloud...");
+                        setNotes(parsed);
+                        if (!nRes.data || nRes.data.length === 0) {
+                            // Filter notes to remove local IDs that might conflict with identity
+                            const seedNotes = parsed.map((n: any) => ({ text: n.text, color: n.color, rotation: n.rotation }));
+                            supabase.from('notes').insert(seedNotes).then(() => console.log("Seeded Notes"));
+                        }
                     }
 
                     // Shopping List loading/fallback
@@ -146,6 +166,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
         if (isSupabaseConfigured) {
             try {
+                console.log("Notes: Inserting into Supabase...");
                 const { data, error } = await supabase.from('notes').insert([
                     { text, color, rotation }
                 ]).select();
@@ -153,11 +174,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
                 if (error) throw error;
 
                 if (data && data[0]) {
+                    console.log("Notes: Sync Success, updating local ID", data[0].id);
                     setNotes(prev => prev.map(n => n.id === tempId ? data[0] : n));
                 }
             } catch (e) {
                 console.error("Error adding note to Supabase:", e);
-                // Keep the temp item for now, it's saved to localStorage anyway.
             }
         }
     };

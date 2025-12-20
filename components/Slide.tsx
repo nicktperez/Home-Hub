@@ -17,7 +17,7 @@ export default function Slide({ children, isActive, title }: SlideProps) {
         "bg-white/1 backdrop-blur-xl",
         "rounded-[32px] lg:rounded-[40px] border border-white/20 shadow-sm",
         "transition-opacity duration-700 ease-in-out",
-        "overflow-y-auto lg:overflow-hidden pb-16 lg:pb-8",
+        "overflow-y-auto lg:overflow-hidden pb-32 lg:pb-8",
         isActive ? "opacity-100 pointer-events-auto z-10" : "opacity-0 pointer-events-none z-0"
       )}
     >

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Reorder, motion } from 'framer-motion';
+import { Reorder, motion, AnimatePresence } from 'framer-motion';
 import { Project } from '../types';
 import { Plus, X, AlignLeft, Trash2 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -157,40 +157,74 @@ export default function ProjectBoard() {
                     const columnProjects = projects.filter(p => p.status === col.id);
 
                     return (
-                        <GlassCard key={col.id} className={`rounded-[24px] lg:rounded-[32px] border-t-4 h-full overflow-hidden flex flex-col ${col.color} bg-white/2`} hover={false}>
-                            <div className="p-4 lg:p-5 border-b border-white/5 flex justify-between items-center bg-white/5 text-[10px] uppercase tracking-[0.2em] font-black text-stone-400">
-                                {col.title}
-                                <span className="bg-white/10 px-2 py-0.5 rounded-full text-stone-300">
-                                    {columnProjects.length}
-                                </span>
-                            </div>
-
-                            <Reorder.Group
-                                axis="y"
-                                onReorder={(newOrder) => {
-                                    const otherItems = projects.filter(p => p.status !== col.id);
-                                    setProjects([...otherItems, ...newOrder]);
-                                }}
-                                values={columnProjects}
-                                className="flex-1 p-2 lg:p-4 overflow-y-auto space-y-3 lg:space-y-4 custom-scrollbar"
+                        <div key={col.id} className="h-full flex flex-col">
+                            <GlassCard
+                                className={`rounded-[24px] lg:rounded-[32px] border-t-4 h-full overflow-hidden flex flex-col ${col.color} bg-white/2`}
+                                hover={false}
                             >
-                                {columnProjects.map(project => (
-                                    <Reorder.Item
-                                        key={project.id}
-                                        value={project}
-                                        dragListener={true}
-                                        style={{ listStyle: 'none' }}
-                                    >
-                                        <div onClick={() => setSelectedProject(project)}>
-                                            <ProjectCard
-                                                project={project}
-                                                onDelete={handleDelete}
-                                            />
+                                <div className="p-4 lg:p-5 border-b border-white/5 flex justify-between items-center bg-white/5 text-[10px] uppercase tracking-[0.2em] font-black text-stone-400">
+                                    {col.title}
+                                    <span className="bg-white/10 px-2 py-0.5 rounded-full text-stone-300">
+                                        {columnProjects.length}
+                                    </span>
+                                </div>
+
+                                <div className="flex-1 p-2 lg:p-4 overflow-y-auto space-y-3 lg:space-y-4 custom-scrollbar lg:min-h-0">
+                                    <AnimatePresence mode="popLayout">
+                                        {columnProjects.map(project => (
+                                            <motion.div
+                                                key={project.id}
+                                                layoutId={project.id}
+                                                drag={true}
+                                                dragSnapToOrigin={true}
+                                                onDragEnd={(_, info) => {
+                                                    // Determine drop column based on drag distance
+                                                    // This is a simple heuristic: if they dragged far enough to the right/left
+                                                    const { x, y } = info.offset;
+                                                    const isDesktop = window.innerWidth > 768;
+
+                                                    if (isDesktop) {
+                                                        const colWidth = window.innerWidth / 3;
+                                                        if (x > colWidth * 0.4) {
+                                                            const nextStatus = col.id === 'todo' ? 'in_progress' : col.id === 'in_progress' ? 'done' : 'done';
+                                                            if (nextStatus !== col.id) handleUpdateProject(project.id, { status: nextStatus });
+                                                        } else if (x < -colWidth * 0.4) {
+                                                            const prevStatus = col.id === 'done' ? 'in_progress' : col.id === 'in_progress' ? 'todo' : 'todo';
+                                                            if (prevStatus !== col.id) handleUpdateProject(project.id, { status: prevStatus });
+                                                        }
+                                                    } else {
+                                                        // Vertical drag on mobile
+                                                        if (y > 100) {
+                                                            const nextStatus = col.id === 'todo' ? 'in_progress' : col.id === 'in_progress' ? 'done' : 'done';
+                                                            if (nextStatus !== col.id) handleUpdateProject(project.id, { status: nextStatus });
+                                                        } else if (y < -100) {
+                                                            const prevStatus = col.id === 'done' ? 'in_progress' : col.id === 'in_progress' ? 'todo' : 'todo';
+                                                            if (prevStatus !== col.id) handleUpdateProject(project.id, { status: prevStatus });
+                                                        }
+                                                    }
+                                                }}
+                                                className="cursor-grab active:cursor-grabbing z-10"
+                                                whileDrag={{ scale: 1.05, zIndex: 50, rotate: 1 }}
+                                            >
+                                                <div onClick={() => setSelectedProject(project)}>
+                                                    <ProjectCard
+                                                        project={project}
+                                                        onDelete={handleDelete}
+                                                        onMove={(id, nextStatus) => handleUpdateProject(id, { status: nextStatus })}
+                                                    />
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </AnimatePresence>
+                                    <div className="h-20 flex-shrink-0" />
+                                    {columnProjects.length === 0 && (
+                                        <div className="h-40 border-2 border-dashed border-white/5 rounded-[32px] flex flex-col items-center justify-center text-stone-600">
+                                            <p className="text-[10px] uppercase font-black tracking-[0.2em] opacity-30">Empty Column</p>
                                         </div>
-                                    </Reorder.Item>
-                                ))}
-                            </Reorder.Group>
-                        </GlassCard>
+                                    )}
+                                </div>
+                            </GlassCard>
+                        </div>
                     );
                 })}
             </div>

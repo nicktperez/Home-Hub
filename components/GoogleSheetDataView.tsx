@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Wrench, Calendar, ChevronRight, RefreshCw, AlertCircle } from 'lucide-react';
+import { Wrench, Calendar, ChevronRight, RefreshCw, AlertCircle, Settings } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -22,6 +22,7 @@ export default function GoogleSheetDataView({ csvUrl }: { csvUrl: string }) {
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [sheetUrl, setSheetUrl] = useState(csvUrl);
     const [urlInput, setUrlInput] = useState(csvUrl);
+    const [showConfig, setShowConfig] = useState(false);
     const abortRef = useRef<AbortController | null>(null);
 
     useEffect(() => {
@@ -187,44 +188,57 @@ export default function GoogleSheetDataView({ csvUrl }: { csvUrl: string }) {
 
     return (
         <div className="w-full h-full flex flex-col gap-8 pb-12 overflow-y-auto custom-scrollbar pr-2">
-            <form
-                className="glass-card rounded-3xl border border-white/40 shadow-md p-4 flex flex-wrap items-center gap-3"
-                onSubmit={(e) => {
-                    e.preventDefault();
-                    if (!urlInput.trim()) return;
-                    setSheetUrl(urlInput.trim());
-                    localStorage.setItem('google-sheet-url', urlInput.trim());
-                    fetchData(urlInput.trim());
-                }}
-            >
-                <div className="flex flex-col flex-1 min-w-[220px]">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-cocoa/60 mb-1">
-                        Google Sheet CSV URL
-                    </label>
-                    <input
-                        value={urlInput}
-                        onChange={(e) => setUrlInput(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-white/50 bg-white/60 text-sm text-cocoa placeholder:text-cocoa/40 focus:outline-none focus:ring-2 focus:ring-rose/40"
-                        placeholder="Paste CSV export link"
-                    />
-                </div>
-                <div className="flex items-end gap-2">
-                    <button
-                        type="submit"
-                        className="px-4 py-2 rounded-full bg-rose text-white text-xs font-bold uppercase tracking-[0.18em] shadow-md hover:shadow-lg transition-all"
-                    >
-                        Save & Refresh
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => fetchData()}
-                        className="px-3 py-2 rounded-full border border-cocoa/15 text-[11px] font-bold text-cocoa/70 bg-white/50 hover:bg-white/70 transition-colors flex items-center gap-2"
-                    >
-                        <RefreshCw className={clsx("w-3 h-3", loading && "animate-spin")} />
-                        Refresh
-                    </button>
-                </div>
-            </form>
+            <div className="flex justify-end px-2 mb-2 lg:mb-4">
+                <button
+                    onClick={() => setShowConfig(!showConfig)}
+                    className="text-[10px] font-black text-cocoa/40 uppercase tracking-widest flex items-center gap-2 hover:text-rose transition-colors"
+                >
+                    <Settings className="w-3 h-3" />
+                    {showConfig ? 'Hide Config' : 'Sheet Settings'}
+                </button>
+            </div>
+
+            {showConfig && (
+                <form
+                    className="glass-card rounded-[32px] border border-white/40 shadow-sm p-4 lg:p-6 mb-6 flex flex-wrap items-center gap-4 transition-all animate-in fade-in slide-in-from-top-4"
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!urlInput.trim()) return;
+                        setSheetUrl(urlInput.trim());
+                        localStorage.setItem('google-sheet-url', urlInput.trim());
+                        fetchData(urlInput.trim());
+                        setShowConfig(false);
+                    }}
+                >
+                    <div className="flex flex-col flex-1 min-w-[240px]">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-cocoa/60 mb-1 px-1">
+                            Google Sheet CSV URL
+                        </label>
+                        <input
+                            value={urlInput}
+                            onChange={(e) => setUrlInput(e.target.value)}
+                            className="w-full px-4 py-2.5 rounded-2xl border border-white/50 bg-white/60 text-sm text-cocoa placeholder:text-cocoa/40 focus:outline-none focus:ring-2 focus:ring-rose/30"
+                            placeholder="Paste CSV export link"
+                        />
+                    </div>
+                    <div className="flex items-end gap-2 w-full lg:w-auto">
+                        <button
+                            type="submit"
+                            className="flex-1 lg:flex-none px-6 py-2.5 rounded-full bg-rose text-white text-[10px] font-black uppercase tracking-widest shadow-md hover:shadow-lg transition-all"
+                        >
+                            Save & Load
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => fetchData()}
+                            className="px-4 py-2.5 rounded-full border border-cocoa/10 text-[10px] font-black text-cocoa/70 bg-white/40 hover:bg-white/60 transition-colors flex items-center gap-2"
+                        >
+                            <RefreshCw className={clsx("w-3.5 h-3.5", loading && "animate-spin")} />
+                            Sync
+                        </button>
+                    </div>
+                </form>
+            )}
 
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4 px-2">
                 <div>
