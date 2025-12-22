@@ -203,8 +203,13 @@ export default function ProjectBoard() {
                                                         }
                                                     }
                                                 }}
-                                                className="cursor-grab active:cursor-grabbing z-10"
-                                                whileDrag={{ scale: 1.05, zIndex: 50, rotate: 1 }}
+                                                className="cursor-grab active:cursor-grabbing relative z-10"
+                                                whileDrag={{
+                                                    scale: 1.08,
+                                                    rotate: 2,
+                                                    zIndex: 200,
+                                                    boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)"
+                                                }}
                                             >
                                                 <div onClick={() => setSelectedProject(project)}>
                                                     <ProjectCard

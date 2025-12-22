@@ -38,7 +38,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const loadData = async () => {
             if (isSupabaseConfigured) {
-                console.log("DashboardContext: Starting initial sync with Supabase...");
+                console.log("🔄 Dashboard Sync: Connecting to Supabase...");
                 try {
                     const [pRes, nRes, sRes] = await Promise.all([
                         supabase.from('projects').select('*').order('created_at', { ascending: false }),
@@ -46,52 +46,54 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
                         supabase.from('shopping_list').select('*').order('created_at', { ascending: true })
                     ]);
 
-                    if (pRes.error) console.error("Supabase Projects Error:", pRes.error);
-                    if (nRes.error) console.error("Supabase Notes Error:", nRes.error);
-                    if (sRes.error) console.error("Supabase Shopping Error:", sRes.error);
+                    if (pRes.error) throw pRes.error;
+                    if (nRes.error) throw nRes.error;
+                    if (sRes.error) throw sRes.error;
 
-                    console.log(`Cloud data counts - Projects: ${pRes.data?.length}, Notes: ${nRes.data?.length}, Shopping: ${sRes.data?.length}`);
+                    console.log(`✅ Sync Success: Found ${pRes.data?.length} projects, ${nRes.data?.length} notes, ${sRes.data?.length} items.`);
 
                     const localProjects = localStorage.getItem('home-hub-projects');
                     const localNotes = localStorage.getItem('home-hub-notes');
                     const localShopping = localStorage.getItem('shopping-list');
 
-                    // Projects loading/fallback
+                    // Decision Logic: If Cloud is empty AND Local has items, push Local to Cloud.
+                    // Otherwise, Cloud wins.
+
                     if (pRes.data && pRes.data.length > 0) {
                         setProjects(pRes.data);
                     } else if (localProjects) {
                         const parsed = JSON.parse(localProjects);
-                        console.log("Seeding Projects from Local Storage to Cloud...");
-                        setProjects(parsed);
-                        // Optional: push to cloud if cloud is empty
-                        if (!pRes.data || pRes.data.length === 0) {
-                            supabase.from('projects').insert(parsed).then(() => console.log("Seeded Projects"));
+                        if (parsed.length > 0) {
+                            console.log("📤 Seeding projects to cloud...");
+                            setProjects(parsed);
+                            await supabase.from('projects').insert(parsed);
                         }
                     }
 
-                    // Notes loading/fallback
                     if (nRes.data && nRes.data.length > 0) {
                         setNotes(nRes.data);
                     } else if (localNotes) {
                         const parsed = JSON.parse(localNotes);
-                        console.log("Seeding Notes from Local Storage to Cloud...");
-                        setNotes(parsed);
-                        if (!nRes.data || nRes.data.length === 0) {
-                            // Filter notes to remove local IDs that might conflict with identity
+                        if (parsed.length > 0) {
+                            console.log("📤 Seeding notes to cloud...");
+                            setNotes(parsed);
                             const seedNotes = parsed.map((n: any) => ({ text: n.text, color: n.color, rotation: n.rotation }));
-                            supabase.from('notes').insert(seedNotes).then(() => console.log("Seeded Notes"));
+                            await supabase.from('notes').insert(seedNotes);
                         }
                     }
 
-                    // Shopping List loading/fallback
                     if (sRes.data && sRes.data.length > 0) {
                         setShoppingList(sRes.data);
                     } else if (localShopping) {
-                        setShoppingList(JSON.parse(localShopping));
+                        const parsed = JSON.parse(localShopping);
+                        if (parsed.length > 0) {
+                            setShoppingList(parsed);
+                            await supabase.from('shopping_list').insert(parsed);
+                        }
                     }
 
                 } catch (e) {
-                    console.error("Supabase load failed, falling back to localStorage", e);
+                    console.error("❌ Supabase connection failed:", e);
                     loadFromLocalStorage();
                 }
             } else {
@@ -104,7 +106,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
             const savedProjects = localStorage.getItem('home-hub-projects');
             const savedNotes = localStorage.getItem('home-hub-notes');
             const savedShopping = localStorage.getItem('shopping-list');
-
             if (savedProjects) setProjects(JSON.parse(savedProjects));
             if (savedNotes) setNotes(JSON.parse(savedNotes));
             if (savedShopping) setShoppingList(JSON.parse(savedShopping));
@@ -113,26 +114,17 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         loadData();
     }, [isSupabaseConfigured]);
 
-    // Persistence to localStorage (Always keep a local copy for speed/offline)
+    // Fast Local Persistence
     useEffect(() => {
         if (loading) return;
         localStorage.setItem('home-hub-projects', JSON.stringify(projects));
-    }, [projects, loading]);
-
-    useEffect(() => {
-        if (loading) return;
         localStorage.setItem('home-hub-notes', JSON.stringify(notes));
-    }, [notes, loading]);
-
-    useEffect(() => {
-        if (loading) return;
         localStorage.setItem('shopping-list', JSON.stringify(shoppingList));
-    }, [shoppingList, loading]);
+    }, [projects, notes, shoppingList, loading]);
 
-    // Helper methods for Shopping List
+    // Persistence Methods
     const addShoppingItem = async (text: string) => {
-        const id = Date.now().toString();
-        const newItem: ShoppingItem = { id, text, checked: false, category: 'other' };
+        const newItem: ShoppingItem = { id: Date.now().toString(), text, checked: false, category: 'other' };
         setShoppingList(prev => [...prev, newItem]);
         if (isSupabaseConfigured) {
             const { error } = await supabase.from('shopping_list').insert([newItem]);
@@ -143,42 +135,32 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     const toggleShoppingItem = async (id: string, checked: boolean) => {
         setShoppingList(prev => prev.map(item => item.id === id ? { ...item, checked } : item));
         if (isSupabaseConfigured) {
-            const { error } = await supabase.from('shopping_list').update({ checked }).eq('id', id);
-            if (error) console.error("Error toggling shopping item:", error);
+            await supabase.from('shopping_list').update({ checked }).eq('id', id);
         }
     };
 
     const deleteShoppingItem = async (id: string) => {
         setShoppingList(prev => prev.filter(item => item.id !== id));
         if (isSupabaseConfigured) {
-            const { error } = await supabase.from('shopping_list').delete().eq('id', id);
-            if (error) console.error("Error deleting shopping item:", error);
+            await supabase.from('shopping_list').delete().eq('id', id);
         }
     };
 
-    // Helper methods for Notes
     const addNote = async (text: string, color = 'bg-yellow-200') => {
         const tempId = Date.now();
         const rotation = `rotate-${Math.floor(Math.random() * 6) - 3}`;
         const newNote: Note = { id: tempId, text, color, rotation };
-
         setNotes(prev => [...prev, newNote]);
 
         if (isSupabaseConfigured) {
             try {
-                console.log("Notes: Inserting into Supabase...");
-                const { data, error } = await supabase.from('notes').insert([
-                    { text, color, rotation }
-                ]).select();
-
+                const { data, error } = await supabase.from('notes').insert([{ text, color, rotation }]).select();
                 if (error) throw error;
-
-                if (data && data[0]) {
-                    console.log("Notes: Sync Success, updating local ID", data[0].id);
+                if (data?.[0]) {
                     setNotes(prev => prev.map(n => n.id === tempId ? data[0] : n));
                 }
             } catch (e) {
-                console.error("Error adding note to Supabase:", e);
+                console.error("Notes: Cloud save failed", e);
             }
         }
     };
@@ -194,8 +176,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     const deleteNote = async (id: number) => {
         setNotes(prev => prev.filter(n => n.id !== id));
         if (isSupabaseConfigured) {
-            const { error } = await supabase.from('notes').delete().eq('id', id);
-            if (error) console.error("Error deleting note:", error);
+            await supabase.from('notes').delete().eq('id', id);
         }
     };
 
@@ -203,26 +184,24 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         const newProject: Project = { id: crypto.randomUUID(), title, status };
         setProjects(prev => [newProject, ...prev]);
         if (isSupabaseConfigured) {
-            const { error } = await supabase.from('projects').insert([newProject]);
-            if (error) console.error("Error adding project:", error);
+            await supabase.from('projects').insert([newProject]);
         }
     };
 
     const updateProject = async (id: string, updates: Partial<Project>) => {
         setProjects(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
         if (isSupabaseConfigured) {
-            const { error } = await supabase.from('projects').update(updates).eq('id', id);
-            if (error) console.error("Error updating project:", error);
+            await supabase.from('projects').update(updates).eq('id', id);
         }
     };
 
     const deleteProject = async (id: string) => {
         setProjects(prev => prev.filter(p => p.id !== id));
         if (isSupabaseConfigured) {
-            const { error } = await supabase.from('projects').delete().eq('id', id);
-            if (error) console.error("Error deleting project:", error);
+            await supabase.from('projects').delete().eq('id', id);
         }
     };
+
 
     return (
         <DashboardContext.Provider value={{
