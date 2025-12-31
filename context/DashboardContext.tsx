@@ -52,48 +52,14 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
                     console.log(`✅ Sync Success: Found ${pRes.data?.length} projects, ${nRes.data?.length} notes, ${sRes.data?.length} items.`);
 
-                    const localProjects = localStorage.getItem('home-hub-projects');
-                    const localNotes = localStorage.getItem('home-hub-notes');
-                    const localShopping = localStorage.getItem('shopping-list');
-
-                    // Decision Logic: If Cloud is empty AND Local has items, push Local to Cloud.
-                    // Otherwise, Cloud wins.
-
-                    if (pRes.data && pRes.data.length > 0) {
-                        setProjects(pRes.data);
-                    } else if (localProjects) {
-                        const parsed = JSON.parse(localProjects);
-                        if (parsed.length > 0) {
-                            console.log("📤 Seeding projects to cloud...");
-                            setProjects(parsed);
-                            await supabase.from('projects').insert(parsed);
-                        }
-                    }
-
-                    if (nRes.data && nRes.data.length > 0) {
-                        setNotes(nRes.data);
-                    } else if (localNotes) {
-                        const parsed = JSON.parse(localNotes);
-                        if (parsed.length > 0) {
-                            console.log("📤 Seeding notes to cloud...");
-                            setNotes(parsed);
-                            const seedNotes = parsed.map((n: any) => ({ text: n.text, color: n.color, rotation: n.rotation }));
-                            await supabase.from('notes').insert(seedNotes);
-                        }
-                    }
-
-                    if (sRes.data && sRes.data.length > 0) {
-                        setShoppingList(sRes.data);
-                    } else if (localShopping) {
-                        const parsed = JSON.parse(localShopping);
-                        if (parsed.length > 0) {
-                            setShoppingList(parsed);
-                            await supabase.from('shopping_list').insert(parsed);
-                        }
-                    }
+                    // PRIORITIZE CLOUD DATA: authentic source of truth
+                    if (pRes.data) setProjects(pRes.data);
+                    if (nRes.data) setNotes(nRes.data);
+                    if (sRes.data) setShoppingList(sRes.data);
 
                 } catch (e) {
                     console.error("❌ Supabase connection failed:", e);
+                    // Only fallback to local if cloud fails completely
                     loadFromLocalStorage();
                 }
             } else {
