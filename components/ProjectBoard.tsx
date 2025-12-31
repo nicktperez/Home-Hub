@@ -159,7 +159,7 @@ export default function ProjectBoard() {
                     return (
                         <div key={col.id} className="h-full flex flex-col">
                             <GlassCard
-                                className={`rounded-[24px] lg:rounded-[32px] border-t-4 h-full overflow-hidden flex flex-col ${col.color} bg-white/2`}
+                                className={`rounded-[24px] lg:rounded-[32px] border-t-4 h-full flex flex-col ${col.color} bg-white/2`}
                                 hover={false}
                             >
                                 <div className="p-4 lg:p-5 border-b border-white/5 flex justify-between items-center bg-white/5 text-[10px] uppercase tracking-[0.2em] font-black text-stone-400">
