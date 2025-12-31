@@ -198,11 +198,7 @@ export default function Dashboard() {
       <VoiceCommander />
 
       {/* Pause Indicator */}
-      {paused && (
-        <div className="fixed bottom-8 right-8 bg-rose text-white text-[10px] font-bold tracking-widest px-4 py-2 rounded-full shadow-lg">
-          PAUSED
-        </div>
-      )}
+      {/* Pause Indicator Removed as per request */}
     </main>
   );
 }

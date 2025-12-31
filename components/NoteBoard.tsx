@@ -102,18 +102,6 @@ export default function NoteBoard() {
 
     return (
         <GlassCard className="rounded-[32px] lg:rounded-[40px] p-4 lg:p-8 h-full flex flex-col shadow-sm border border-white/40" hover={false}>
-            <div className="flex justify-between items-center mb-4 lg:mb-8 px-1 lg:px-2">
-                <div>
-                    <h2 className="text-2xl lg:text-3xl font-serif font-black text-cocoa flex items-center gap-2 lg:gap-3">
-                        Family Notes
-                    </h2>
-                    <p className="text-xs lg:text-sm text-secondary font-medium mt-1 italic opacity-80 font-sans">Click a note to start writing.</p>
-                </div>
-                <div className="hidden lg:block text-[10px] font-black text-rose uppercase tracking-[0.2em] bg-rose/5 px-4 py-1.5 rounded-full border border-rose/10 shadow-inner">
-                    {notes.length} Stickies
-                </div>
-            </div>
-
             <div ref={containerRef} className="flex-1 relative overflow-y-auto lg:overflow-hidden rounded-[24px] lg:rounded-[32px] border border-white/40 bg-white/5 shadow-[inner_0_4px_12px_rgba(0,0,0,0.01)] min-h-[400px] lg:min-h-0">
                 <div className="lg:absolute lg:inset-0 p-3 lg:p-8 flex flex-col lg:flex-row lg:flex-wrap content-start gap-6 lg:gap-10">
                     {notes.map(note => (

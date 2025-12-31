@@ -84,17 +84,23 @@ export default function Weather() {
         return { icon: <CloudSun className="w-12 h-12 text-rose" />, text: 'Cloudy' };
     };
 
-    const getClothingSuggestion = (temp: number) => {
-        if (temp > 80) return "It's a sundress kind of day! 👗";
-        if (temp > 70) return "T-shirt weather is here! 👕";
-        if (temp > 60) return "Perfect for a light sweater. 🧥";
-        if (temp > 50) return "Layer up with a cozy cardigan. 🧶";
-        if (temp > 40) return "Definitely need a warm coat today. 🧥";
-        return "Bundle up, it's chilly! 🧣";
+    const getClothingSuggestion = (temp: number, code: number) => {
+        if (code >= 95) return "Stay inside, it's stormy! 🌩️";
+        if (code >= 51 && code <= 67) return "Don't forget your umbrella! ☔";
+        if (code >= 71) return "Snow day gear required! ❄️";
+
+        if (temp > 95) return "Stay hydrated & find AC! 🥵";
+        if (temp > 85) return "Pool weather! 🩳";
+        if (temp > 75) return "T-shirt & shorts weather! 👕";
+        if (temp > 65) return "Perfect for a light layer. 🧥";
+        if (temp > 55) return "Sweater weather is here. 🧶";
+        if (temp > 45) return "Grab a warm jacket. 🧥";
+        if (temp > 32) return "Winter coat essentials. 🧣";
+        return "Bundle up, it's freezing! 🥶";
     };
 
     const currentInfo = weatherData ? getWeatherInfo(weatherData.current.weather_code) : { icon: null, text: '' };
-    const clothing = weatherData ? getClothingSuggestion(weatherData.current.temperature_2m) : '';
+    const clothing = weatherData ? getClothingSuggestion(weatherData.current.temperature_2m, weatherData.current.weather_code) : '';
 
     return (
         <GlassCard className="p-5 lg:p-6 flex flex-col justify-between h-full group" hover={true}>
@@ -169,14 +175,13 @@ export default function Weather() {
                             const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
                             const maxTemp = Math.round(weatherData.daily.temperature_2m_max[i]);
                             const code = weatherData.daily.weather_code[i];
-                            let Icon = CloudSun;
-                            if (code > 50) Icon = Droplets;
+                            const { icon } = getWeatherInfo(code);
 
                             return (
                                 <div key={i} className="flex flex-col items-center gap-1 group/day shrink-0 min-w-[45px] lg:min-w-0">
                                     <span className="text-[8px] lg:text-[9px] font-bold text-secondary uppercase mb-0.5">{dayName}</span>
-                                    <div className="p-1 rounded-lg bg-white/20 group-hover/day:bg-rose/10 transition-colors">
-                                        <Icon className="w-2.5 h-2.5 lg:w-3 lg:h-3 text-terracotta" />
+                                    <div className="p-1 rounded-lg bg-white/20 group-hover/day:bg-rose/10 transition-colors scale-75 lg:scale-100">
+                                        {icon}
                                     </div>
                                     <span className="text-[10px] lg:text-[11px] font-bold text-cocoa mt-0.5">{maxTemp}°</span>
                                 </div>
