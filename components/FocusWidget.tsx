@@ -4,40 +4,32 @@ import { useState, useEffect } from 'react';
 import { Sparkles } from 'lucide-react';
 import { clsx } from 'clsx';
 
-const INTENTIONS = [
-    "Choose Kindness",
-    "Practice Gratitude",
-    "Stay Present",
-    "Find Joy in Small Things",
-    "Listen with Heart",
-    "Be Patient with Yourself",
-    "Spread Light",
-    "Breathe Deeply",
-    "Seek Balance",
-    "Act with Love",
-    "Cultivate Peace",
-    "Keep Growing",
-    "Embrace the Mess",
-    "Find Magic in the Ordinary",
-    "Trust the Journey"
-];
 
 import GlassCard from './GlassCard';
 
 export default function FocusWidget() {
-    const [intention, setIntention] = useState('');
+    const [intention, setIntention] = useState('Loading...');
     const [isMounted, setIsMounted] = useState(false);
+
+    const fetchNewQuote = async () => {
+        try {
+            const res = await fetch('/api/quote');
+            if (res.ok) {
+                const data = await res.json();
+                setIntention(data.quote);
+            }
+        } catch (e) {
+            console.error(e);
+            setIntention("Choose Kindness"); // Ultimate fallback
+        }
+    };
 
     useEffect(() => {
         setIsMounted(true);
-        // Set a random intention on mount
-        setIntention(INTENTIONS[Math.floor(Math.random() * INTENTIONS.length)]);
+        fetchNewQuote();
 
-        // Rotate every 4 hours for a "daily rhythm" feel
-        const interval = setInterval(() => {
-            setIntention(INTENTIONS[Math.floor(Math.random() * INTENTIONS.length)]);
-        }, 14400000);
-
+        // Refresh quote every 4 hours
+        const interval = setInterval(fetchNewQuote, 14400000);
         return () => clearInterval(interval);
     }, []);
 
