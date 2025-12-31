@@ -179,25 +179,29 @@ export default function ProjectBoard() {
                                                 dragSnapToOrigin={true}
                                                 onDragEnd={(_, info) => {
                                                     // Determine drop column based on drag distance
-                                                    // This is a simple heuristic: if they dragged far enough to the right/left
                                                     const { x, y } = info.offset;
-                                                    const isDesktop = window.innerWidth > 768;
 
-                                                    if (isDesktop) {
-                                                        const colWidth = window.innerWidth / 3;
-                                                        if (x > colWidth * 0.4) {
+                                                    // Threshold for move (pixels)
+                                                    // Use a fixed pixel value instead of percentage for better reliability on different screens
+                                                    const THRESHOLD = 150;
+                                                    const VERTICAL_THRESHOLD = 100;
+
+                                                    // Determine direction
+                                                    if (Math.abs(x) > Math.abs(y)) {
+                                                        // Horizontal Drag
+                                                        if (x > THRESHOLD) {
                                                             const nextStatus = col.id === 'todo' ? 'in_progress' : col.id === 'in_progress' ? 'done' : 'done';
                                                             if (nextStatus !== col.id) handleUpdateProject(project.id, { status: nextStatus });
-                                                        } else if (x < -colWidth * 0.4) {
+                                                        } else if (x < -THRESHOLD) {
                                                             const prevStatus = col.id === 'done' ? 'in_progress' : col.id === 'in_progress' ? 'todo' : 'todo';
                                                             if (prevStatus !== col.id) handleUpdateProject(project.id, { status: prevStatus });
                                                         }
                                                     } else {
-                                                        // Vertical drag on mobile
-                                                        if (y > 100) {
+                                                        // Vertical Drag (Mobile fallback or just vertical movement)
+                                                        if (y > VERTICAL_THRESHOLD) {
                                                             const nextStatus = col.id === 'todo' ? 'in_progress' : col.id === 'in_progress' ? 'done' : 'done';
                                                             if (nextStatus !== col.id) handleUpdateProject(project.id, { status: nextStatus });
-                                                        } else if (y < -100) {
+                                                        } else if (y < -VERTICAL_THRESHOLD) {
                                                             const prevStatus = col.id === 'done' ? 'in_progress' : col.id === 'in_progress' ? 'todo' : 'todo';
                                                             if (prevStatus !== col.id) handleUpdateProject(project.id, { status: prevStatus });
                                                         }

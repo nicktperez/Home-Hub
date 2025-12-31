@@ -3,6 +3,7 @@
 
 
 :root {
+  /* DEBUG: If you see this, CSS is loading but Tailwind might be broken */
   /* Warm "Millennial Mom" Palette */
   --bg-primary: #FAF9F6;
   /* Soft Cream */

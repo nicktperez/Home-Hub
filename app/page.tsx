@@ -39,9 +39,10 @@ const SLIDE_DURATIONS = [
 export default function Dashboard() {
   const [activeSlide, setActiveSlide] = useState(1); // Default to Today
   const [paused, setPaused] = useState(false);
-  const [autoDimEnabled, setAutoDimEnabled] = useState(true);
+  const [dimMode, setDimMode] = useState<'auto' | 'light' | 'dark'>('auto');
   const [isDimmed, setIsDimmed] = useState(false);
 
+  // Auto-scroll Timer
   useEffect(() => {
     if (paused) return;
 
@@ -53,53 +54,73 @@ export default function Dashboard() {
     return () => clearTimeout(timer);
   }, [activeSlide, paused]);
 
+  // Load Dim Preference
   useEffect(() => {
-    const saved = localStorage.getItem('home-hub-auto-dim');
-    if (saved !== null) {
-      setAutoDimEnabled(saved === 'true');
+    const saved = localStorage.getItem('home-hub-dim-mode');
+    if (saved === 'auto' || saved === 'light' || saved === 'dark') {
+      setDimMode(saved);
     }
   }, []);
 
+  // Save Dim Preference
   useEffect(() => {
-    localStorage.setItem('home-hub-auto-dim', String(autoDimEnabled));
-  }, [autoDimEnabled]);
+    localStorage.setItem('home-hub-dim-mode', dimMode);
+  }, [dimMode]);
 
+  // Calculate Dim State
   useEffect(() => {
     const updateDimState = () => {
-      const hour = new Date().getHours();
-      const shouldDim = autoDimEnabled && (hour >= 21 || hour < 6);
-      setIsDimmed(shouldDim);
+      if (dimMode === 'auto') {
+        const hour = new Date().getHours();
+        const shouldDim = hour >= 21 || hour < 6;
+        setIsDimmed(shouldDim);
+      } else {
+        setIsDimmed(dimMode === 'dark');
+      }
     };
 
     updateDimState();
     const interval = setInterval(updateDimState, 60000);
     return () => clearInterval(interval);
-  }, [autoDimEnabled]);
+  }, [dimMode]);
 
+  // Apply Dim Class
   useEffect(() => {
     document.body.classList.toggle('night-dim', isDimmed);
   }, [isDimmed]);
 
   return (
-    <main className="relative w-screen h-screen overflow-hidden p-2 lg:p-10 select-none">
+    <main
+      className="relative w-screen h-screen overflow-hidden p-2 lg:p-10 select-none"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onTouchStart={() => setPaused(true)}
+    >
       <Navigation
         slides={SLIDE_TITLES}
         activeIndex={activeSlide}
         onNavigate={setActiveSlide}
       />
 
-      <div className="fixed top-8 right-8 z-50 flex items-center gap-3">
+      <div className="fixed top-8 right-8 z-50 flex items-center gap-2 bg-white/10 backdrop-blur-md p-1 rounded-full border border-white/20">
         <button
-          onClick={() => setAutoDimEnabled((prev) => !prev)}
-          className="glass-card px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest text-cocoa/70 hover:text-cocoa transition-colors border border-white/60"
+          onClick={() => setDimMode('light')}
+          className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${dimMode === 'light' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-300'}`}
         >
-          Auto Dim: {autoDimEnabled ? 'On' : 'Off'}
+          Light
         </button>
-        {isDimmed && (
-          <span className="text-[10px] font-bold uppercase tracking-widest text-rose bg-rose/10 px-3 py-2 rounded-full border border-rose/20">
-            Dimmed
-          </span>
-        )}
+        <button
+          onClick={() => setDimMode('auto')}
+          className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${dimMode === 'auto' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-300'}`}
+        >
+          Auto
+        </button>
+        <button
+          onClick={() => setDimMode('dark')}
+          className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${dimMode === 'dark' ? 'bg-stone-800 text-white shadow-sm' : 'text-stone-500 hover:text-stone-300'}`}
+        >
+          Dark
+        </button>
       </div>
 
       <div className="relative w-full h-full pt-20 lg:pt-24 pb-12 lg:pb-0">
