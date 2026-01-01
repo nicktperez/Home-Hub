@@ -90,7 +90,23 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
     // Persistence Methods
     const addShoppingItem = async (text: string) => {
-        const newItem: ShoppingItem = { id: Date.now().toString(), text, checked: false, category: 'other' };
+        let category: any = 'other';
+        try {
+            // Ask AI for category
+            const res = await fetch('/api/categorize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ item: text })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                category = data.category;
+            }
+        } catch (e) {
+            console.error("Categorization failed, defaulting to other");
+        }
+
+        const newItem: ShoppingItem = { id: Date.now().toString(), text, checked: false, category };
         setShoppingList(prev => [...prev, newItem]);
         if (isSupabaseConfigured) {
             const { error } = await supabase.from('shopping_list').insert([newItem]);

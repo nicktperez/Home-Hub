@@ -14,7 +14,7 @@ export interface Note {
     rotation: string;
 }
 
-export type ShoppingCategory = 'produce' | 'dairy' | 'pantry' | 'other';
+export type ShoppingCategory = 'produce' | 'dairy' | 'meat' | 'pantry' | 'household' | 'frozen' | 'beverages' | 'other';
 
 export interface ShoppingItem {
     id: string;

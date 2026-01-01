@@ -9,7 +9,13 @@ export default function VoiceCommander() {
     const [isListening, setIsListening] = useState(false);
     const [transcript, setTranscript] = useState('');
     const [feedback, setFeedback] = useState<string | null>(null);
+    const [isThinking, setIsThinking] = useState(false);
     const { addShoppingItem, addNote, addProject } = useDashboard();
+
+    const showFeedback = useCallback((msg: string, duration = 3000) => {
+        setFeedback(msg);
+        setTimeout(() => setFeedback(null), duration);
+    }, []);
 
     const processCommand = useCallback(async (text: string) => {
         const lowerText = text.toLowerCase();
@@ -33,14 +39,28 @@ export default function VoiceCommander() {
                 showFeedback(`Started project: ${title}`);
             }
         } else {
-            showFeedback("I didn't catch that command.");
+            // AI Fallback
+            setIsThinking(true);
+            setFeedback("Thinking...");
+            try {
+                const res = await fetch('/api/ai_chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: text })
+                });
+                const data = await res.json();
+                if (data.reply) {
+                    showFeedback(data.reply, 8000); // Show AI answer for 8 seconds
+                } else {
+                    showFeedback("I couldn't think of a response.");
+                }
+            } catch (e) {
+                showFeedback("AI Connection Error");
+            } finally {
+                setIsThinking(false);
+            }
         }
-    }, [addShoppingItem, addNote, addProject]);
-
-    const showFeedback = (msg: string) => {
-        setFeedback(msg);
-        setTimeout(() => setFeedback(null), 3000);
-    };
+    }, [addShoppingItem, addNote, addProject, showFeedback]);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -78,7 +98,9 @@ export default function VoiceCommander() {
         <div className="fixed bottom-6 right-6 lg:bottom-10 lg:left-10 z-[100] flex flex-row-reverse lg:flex-row items-center gap-4">
             <button
                 onClick={() => setIsListening(!isListening)}
-                className={`w-12 h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center transition-all shadow-lg ${isListening ? 'bg-rose text-white animate-pulse scale-110' : 'bg-white/80 backdrop-blur-md text-cocoa hover:bg-white hover:scale-105'
+                className={`w-12 h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center transition-all shadow-lg ${isListening ? 'bg-rose text-white animate-pulse scale-110' :
+                        isThinking ? 'bg-amber-400 text-white animate-bounce' :
+                            'bg-white/80 backdrop-blur-md text-cocoa hover:bg-white hover:scale-105'
                     }`}
             >
                 {isListening ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6 opacity-40" />}

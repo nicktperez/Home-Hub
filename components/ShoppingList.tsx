@@ -56,43 +56,56 @@ export default function ShoppingList() {
                         <p className="font-serif italic text-lg">Your list is empty</p>
                     </div>
                 )}
-                {[...items]
-                    .sort((a, b) => (a.checked === b.checked ? 0 : a.checked ? 1 : -1))
-                    .map(item => (
-                        <div
-                            key={item.id}
-                            onClick={() => toggleItem(item.id, !item.checked)}
-                            className={clsx(
-                                "flex items-center justify-between p-2 lg:p-3 mx-1 lg:mx-2 rounded-lg cursor-pointer transition-all group",
-                                item.checked
-                                    ? "opacity-50"
-                                    : "hover:bg-white hover:shadow-sm"
-                            )}
-                        >
-                            <div className="flex items-center gap-2 lg:gap-3">
-                                <div className={clsx(
-                                    "w-5 h-5 lg:w-6 lg:h-6 rounded-full border-2 flex items-center justify-center transition-colors shadow-sm shrink-0",
-                                    item.checked
-                                        ? "bg-stone-400 border-stone-400 text-white"
-                                        : "bg-white border-stone-300 text-transparent hover:border-accent-clay"
-                                )}>
-                                    <Check className="w-3 lg:w-3.5 h-3 lg:h-3.5" />
+
+                {['produce', 'dairy', 'meat', 'frozen', 'pantry', 'beverages', 'household', 'other'].map(cat => {
+                    const catItems = items.filter(i => (i.category || 'other') === cat)
+                        .sort((a, b) => (a.checked === b.checked ? 0 : a.checked ? 1 : -1));
+
+                    if (catItems.length === 0) return null;
+
+                    return (
+                        <div key={cat} className="mb-2">
+                            <h3 className="sticky top-0 bg-[#fdfaf5]/95 backdrop-blur-sm z-10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-stone-400 border-b border-stone-200 mb-1">
+                                {cat}
+                            </h3>
+                            {catItems.map(item => (
+                                <div
+                                    key={item.id}
+                                    onClick={() => toggleItem(item.id, !item.checked)}
+                                    className={clsx(
+                                        "flex items-center justify-between p-2 lg:p-3 mx-1 lg:mx-2 rounded-lg cursor-pointer transition-all group",
+                                        item.checked
+                                            ? "opacity-50"
+                                            : "hover:bg-white hover:shadow-sm"
+                                    )}
+                                >
+                                    <div className="flex items-center gap-2 lg:gap-3">
+                                        <div className={clsx(
+                                            "w-5 h-5 lg:w-6 lg:h-6 rounded-full border-2 flex items-center justify-center transition-colors shadow-sm shrink-0",
+                                            item.checked
+                                                ? "bg-stone-400 border-stone-400 text-white"
+                                                : "bg-white border-stone-300 text-transparent hover:border-accent-clay"
+                                        )}>
+                                            <Check className="w-3 lg:w-3.5 h-3 lg:h-3.5" />
+                                        </div>
+                                        <span className={clsx(
+                                            "text-base lg:text-lg font-serif tracking-wide truncate max-w-[180px] lg:max-w-none",
+                                            item.checked ? "line-through text-stone-400" : "text-stone-800"
+                                        )}>
+                                            {item.text}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }}
+                                        className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 text-stone-300 lg:text-stone-400 hover:text-red-500 p-2 transition-all"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                                    </button>
                                 </div>
-                                <span className={clsx(
-                                    "text-base lg:text-lg font-serif tracking-wide truncate max-w-[180px] lg:max-w-none",
-                                    item.checked ? "line-through text-stone-400" : "text-stone-800"
-                                )}>
-                                    {item.text}
-                                </span>
-                            </div>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }}
-                                className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 text-stone-300 lg:text-stone-400 hover:text-red-500 p-2 transition-all"
-                            >
-                                <Trash2 className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
-                            </button>
+                            ))}
                         </div>
-                    ))}
+                    );
+                })}
             </div>
 
             {/* Input Area */}
