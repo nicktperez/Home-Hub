@@ -15,6 +15,7 @@ import FocusWidget from '../components/FocusWidget';
 import GoogleSheetDataView from '../components/GoogleSheetDataView';
 import CalendarWidget from '../components/CalendarWidget';
 import VoiceCommander from '../components/VoiceCommander';
+import NewsTicker from '../components/NewsTicker';
 
 const ICAL_URL = "https://calendar.google.com/calendar/ical/19fc18fe1e0342336012fb0530d644d8c3ea9d6e14fe63b65db9b8b1ade07504%40group.calendar.google.com/public/basic.ics";
 
@@ -197,8 +198,8 @@ export default function Dashboard() {
       {/* Voice Assistant */}
       <VoiceCommander />
 
-      {/* Pause Indicator */}
-      {/* Pause Indicator Removed as per request */}
+      {/* Positive News Ticker */}
+      <NewsTicker />
     </main>
   );
 }
