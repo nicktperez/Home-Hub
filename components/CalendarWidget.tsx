@@ -61,10 +61,10 @@ export default function CalendarWidget({ icalUrl }: { icalUrl: string }) {
                 </div>
             </div>
 
-            {/* AI Digest */}
+            {/* AI Digest - Moved to be more subtle/integrated */}
             {digest && (
-                <div className="mb-4 px-3 py-2 bg-emerald-400/10 rounded-lg text-xs font-medium text-emerald-800 italic border border-emerald-400/20">
-                    "{digest}"
+                <div className="mb-4 text-xs font-serif italic text-emerald-700/70 border-l-2 border-emerald-400/30 pl-3">
+                    {digest}
                 </div>
             )}
 

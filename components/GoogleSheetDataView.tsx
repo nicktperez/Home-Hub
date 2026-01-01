@@ -284,24 +284,58 @@ export default function GoogleSheetDataView({ csvUrl }: { csvUrl: string }) {
                                     <h3 className="text-2xl font-serif font-black text-cocoa">{section.title}</h3>
                                     {(() => {
                                         const oilColIdx = section.headers.findIndex(h => h.toLowerCase().includes('oil'));
-                                        if (oilColIdx === -1) return null;
+
+                                        // AI Insight Integration (only fetch once per section valid load)
+                                        const [aiInsight, setAiInsight] = useState<string | null>(null);
+                                        useEffect(() => {
+                                            if (section.rows.length > 0) {
+                                                // Send just the latest 3 rows to save tokens/bandwidth
+                                                const recentData = section.rows.slice(0, 3).map(r => ({ date: r[0], details: r.slice(1) }));
+
+                                                fetch('/api/car_insight', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ carData: { vehicle: section.title, history: recentData } })
+                                                })
+                                                    .then(res => res.json())
+                                                    .then(data => setAiInsight(data.insight))
+                                                    .catch(err => console.error("Car AI Error", err));
+                                            }
+                                        }, [section.title]); // Only run on mount/title change
+
+                                        if (oilColIdx === -1) return (
+                                            <div className="mt-2 min-h-[20px]">
+                                                {aiInsight && (
+                                                    <p className="text-xs font-serif italic text-cocoa/60 border-l-2 border-rose/30 pl-2 animate-in fade-in">
+                                                        "{aiInsight}"
+                                                    </p>
+                                                )}
+                                            </div>
+                                        );
 
                                         // Find the most recent oil change (rows are already sorted desc)
                                         const latestOilRow = section.rows.find(row => row[oilColIdx + 1] && row[oilColIdx + 1] !== '');
                                         const needsAttention = latestOilRow ? isOilOverdue(latestOilRow[0]) : false;
 
                                         return (
-                                            <div className="flex items-center gap-2 mt-1">
-                                                {needsAttention ? (
-                                                    <span className="text-[10px] font-black text-rose bg-rose/10 px-2 py-0.5 rounded-md uppercase tracking-wider border border-rose/10 flex items-center gap-1.5 animate-pulse">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-rose"></span>
-                                                        Oil Change Recommended
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-[10px] font-bold text-sage bg-sage/10 px-2 py-0.5 rounded-md uppercase tracking-wider border border-sage/10 flex items-center gap-1.5">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-sage"></span>
-                                                        Maintenance Up to Date
-                                                    </span>
+                                            <div className="flex flex-col gap-2 mt-1">
+                                                <div className="flex items-center gap-2">
+                                                    {needsAttention ? (
+                                                        <span className="text-[10px] font-black text-rose bg-rose/10 px-2 py-0.5 rounded-md uppercase tracking-wider border border-rose/10 flex items-center gap-1.5 animate-pulse">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-rose"></span>
+                                                            Oil Change Recommended
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[10px] font-bold text-sage bg-sage/10 px-2 py-0.5 rounded-md uppercase tracking-wider border border-sage/10 flex items-center gap-1.5">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-sage"></span>
+                                                            Maintenance Up to Date
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {aiInsight && (
+                                                    <p className="text-xs font-serif italic text-cocoa/60 border-l-2 border-rose/30 pl-2 animate-in fade-in">
+                                                        "{aiInsight}"
+                                                    </p>
                                                 )}
                                             </div>
                                         );

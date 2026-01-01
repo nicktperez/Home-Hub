@@ -12,6 +12,7 @@ export default function FocusWidget() {
     const [isMounted, setIsMounted] = useState(false);
 
     const fetchNewQuote = async () => {
+        setIntention("Thinking..."); // Optimistic UI
         try {
             const res = await fetch('/api/quote');
             if (res.ok) {

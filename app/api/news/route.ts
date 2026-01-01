@@ -6,35 +6,47 @@ const parser = new Parser();
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY || '');
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-export async function GET() {
+export async function GET(req: Request) {
     try {
-        // Fetch from Good News Network RSS
-        const feed = await parser.parseURL('https://www.goodnewsnetwork.org/feed/');
+        const { searchParams } = new URL(req.url);
+        const location = searchParams.get('location') || 'World';
 
-        // Take the top 3 headlines
-        const potentialStories = feed.items.slice(0, 3).map(item => item.title).join("\n");
+        // Use Google News RSS for specific positive query
+        const rssUrl = `https://news.google.com/rss/search?q=uplifting+good+news+in+${encodeURIComponent(location)}&hl=en-US&gl=US&ceid=US:en`;
+        const feed = await parser.parseURL(rssUrl);
 
-        if (!potentialStories) {
-            throw new Error("No feed items found");
-        }
+        // Take top 5
+        const items = feed.items.slice(0, 5);
 
-        // Ask AI to summarize into a single ticker string
-        const prompt = `Here are 3 uplifting news headlines:
-        ${potentialStories}
+        if (items.length === 0) throw new Error("No feed items found");
 
-        Select the ONE best/happiest story and rewrite it as a short, punchy ticker-tape style headline (max 12 words).
-        It should sound exciting and positive.
-        Return ONLY the headline text.`;
+        const headlines = items.map(i => i.title).join("\n---\n");
+
+        const prompt = `Here are news headlines:
+        ${headlines}
+
+        Task: Select the 3 most positive, non-political, uplifting stories.
+        Rewrite each one into a short ticker-tape style headline (max 10 words).
+        Return them separated by feature ' || '.
+        Example: Local Park Opens New Garden || Firefighters Rescue Kitten || High School Wins Championship
+        RETURN ONLY THE TEXT.`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const tickerText = response.text().trim().replace(/['"]/g, '');
+        const text = response.text().trim();
 
-        return NextResponse.json({ news: tickerText });
+        const newsItems = text.split('||').map(s => s.trim()).filter(s => s.length > 0);
 
-    } catch (error) {
-        console.error('News Error:', error);
-        // Fallback
-        return NextResponse.json({ news: "Sunflowers bloom earlier this year, bringing color to local fields! 🌻" });
+        return NextResponse.json({ news: newsItems });
+
+    } catch (error: any) {
+        console.error('News API Error:', error.message);
+        return NextResponse.json({
+            news: [
+                "Sunflowers blooming early this year 🌻",
+                "Local library waives all fees 📚",
+                "Community garden reports record harvest 🥕"
+            ]
+        });
     }
 }
