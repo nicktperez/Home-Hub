@@ -23,6 +23,23 @@ export default function CalendarWidget({ icalUrl }: { icalUrl: string }) {
             eventDate.getFullYear() === today.getFullYear();
     }).sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 
+    const [digest, setDigest] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (todayEvents.length > 0) {
+            fetch('/api/digest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ events: todayEvents })
+            })
+                .then(res => res.json())
+                .then(data => setDigest(data.summary))
+                .catch(err => console.error("Digest fetch error", err));
+        } else {
+            setDigest("No plans today. Enjoy the peace!");
+        }
+    }, [todayEvents.length]); // Only re-run if number of events changes to save API calls
+
     const formatTime = (date: Date) => {
         return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
     };
@@ -30,8 +47,8 @@ export default function CalendarWidget({ icalUrl }: { icalUrl: string }) {
     return (
         <GlassCard className="p-6 h-full flex flex-col relative overflow-hidden">
             {/* Header */}
-            <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-emerald-400/10 rounded-xl flex items-center justify-center text-emerald-600 ring-1 ring-emerald-400/20 shadow-inner">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-emerald-400/10 rounded-xl flex items-center justify-center text-emerald-600 ring-1 ring-emerald-400/20 shadow-inner shrink-0">
                     <Calendar className="w-5 h-5" />
                 </div>
                 <div>
@@ -43,6 +60,13 @@ export default function CalendarWidget({ icalUrl }: { icalUrl: string }) {
                     </div>
                 </div>
             </div>
+
+            {/* AI Digest */}
+            {digest && (
+                <div className="mb-4 px-3 py-2 bg-emerald-400/10 rounded-lg text-xs font-medium text-emerald-800 italic border border-emerald-400/20">
+                    "{digest}"
+                </div>
+            )}
 
             {/* Event List */}
             <div className="flex-1 overflow-y-auto no-scrollbar space-y-3 min-h-[100px]">
