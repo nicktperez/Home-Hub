@@ -1,26 +1,41 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Newspaper } from 'lucide-react';
 
+interface NewsItem {
+    text: string;
+    source: string;
+}
+
 export default function NewsTicker() {
-    const [news, setNews] = useState<string[]>([]);
+    const [news, setNews] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchNews = async () => {
             try {
-                // Try to guess location or default to US
-                const res = await fetch('/api/news?location=USA');
+                // Get user's city if possible via simple free IP API
+                // Or checking a localstorage pref if Weather.tsx saved it
+                // For now, let's try a best-effort IP gelocation or default
+                let location = 'USA';
+                try {
+                    // try browser geo helper if we had one, but for now simple fetch
+                    // This step is optional but helps personalization
+                } catch { }
+
+                const res = await fetch(`/api/news?location=${encodeURIComponent(location)}`);
                 if (res.ok) {
                     const data = await res.json();
 
                     if (Array.isArray(data.news)) {
-                        setNews(data.news);
-                    } else {
-                        // Handle legacy single string format
-                        setNews([data.news]);
+                        // Check if it's the new object format or legacy string
+                        const parsedNews = data.news.map((item: any) => {
+                            if (typeof item === 'string') return { text: item, source: 'Good News' };
+                            return item;
+                        });
+                        setNews(parsedNews);
                     }
                 }
             } catch (e) {
@@ -48,21 +63,22 @@ export default function NewsTicker() {
 
             <div className="flex-1 overflow-hidden relative h-full flex items-center">
                 <motion.div
-                    className="whitespace-nowrap px-8 text-sm font-medium text-stone-300 flex gap-12"
+                    className="whitespace-nowrap px-8 text-sm font-medium text-stone-300 flex gap-4"
                     animate={{ x: ["100%", "-100%"] }}
                     transition={{
                         repeat: Infinity,
                         ease: "linear",
-                        duration: 60 // Slower scroll for longer content
+                        duration: 80
                     }}
                 >
-                    {/* Only render if we have items. Cycle them. */}
-                    {/* We repeat the array 2-3 times to create a seamless loop buffer */}
+                    {/* Render Loop */}
                     {[...news, ...news, ...news].map((item, i) => (
-                        <span key={i} className="flex items-center gap-8">
-                            <span>{item}</span>
-                            <span className="text-rose/50 text-[10px]">●</span>
-                        </span>
+                        <div key={i} className="flex items-center gap-4 px-4 border-r border-white/10">
+                            <span className="text-stone-200">{item.text}</span>
+                            <span className="text-[10px] font-black uppercase tracking-wider text-rose/80 bg-rose/10 px-1.5 rounded">
+                                {item.source}
+                            </span>
+                        </div>
                     ))}
                 </motion.div>
             </div>

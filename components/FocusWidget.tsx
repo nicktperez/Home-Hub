@@ -17,11 +17,21 @@ export default function FocusWidget() {
             const res = await fetch('/api/quote');
             if (res.ok) {
                 const data = await res.json();
-                setIntention(data.quote);
+                if (data.error) {
+                    console.error("API Quote Error Details:", data.error); // Log to console
+                    setIntention("Choose Kindness"); // Still fallback for UI cleanliness, but now we know why
+                } else {
+                    setIntention(data.quote);
+                }
+            } else {
+                console.error("API Quote Network Error", res.status, res.statusText);
+                const text = await res.text();
+                console.error("Response body:", text);
+                setIntention("Choose Kindness");
             }
         } catch (e) {
-            console.error(e);
-            setIntention("Choose Kindness"); // Ultimate fallback
+            console.error("Fetch Logic Error:", e);
+            setIntention("Choose Kindness");
         }
     };
 
