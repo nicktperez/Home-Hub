@@ -4,15 +4,15 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const parser = new Parser();
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY || '');
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
 export async function GET(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
         const location = searchParams.get('location') || 'US';
 
-        // Google News RSS with a query for "Good News" + Location
-        const rssUrl = `https://news.google.com/rss/search?q=uplifting+good+news+in+${encodeURIComponent(location)}&hl=en-US&gl=US&ceid=US:en`;
+        // query for general news in location, then we filter with AI
+        const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(location)}&hl=en-US&gl=US&ceid=US:en`;
 
         const feed = await parser.parseURL(rssUrl);
 

@@ -16,14 +16,8 @@ export default function NewsTicker() {
     useEffect(() => {
         const fetchNews = async () => {
             try {
-                // Get user's city if possible via simple free IP API
-                // Or checking a localstorage pref if Weather.tsx saved it
-                // For now, let's try a best-effort IP gelocation or default
-                let location = 'USA';
-                try {
-                    // try browser geo helper if we had one, but for now simple fetch
-                    // This step is optional but helps personalization
-                } catch { }
+                // User's specific location (Rancho Cordova, CA 95742)
+                const location = 'Rancho Cordova, CA 95742';
 
                 const res = await fetch(`/api/news?location=${encodeURIComponent(location)}`);
                 if (res.ok) {
